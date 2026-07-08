@@ -41,6 +41,14 @@ Then open `http://localhost:8080`.
 
 Any OCI-compatible tool (Docker included) works the same way — the image and `compose.yaml` aren't Podman-specific. See `SPEC.md` §9 for full container/operations details.
 
+### Building locally
+
+```bash
+podman build --format docker -t localscore .
+```
+
+The `--format docker` flag matters: Podman defaults to the OCI image format, which silently drops the Dockerfile's `HEALTHCHECK` instruction. Without it, `podman ps` and `podman inspect` won't show a health status.
+
 ## What it does *not* do
 
 - It doesn't scan anything or talk to your infrastructure — you tell it about a location by answering questions, and you paste in vectors or CVE IDs.

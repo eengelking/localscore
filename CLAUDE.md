@@ -17,7 +17,7 @@ Run from the repo root unless noted.
 - `npm start` — runs the built server (`server/dist/index.js`); serves the built frontend + API on one port.
 - `npm test` — runs the server's Vitest suite (`server/test/*.test.ts`). To run one file: `npm run test --workspace server -- test/catalog.test.ts`.
 - `npm run typecheck` / `npm run lint` — both workspaces.
-- `podman build -t localscore .` / `podman compose up` — container build per SPEC.md §9. The maintainer uses **Podman, not Docker**; the Dockerfile/compose.yaml are plain OCI and must keep working under Docker too, but write any documentation/examples with `podman`.
+- `podman build --format docker -t localscore .` / `podman compose up` — container build per SPEC.md §9. The maintainer uses **Podman, not Docker**; the Dockerfile/compose.yaml are plain OCI and must keep working under Docker too, but write any documentation/examples with `podman`. **`--format docker` is required** — Podman's default OCI build format silently drops the Dockerfile's `HEALTHCHECK` instruction with just a warning, no error. Verified: `podman build --format docker` + `podman run` produces a container `podman inspect` reports as `healthy`, and the API/frontend work end-to-end (2026-07-07).
 
 `DATA_DIR` (default `./data`) and `PORT` (default `8080`) are read from the environment; see `.env.example`.
 

@@ -13,7 +13,7 @@ COPY server server
 COPY web web
 RUN npm run build
 
-RUN npm prune --omit=dev --workspace server
+RUN npm prune --omit=dev
 
 
 FROM node:22-slim AS runtime
@@ -27,9 +27,12 @@ RUN groupadd --system localscore && useradd --system --gid localscore --home /ap
     && chown -R localscore:localscore /app /data
 
 COPY --from=build --chown=localscore:localscore /app/server/dist ./server/dist
-COPY --from=build --chown=localscore:localscore /app/server/node_modules ./server/node_modules
 COPY --from=build --chown=localscore:localscore /app/server/package.json ./server/package.json
 COPY --from=build --chown=localscore:localscore /app/web/dist ./web/dist
+# npm hoists shared deps to the workspace root, not server/node_modules —
+# copy the hoisted tree so Node's module resolution (which walks up from
+# server/dist) finds it at /app/node_modules.
+COPY --from=build --chown=localscore:localscore /app/node_modules ./node_modules
 
 USER localscore
 VOLUME ["/data"]

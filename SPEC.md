@@ -382,7 +382,7 @@ The frontend is served for all non-`/api` paths (SPA fallback to `index.html`).
 
 - **Multi-stage Dockerfile** (standard OCI build file — works with Docker, Podman, or any compatible builder): build stage (install deps, build frontend + backend, prune dev deps) → runtime stage on `node:22-slim` (or alpine, whichever `better-sqlite3` prebuilds support cleanly). Runs as a non-root user. Final image SHOULD be < 300 MB.
 - Port **8080** (`PORT` env var to override). Data directory `/data` (`DATA_DIR` to override); the app creates the DB file and runs migrations on boot. If `/data` isn't writable, fail fast with a clear log message about mounting a volume.
-- `HEALTHCHECK` wired to `/api/health`.
+- `HEALTHCHECK` wired to `/api/health`. Note for implementers building with Podman: `podman build` defaults to the OCI image format, which silently drops `HEALTHCHECK` (a warning, not an error) — build with `podman build --format docker` to keep it.
 - The primary maintainer runs **Podman**, not Docker — document run commands with `podman`, but nothing in the image or build should be Podman-specific (it MUST also build and run under plain Docker). Documented run commands (these go in the README verbatim):
 
 ```bash
