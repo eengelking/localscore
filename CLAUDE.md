@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Workflow
+
+- Never commit directly to `main`. Before starting any work, create a new branch off `main` (branch off the latest `main`, not an existing feature branch).
+- When the work is done, commit the changes and push the branch to the remote.
+- After pushing, generate a Markdown summary of the changes so the user can open the PR on GitHub manually — do not open the PR yourself. (This is manual for now; may be automated later.)
+
 ## Status
 
 The product works end-to-end: an npm-workspaces monorepo (`server/` = Hono + better-sqlite3 API, `web/` = React + Vite frontend), the full interview catalog (SPEC.md §5.2), environment CRUD with answer-derivation, the initial DB migration, a working **scoring engine** (`POST /api/score`, `server/src/scoring/`), and a real **frontend** (environments list → interview wizard → paste-a-vector results screen, all wired to the API — no more placeholder page). **NVD lookup and saved-vulnerability CRUD are still stubbed (HTTP 501)** — those are the remaining unbuilt pieces.
