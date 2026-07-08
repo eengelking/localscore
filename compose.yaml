@@ -1,0 +1,12 @@
+services:
+  localscore:
+    build: .
+    image: localscore:local
+    ports:
+      - "8080:8080"
+    volumes:
+      - localscore-data:/data
+    restart: unless-stopped
+
+volumes:
+  localscore-data:

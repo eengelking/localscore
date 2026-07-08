@@ -4,7 +4,22 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-This repository currently contains only `README.md` and `SPEC.md` — **no application code exists yet**. There is no build system, no package.json, no tests to run. If you're implementing this project, you're starting from zero.
+Scaffolding is in place: an npm-workspaces monorepo (`server/` = Hono + better-sqlite3 API, `web/` = React + Vite frontend), the full interview catalog (SPEC.md §5.2), environment CRUD with answer-derivation, and the initial DB migration. **Scoring (`POST /api/score`), NVD lookup, and saved-vulnerability CRUD are stubbed (HTTP 501)** — SPEC.md §2.4 requires evaluating a reference-validated CVSS library before writing that code; see `server/src/scoring/index.ts`.
+
+### Commands
+
+Run from the repo root unless noted.
+
+- `npm install` — installs all workspaces.
+- `npm run dev:server` — server on :8080 with reload (`tsx watch`).
+- `npm run dev:web` — Vite dev server with `/api` proxied to :8080 (run alongside `dev:server`).
+- `npm run build` — builds `web` (static assets to `web/dist`) then `server` (to `server/dist`, migrations copied alongside).
+- `npm start` — runs the built server (`server/dist/index.js`); serves the built frontend + API on one port.
+- `npm test` — runs the server's Vitest suite (`server/test/*.test.ts`). To run one file: `npm run test --workspace server -- test/catalog.test.ts`.
+- `npm run typecheck` / `npm run lint` — both workspaces.
+- `docker build -t localscore .` / `docker compose up` — container build per SPEC.md §9 (untested in this environment — no Docker available; verify before relying on it).
+
+`DATA_DIR` (default `./data`) and `PORT` (default `8080`) are read from the environment; see `.env.example`.
 
 ## Source of truth
 
