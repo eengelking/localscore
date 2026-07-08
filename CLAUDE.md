@@ -2,6 +2,12 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Workflow
+
+- Never commit directly to `main`. Before starting any work, create a new branch off `main` (branch off the latest `main`, not an existing feature branch).
+- When the work is done, commit the changes and push the branch to the remote.
+- After pushing, generate a Markdown summary of the changes so the user can open the PR on GitHub manually — do not open the PR yourself. (This is manual for now; may be automated later.)
+
 ## Status
 
 This repository currently contains only `README.md` and `SPEC.md` — **no application code exists yet**. There is no build system, no package.json, no tests to run. If you're implementing this project, you're starting from zero.
