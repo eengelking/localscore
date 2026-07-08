@@ -1,0 +1,53 @@
+# localscore
+
+**localscore** turns a CVSS base score into the score that actually applies to *your* systems.
+
+A vulnerability scanner reports a 10.0 and everyone panics — but the CVSS base score describes a worst-case target: reachable from anywhere, full of secrets, and impossible to lose. Most real systems don't look like that. CVSS has environmental metrics built in to correct for this, but the official calculators are expert-facing and almost nobody uses them.
+
+localscore fixes that by asking plain-English questions about a location instead of CVSS jargon, then applying the answers to any vulnerability you paste in.
+
+> Self-hosted, single container, SQLite on a volume. No account, no cloud dependency — the only optional network call is looking up a CVE by ID from NVD.
+
+## How it works
+
+1. **Define a location.** Give it a name, e.g. *"My Data Center"*, *"Retail Kiosks"*, *"Dev Lab"*.
+2. **Answer the interview.** ~12 short questions — how reachable it is, whether it needs a login, what happens if data on it leaks or the box goes down, whether compromising it gives an attacker a path to anything else. No CVSS knowledge required.
+3. **Repeat for each location you care about.** Every environment gets its own saved profile.
+4. **Paste a CVSS vector or a CVE ID.** localscore fetches the base score and, for every environment you've defined, shows the *modified* score next to it — with a plain-English breakdown of exactly which answers caused each change.
+
+A 9.8 "Critical" against a production database might land at 9.8 for your data center and 0.0 for a disposable dev environment that gets rebuilt from a pipeline every morning. Same vulnerability, two very different stories — and now you can see both.
+
+## Status
+
+This repository currently contains the implementation spec ([`SPEC.md`](./SPEC.md)) and no application code yet. `SPEC.md` is the full contract — data model, the exact interview question catalog and how each answer maps to CVSS metrics, scoring rules, API surface, and container packaging — for whoever (human or agent) builds this next.
+
+## Running it (once built)
+
+```bash
+docker run -d --name localscore -p 8080:8080 \
+  -v localscore-data:/data \
+  ghcr.io/<owner>/localscore:latest
+```
+
+or with a bind mount so the database lands on disk somewhere you control:
+
+```bash
+docker run -d --name localscore -p 8080:8080 \
+  -v "$PWD/data:/data" \
+  ghcr.io/<owner>/localscore:latest
+```
+
+Then open `http://localhost:8080`.
+
+A `compose.yaml` equivalent will ship alongside the Dockerfile. See `SPEC.md` §9 for full container/operations details.
+
+## What it does *not* do
+
+- It doesn't scan anything or talk to your infrastructure — you tell it about a location by answering questions, and you paste in vectors or CVE IDs.
+- It doesn't guess whether an exploit exists in the wild (CVSS threat/temporal metrics) — those are per-vulnerability, not per-environment, and are shown read-only from whatever you paste in.
+- It doesn't support CVSS v2.0 yet (NVD stopped assigning it in 2022; see `SPEC.md` §11 for the roadmap).
+- It doesn't require an internet connection, except for the optional "look up this CVE by ID" convenience.
+
+## Why this exists
+
+Longer background on the problem this tool solves: [*"That CVSS 10 Might Actually Be a Zero"*](https://edengelking.com/blog/that-cvss-10-might-actually-be-a-zero) — the base score is only one input into a much bigger scoring system, and the environmental metrics are the part almost nobody reads.
