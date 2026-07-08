@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { formatSignedScore } from "../lib/format.js";
 import type { Catalog, EnvironmentScoreResult } from "../types.js";
 import { AnimatedScore } from "./AnimatedScore.js";
 import { ScoreChanges } from "./ScoreChanges.js";
@@ -7,11 +8,6 @@ function deltaClass(delta: number): string {
   if (delta < 0) return "delta delta-down";
   if (delta > 0) return "delta delta-up";
   return "delta delta-flat";
-}
-
-function formatDelta(delta: number): string {
-  if (delta === 0) return "±0.0";
-  return delta > 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1);
 }
 
 export function EnvironmentResultRow({
@@ -47,7 +43,7 @@ export function EnvironmentResultRow({
         <span className="environment-name">{result.name}</span>
         <span className="result-row-figures">
           <AnimatedScore from={baseScore} to={result.score} />
-          <span className={deltaClass(result.delta)}>{formatDelta(result.delta)}</span>
+          <span className={deltaClass(result.delta)}>{formatSignedScore(result.delta)}</span>
           <span className={`disclosure ${open ? "is-open" : ""}`} aria-hidden="true">
             ▾
           </span>

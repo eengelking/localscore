@@ -1,3 +1,4 @@
+import { formatSignedScore } from "../lib/format.js";
 import type { AnsweredQuestionNote, Catalog, ScoreChange } from "../types.js";
 
 function optionLabel(catalog: Catalog | null, questionId: string, optionId: string): string {
@@ -15,13 +16,13 @@ const NOTE_BADGE_LABEL: Record<AnsweredQuestionNote["status"], string> = {
 const DIRECTION_GLYPH: Record<ScoreChange["direction"], string> = {
   worse: "▲",
   better: "▼",
-  neutral: "",
+  neutral: "–",
 };
 
 const DIRECTION_LABEL: Record<ScoreChange["direction"], string> = {
   worse: "Increased severity: ",
   better: "Decreased severity: ",
-  neutral: "",
+  neutral: "No net change: ",
 };
 
 export function ScoreChanges({
@@ -35,6 +36,7 @@ export function ScoreChanges({
 }) {
   const individualNotes = notes.filter((n) => n.status !== "not-applicable-to-version");
   const skippedVersionCount = notes.length - individualNotes.length;
+  const total = Math.round(changes.reduce((sum, c) => sum + c.impact, 0) * 10) / 10;
 
   return (
     <div className="why">
@@ -43,22 +45,34 @@ export function ScoreChanges({
           None of this environment's answers changed the score for this vector — see why below.
         </p>
       ) : (
-        <ul className="why-list">
-          {changes.map((change) => (
-            <li key={change.metric} className="why-item">
-              <span className="why-metric">
-                <span className={`why-direction why-direction-${change.direction}`} aria-hidden="true">
-                  {DIRECTION_GLYPH[change.direction]}
+        <>
+          <ul className="why-list">
+            {changes.map((change) => (
+              <li key={change.metric} className="why-item">
+                <span className="why-metric">
+                  <span className={`why-direction why-direction-${change.direction}`} aria-hidden="true">
+                    {DIRECTION_GLYPH[change.direction]}
+                  </span>
+                  <span className="sr-only">{DIRECTION_LABEL[change.direction]}</span>
+                  <span className="why-impact">{formatSignedScore(change.impact)}</span>{" "}
+                  {change.metricName}: {change.fromValueName} → {change.toValueName}
                 </span>
-                <span className="sr-only">{DIRECTION_LABEL[change.direction]}</span>
-                {change.metricName}: {change.fromValueName} → {change.toValueName}
-              </span>
-              <span className="why-reason">
-                because you answered &ldquo;{optionLabel(catalog, change.questionId, change.optionId)}&rdquo;
-              </span>
-            </li>
-          ))}
-        </ul>
+                <span className="why-reason">
+                  because you answered &ldquo;{optionLabel(catalog, change.questionId, change.optionId)}&rdquo;
+                </span>
+              </li>
+            ))}
+          </ul>
+
+          {changes.length > 1 && (
+            <p className="why-order-note">
+              Shown in the order these apply — the total always matches, though the split between changes can shift
+              if the order changes.
+            </p>
+          )}
+
+          <p className="why-total">Total: {formatSignedScore(total)}</p>
+        </>
       )}
 
       {(individualNotes.length > 0 || skippedVersionCount > 0) && (

@@ -5,7 +5,7 @@
 import { CATALOG } from "../catalog/catalog.js";
 import type { Answer, DerivedMetric } from "../catalog/derive.js";
 import type { CvssVersion } from "../catalog/types.js";
-import { baseCounterpartMetric, isLessSevere, severityDirection } from "./orderings.js";
+import { baseCounterpartMetric, isLessSevere } from "./orderings.js";
 import type { CvssInstance, ParsedVector } from "./parse.js";
 import { parseBaseVector } from "./parse.js";
 import type { Severity } from "./severity.js";
@@ -30,6 +30,12 @@ export interface AppliedChange {
   toValue: string;
   toValueName: string;
   effect: "override" | "cap";
+  // Real score movement caused by applying this change on top of every
+  // change already applied before it, in `applyEnvironment`'s iteration
+  // order — a running difference, so summing every change's `impact` always
+  // equals the environment's total delta exactly, even though CVSS scoring
+  // isn't additive (see applyEnvironment for the telescoping-sum property).
+  impact: number;
   direction: "worse" | "better" | "neutral";
   questionId: string;
   optionId: string;
@@ -50,8 +56,7 @@ function valueName(instance: CvssInstance, metric: string, shortName: string): s
   return values.find((v) => v.shortName === shortName)?.name ?? shortName;
 }
 
-function buildChange(instance: CvssInstance, m: DerivedMetric, fromValue: string): AppliedChange {
-  const baseMetric = baseCounterpartMetric(m.metric) ?? m.metric;
+function buildChange(instance: CvssInstance, m: DerivedMetric, fromValue: string, impact: number): AppliedChange {
   return {
     metric: m.metric,
     metricName: componentName(instance, m.metric),
@@ -60,7 +65,8 @@ function buildChange(instance: CvssInstance, m: DerivedMetric, fromValue: string
     toValue: m.value,
     toValueName: valueName(instance, m.metric, m.value),
     effect: m.effect,
-    direction: severityDirection(m.cvssVersion, baseMetric, fromValue, m.value),
+    impact,
+    direction: impact > 0 ? "worse" : impact < 0 ? "better" : "neutral",
     questionId: m.questionId,
     optionId: m.optionId,
   };
@@ -70,9 +76,21 @@ function buildChange(instance: CvssInstance, m: DerivedMetric, fromValue: string
 // metrics per SPEC.md §2.2/§6.2: `override` always wins; `cap` only applies
 // if it's less severe than the base vector's corresponding metric. Returns
 // the list of changes that were actually applied (skipped caps are omitted).
+//
+// Each change's `impact` is the score movement caused by applying it on top
+// of every change already applied before it — a running difference across
+// `computeScore` calls, in this loop's iteration order (the order metrics
+// were first touched by the interview, per `deriveMetrics`). Because it's a
+// running difference of a score sequence (s0 -> s1 -> ... -> sn), the
+// impacts always telescope exactly to `sn - s0`, the environment's total
+// delta — even though CVSS scoring isn't additive across metrics, so this
+// is the one per-line attribution that's guaranteed to sum correctly. The
+// tradeoff: the split between two interacting changes can shift if the
+// order changes, even though the total never does — disclosed in the UI.
 export function applyEnvironment(parsed: ParsedVector, metrics: DerivedMetric[]): AppliedChange[] {
   const relevant = metrics.filter((m) => m.cvssVersion === parsed.version);
   const changes: AppliedChange[] = [];
+  let runningScore = computeScore(parsed.instance).score;
 
   for (const m of relevant) {
     const baseMetric = baseCounterpartMetric(m.metric);
@@ -80,7 +98,13 @@ export function applyEnvironment(parsed: ParsedVector, metrics: DerivedMetric[])
     if (m.effect === "override") {
       const fromValue = baseMetric ? parsed.instance.getComponentByString(baseMetric).shortName : "X";
       parsed.instance.applyComponentString(m.metric, m.value);
-      changes.push(buildChange(parsed.instance, m, fromValue));
+      const newScore = computeScore(parsed.instance).score;
+      // Both operands are already rounded to 1 decimal by the library; the
+      // extra rounding here only guards against float subtraction drift
+      // (e.g. 8.9 - 9.8 producing -0.9000000000000004).
+      const impact = Math.round((newScore - runningScore) * 10) / 10;
+      changes.push(buildChange(parsed.instance, m, fromValue, impact));
+      runningScore = newScore;
       continue;
     }
 
@@ -89,7 +113,10 @@ export function applyEnvironment(parsed: ParsedVector, metrics: DerivedMetric[])
     const baseValue = parsed.instance.getComponentByString(baseMetric).shortName;
     if (isLessSevere(parsed.version, baseMetric, m.value, baseValue)) {
       parsed.instance.applyComponentString(m.metric, m.value);
-      changes.push(buildChange(parsed.instance, m, baseValue));
+      const newScore = computeScore(parsed.instance).score;
+      const impact = Math.round((newScore - runningScore) * 10) / 10;
+      changes.push(buildChange(parsed.instance, m, baseValue, impact));
+      runningScore = newScore;
     }
   }
 
