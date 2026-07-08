@@ -15,6 +15,11 @@ export interface DerivedMetric {
   metric: string;
   value: string;
   effect: EffectType;
+  // The question/option that produced this metric's *current* (winning)
+  // value — useful for building "why did this change" explanations. Not
+  // persisted in environment_metrics; recomputed on demand.
+  questionId: string;
+  optionId: string;
 }
 
 export function deriveMetrics(answers: Answer[]): DerivedMetric[] {
@@ -33,13 +38,27 @@ export function deriveMetrics(answers: Answer[]): DerivedMetric[] {
       const existing = result.get(key);
 
       if (effect.effect === "override") {
-        result.set(key, { cvssVersion: effect.version, metric: effect.metric, value: effect.value, effect: "override" });
+        result.set(key, {
+          cvssVersion: effect.version,
+          metric: effect.metric,
+          value: effect.value,
+          effect: "override",
+          questionId: question.id,
+          optionId: option.id,
+        });
         continue;
       }
 
       // effect.effect === "cap": never displace an existing override.
       if (existing?.effect === "override") continue;
-      result.set(key, { cvssVersion: effect.version, metric: effect.metric, value: effect.value, effect: "cap" });
+      result.set(key, {
+        cvssVersion: effect.version,
+        metric: effect.metric,
+        value: effect.value,
+        effect: "cap",
+        questionId: question.id,
+        optionId: option.id,
+      });
     }
   }
 
