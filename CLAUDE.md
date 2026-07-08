@@ -5,6 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Workflow
 
 - Never commit directly to `main`. Before starting any work, create a new branch off `main` (branch off the latest `main`, not an existing feature branch).
+- Before committing, always update documentation affected by the change — `CLAUDE.md` (Status, and whichever architecture section covers what changed), `README.md`, `API.md`, and `SPEC.md` if the change alters mandated behavior. Check each for now-stale claims (a feature described as "not built yet" that this change built, a route/shape that changed, a screen that didn't exist before) and fix them in the same commit as the code, not a follow-up. Do this as a deliberate last step prior to committing, not opportunistically while coding.
 - When the work is done, commit the changes and push the branch to the remote.
 - After pushing, generate a Markdown summary of the changes so the user can open the PR on GitHub manually — do not open the PR yourself. (This is manual for now; may be automated later.)
 
