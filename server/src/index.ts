@@ -33,8 +33,8 @@ export function createApp(db = openDb()) {
   api.route("/", catalogRoutes());
   api.route("/", environmentRoutes(db));
   api.route("/", scoreRoutes(db));
-  api.route("/", cveRoutes());
-  api.route("/", vulnerabilityRoutes());
+  api.route("/", cveRoutes(db));
+  api.route("/", vulnerabilityRoutes(db));
   app.route("/api", api);
 
   // SPA fallback: serve built frontend assets for everything else.

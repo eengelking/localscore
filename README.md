@@ -13,23 +13,23 @@ localscore fixes that by asking plain-English questions about a location instead
 1. **Define a location.** Give it a name, e.g. *"My Data Center"*, *"Retail Kiosks"*, *"Dev Lab"*.
 2. **Answer the interview.** ~12 short questions — how reachable it is, whether it needs a login, what happens if data on it leaks or the box goes down, whether compromising it gives an attacker a path to anything else. No CVSS knowledge required.
 3. **Repeat for each location you care about.** Every environment gets its own saved profile.
-4. **Paste a CVSS vector or a CVE ID.** localscore fetches the base score and, for every environment you've defined, shows the *modified* score next to it — with a plain-English breakdown of exactly which answers caused each change.
+4. **Paste a CVSS vector.** localscore parses the base score and, for every environment you've defined, shows the *modified* score next to it — with a plain-English breakdown of exactly which answers caused each change. (Looking a vulnerability up by CVE ID against NVD works at the API level today — `GET /api/cve/:cveId` — but isn't wired into the UI yet; for now, paste the vector directly.)
 
 A 9.8 "Critical" against a production database might land at 9.8 for your data center and 0.0 for a disposable dev environment that gets rebuilt from a pipeline every morning. Same vulnerability, two very different stories — and now you can see both.
 
 ## Status
 
-The implementation spec is done ([`SPEC.md`](./SPEC.md)); scaffolding is built on top of it. What works today:
+The implementation spec is done ([`SPEC.md`](./SPEC.md)), and the app works end-to-end:
 
 - An npm-workspaces monorepo (`server/` = Hono + SQLite API, `web/` = React + Vite frontend), served from one process on one port.
 - The full 12-question interview catalog, and environment CRUD — you can create an environment, save interview answers, and have them derive into stored CVSS environmental metrics.
 - **Scoring works.** `POST /api/score` parses a CVSS v4.0/v3.1/v3.0 vector and returns the base score plus every environment's modified score, backed by `ae-cvss-calculator` validated against FIRST's reference vectors — including the exact worked example from `SPEC.md` §6 (a `9.8` base score landing at `0.0` for a disposable dev environment).
+- **A real frontend** — environments list, interview wizard, and a results screen where you paste a vector and see each environment's modified score, with the animated "a 10 might actually be a zero" reveal.
+- **NVD CVE lookup** (`GET /api/cve/:cveId`) — cache-first, throttled, and tolerant of NVD being unreachable — plus saved-vulnerability CRUD.
 - A container image that builds and runs cleanly under Podman (or Docker), passes its own `HEALTHCHECK`, and comes in under 300 MB.
 
 What's not built yet:
 
-- **NVD CVE lookup** (`GET /api/cve/:cveId`) and saved-vulnerability CRUD return `501 Not Implemented`.
-- The frontend is still a placeholder page (just an API health check) — the interview UI and results screen that would actually use the scoring API don't exist yet.
 - No published image — `ghcr.io/<owner>/localscore` doesn't exist yet, so the commands below only work against a local build for now.
 
 ## Running it
@@ -59,6 +59,8 @@ podman run -d --name localscore -p 8080:8080 \
 ```
 
 Then open `http://localhost:8080`. Once a version is published, the plan is to run it straight from `ghcr.io/<owner>/localscore:latest` — same commands, just swap the image name.
+
+`PORT` and `DATA_DIR` are configurable (see `.env.example`); there's also an optional `NVD_API_KEY` that raises NVD's CVE-lookup rate limit above the default ~5 requests/30s — pass it through with `-e NVD_API_KEY=...` if you hit that limit.
 
 Any OCI-compatible tool (Docker included) works the same way — the image and `compose.yaml` aren't Podman-specific.
 
