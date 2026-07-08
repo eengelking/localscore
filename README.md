@@ -19,17 +19,17 @@ A 9.8 "Critical" against a production database might land at 9.8 for your data c
 
 ## Status
 
-The implementation spec is done ([`SPEC.md`](./SPEC.md)); scaffolding is built on top of it. What works today:
+The implementation spec is done ([`SPEC.md`](./SPEC.md)), and the app works end-to-end:
 
 - An npm-workspaces monorepo (`server/` = Hono + SQLite API, `web/` = React + Vite frontend), served from one process on one port.
 - The full 12-question interview catalog, and environment CRUD — you can create an environment, save interview answers, and have them derive into stored CVSS environmental metrics.
 - **Scoring works.** `POST /api/score` parses a CVSS v4.0/v3.1/v3.0 vector and returns the base score plus every environment's modified score, backed by `ae-cvss-calculator` validated against FIRST's reference vectors — including the exact worked example from `SPEC.md` §6 (a `9.8` base score landing at `0.0` for a disposable dev environment).
+- **A real frontend** — environments list, interview wizard, and a results screen where you paste a vector and see each environment's modified score, with the animated "a 10 might actually be a zero" reveal.
+- **NVD CVE lookup** (`GET /api/cve/:cveId`) — cache-first, throttled, and tolerant of NVD being unreachable — plus saved-vulnerability CRUD.
 - A container image that builds and runs cleanly under Podman (or Docker), passes its own `HEALTHCHECK`, and comes in under 300 MB.
 
 What's not built yet:
 
-- **NVD CVE lookup** (`GET /api/cve/:cveId`) and saved-vulnerability CRUD return `501 Not Implemented`.
-- The frontend is still a placeholder page (just an API health check) — the interview UI and results screen that would actually use the scoring API don't exist yet.
 - No published image — `ghcr.io/<owner>/localscore` doesn't exist yet, so the commands below only work against a local build for now.
 
 ## Running it
