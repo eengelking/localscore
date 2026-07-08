@@ -4,13 +4,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-This repository currently contains only `README.md` and `SPEC.md` — **no application code exists yet**. There is no build system, no package.json, no tests to run. If you're implementing this project, you're starting from zero.
+Scaffolding is in place: an npm-workspaces monorepo (`server/` = Hono + better-sqlite3 API, `web/` = React + Vite frontend), the full interview catalog (SPEC.md §5.2), environment CRUD with answer-derivation, and the initial DB migration. **Scoring (`POST /api/score`), NVD lookup, and saved-vulnerability CRUD are stubbed (HTTP 501)** — SPEC.md §2.4 requires evaluating a reference-validated CVSS library before writing that code; see `server/src/scoring/index.ts`.
+
+### Commands
+
+Run from the repo root unless noted.
+
+- `npm install` — installs all workspaces.
+- `npm run dev:server` — server on :8080 with reload (`tsx watch`).
+- `npm run dev:web` — Vite dev server with `/api` proxied to :8080 (run alongside `dev:server`).
+- `npm run build` — builds `web` (static assets to `web/dist`) then `server` (to `server/dist`, migrations copied alongside).
+- `npm start` — runs the built server (`server/dist/index.js`); serves the built frontend + API on one port.
+- `npm test` — runs the server's Vitest suite (`server/test/*.test.ts`). To run one file: `npm run test --workspace server -- test/catalog.test.ts`.
+- `npm run typecheck` / `npm run lint` — both workspaces.
+- `podman build --format docker -t localscore .` then `podman run ...` — container build per SPEC.md §9. The maintainer uses **Podman, not Docker**; the Dockerfile/compose.yaml are plain OCI and must keep working under Docker too, but write any documentation/examples with `podman`. **`--format docker` is required for a direct `podman build`** — Podman's default OCI build format silently drops the Dockerfile's `HEALTHCHECK` instruction with just a warning, no error.
+- `podman compose up` — builds and runs via `compose.yaml`. Verified this does **not** need `--format docker`: going through the external `docker-compose` provider already produces a Docker-format image with `HEALTHCHECK` intact (confirmed by `podman inspect` reporting `healthy`). So the flag only matters for a bare `podman build`, not for compose.
+- No image is published yet (`ghcr.io/<owner>/localscore` doesn't exist) — only local builds work right now.
+
+Verified end-to-end (2026-07-08): both `podman build --format docker` + `podman run`, and `podman compose up`, produce a container `podman inspect` reports as `healthy`, with the API/frontend reachable and a full create-environment round trip working.
+
+`DATA_DIR` (default `./data`) and `PORT` (default `8080`) are read from the environment; see `.env.example`.
+
+### Container testing cleanup
+
+When you `podman run` a container to manually verify something (health check, a route, a full rebuild), it's a temporary test artifact, not something to leave running or lying around:
+
+- **Ask before deleting.** Once testing is done, tell the user what you're about to remove (container name, volume, image) and get a go-ahead before running `podman rm` / `podman rmi` / `podman volume rm` — don't delete silently, even though it's your own test container.
+- **Clean up after yourself.** Stop and remove test containers/volumes when done (after confirmation), and run `podman image prune -f` after repeated `podman build` runs against the same tag — each rebuild orphans the previous image as a dangling `<none>` (this happened during initial Podman verification: 4 dangling images, ~1.5 GB, from 3 build iterations of the same `localscore:local` tag).
+
+### Known gotchas
+
+- **npm workspace hoisting affects the Dockerfile.** `npm ci` hoists shared dependencies to the workspace-root `node_modules`, not `server/node_modules` — the runtime image stage copies `/app/node_modules` (root), not a per-workspace one. If you add a server-only dependency that npm decides *not* to hoist (e.g. a conflicting version), the runtime COPY may need to also grab `server/node_modules` — check after `npm ci` whether it exists before assuming it doesn't.
+- **`npm audit` reports 5 vulnerabilities** (3 moderate, 1 high, 1 critical) in the `vite`/`vitest`/`esbuild` dev-tooling chain (dev-server-only exposure, not a runtime/production risk). Fixing requires a breaking major-version bump to `vite`/`vitest` — left as-is; don't be surprised by it, and don't `npm audit fix --force` without deliberately taking that upgrade.
+- **`podman compose build`/`up` can fail locally** with `error listing credentials - err: exec: "docker-credential-desktop": executable file not found` if `~/.docker/config.json` has `"credsStore": "desktop"` left over from Docker Desktop, even though Podman is what's actually running. Workaround for a one-off command: `DOCKER_CONFIG=<empty-dir-with-{}-config.json> podman compose ...`. Don't edit the user's real `~/.docker/config.json` to fix this — it's outside the project and outside this repo's concern.
 
 ## Source of truth
 
 **`SPEC.md` is the full implementation contract.** Read it in its entirety before writing any code — it specifies the mandated tech stack (§3), data model (§4), the exact interview question catalog with metric mappings (§5), scoring rules (§2, §6), API surface (§8), container packaging (§9), and testing requirements (§10). Treat every MUST/MUST NOT in it as a hard requirement and every SHOULD as the default unless there is a documented reason to deviate. Do not improvise architecture that SPEC.md already decided.
-
-Once code exists, update this section (and add real "commonly used commands") — this file currently can't reference a build/lint/test workflow because none exists.
 
 ## What this project is
 
@@ -26,7 +56,7 @@ Self-hosted single container, SQLite on a volume, no accounts, no cloud dependen
 - **Database**: SQLite via `better-sqlite3`, single file at `/data/localscore.db`, WAL mode. Migrations are sequential numbered SQL files (`migrations/0001_*.sql`, …) applied at startup inside a transaction, tracked in a `schema_migrations` table.
 - **Scoring**: MUST match FIRST's reference calculators exactly (v4.0 and v3.1). Use an existing maintained library (`ae-cvss-calculator` is the leading candidate) or vendor FIRST's reference code, validated against reference test vectors before committing. Hand-rolled scoring math without reference-validated test vectors is explicitly not acceptable.
 - **Testing**: Vitest. Tests are a release gate (§10).
-- **Container**: multi-stage Dockerfile, non-root user, `node:22-slim`/alpine runtime, final image < 300 MB, `HEALTHCHECK` on `/api/health`.
+- **Container**: multi-stage Dockerfile (plain OCI — builds and runs under Docker or Podman), non-root user, `node:22-slim`/alpine runtime, final image < 300 MB, `HEALTHCHECK` on `/api/health`. The maintainer runs Podman day-to-day, so use `podman`/`podman compose` in docs and examples.
 
 No external services, no telemetry. The only outbound network call anywhere in the app is the optional NVD CVE lookup.
 
