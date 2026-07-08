@@ -215,6 +215,24 @@ a {
   background: var(--accent-wash);
 }
 
+@media (max-width: 640px) {
+  .topbar-inner {
+    flex-wrap: wrap;
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .nav {
+    flex-wrap: wrap;
+    gap: var(--space-1) var(--space-2);
+  }
+
+  .nav-link {
+    padding: var(--space-2);
+    font-size: var(--text-xs);
+    white-space: nowrap;
+  }
+}
+
 main {
   flex: 1;
   width: 100%;
@@ -385,6 +403,15 @@ main {
 }
 .pill-critical {
   background: var(--severity-critical);
+}
+
+/* Fixed-width slot for the severity indicator (pill or the chrome-less
+   "None" text) sized to the longest severity word ("CRITICAL") plus the
+   pill's own horizontal padding — keeps score figures aligned in a column
+   down a result list regardless of which severity word appears per row. */
+.severity-slot {
+  display: inline-flex;
+  min-width: calc(8ch + var(--space-3) * 2);
 }
 
 .score-figure {
@@ -675,6 +702,14 @@ main {
   text-align: left;
 }
 
+@media (max-width: 480px) {
+  .result-row-summary {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+}
+
 .result-row-figures {
   display: flex;
   align-items: center;
@@ -742,6 +777,32 @@ main {
   font-weight: 600;
 }
 
+.why-direction {
+  display: inline-block;
+  width: 1em;
+  font-size: var(--text-xs);
+}
+
+.why-direction-worse {
+  color: var(--severity-critical);
+}
+
+.why-direction-better {
+  color: var(--severity-low);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .why-reason {
   color: var(--ink-secondary);
 }
@@ -774,9 +835,9 @@ main {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.02em;
-  color: var(--ink-muted);
+  color: var(--ink-secondary);
   background: var(--surface-sunken);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-strong);
   border-radius: 999px;
   padding: 0.1rem 0.5rem;
   margin-left: var(--space-2);
@@ -869,7 +930,9 @@ main {
 }
 
 .save-panel {
-  padding-top: var(--space-2);
+  margin-top: var(--space-2);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
 }
 
 .save-confirmation {

@@ -59,9 +59,23 @@ describe("reference score parity", () => {
       { cvssVersion: "3.1", metric: "MS", value: "U", effect: "override", questionId: "blast_radius", optionId: "dead_end" },
     ];
 
-    const { result } = scoreForEnvironment("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", metrics);
+    const { result, changes } = scoreForEnvironment("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", metrics);
     expect(result.score).toBe(0.0);
     expect(result.severity).toBe("None");
+
+    // Every change either reduced severity or was a no-op (MS:U repeats the
+    // base vector's already-Unchanged Scope) — none should ever read "worse"
+    // for a profile that drives the score all the way down to 0.0.
+    expect(changes.some((c) => c.direction === "worse")).toBe(false);
+    const byMetric = Object.fromEntries(changes.map((c) => [c.metric, c.direction]));
+    expect(byMetric.MAV).toBe("better");
+    expect(byMetric.CR).toBe("better");
+    expect(byMetric.MC).toBe("better");
+    expect(byMetric.IR).toBe("better");
+    expect(byMetric.MI).toBe("better");
+    expect(byMetric.AR).toBe("better");
+    expect(byMetric.MA).toBe("better");
+    expect(byMetric.MS).toBe("neutral"); // base vector's Scope was already Unchanged
   });
 
   it("worked example reproduced end-to-end via the real catalog derivation", () => {
