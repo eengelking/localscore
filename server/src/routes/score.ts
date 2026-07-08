@@ -3,6 +3,7 @@ import type Database from "better-sqlite3";
 import { deriveMetrics } from "../catalog/derive.js";
 import { HttpError } from "../lib/errors.js";
 import { computeScore, parseBaseVector, scoreForEnvironment } from "../scoring/index.js";
+import type { AnsweredQuestionNote } from "../scoring/index.js";
 
 interface EnvironmentRow {
   id: number;
@@ -39,6 +40,7 @@ export function scoreRoutes(db: Database.Database) {
       vector: string;
       delta: number;
       changes: ReturnType<typeof scoreForEnvironment>["changes"];
+      notes: AnsweredQuestionNote[];
     }[] = [];
     const unscored: { id: number; name: string; hasProfile: false }[] = [];
 
@@ -55,7 +57,11 @@ export function scoreRoutes(db: Database.Database) {
         continue;
       }
 
-      const { result, changes } = scoreForEnvironment(body.vector, derived);
+      const { result, changes, notes } = scoreForEnvironment(
+        body.vector,
+        derived,
+        answers.map((a) => ({ questionId: a.question_id, optionId: a.option_id })),
+      );
       scored.push({
         id: env.id,
         name: env.name,
@@ -65,6 +71,7 @@ export function scoreRoutes(db: Database.Database) {
         vector: result.vector,
         delta: Math.round((result.score - baseResult.score) * 10) / 10,
         changes,
+        notes,
       });
     }
 
