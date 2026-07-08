@@ -13,7 +13,7 @@ localscore fixes that by asking plain-English questions about a location instead
 1. **Define a location.** Give it a name, e.g. *"My Data Center"*, *"Retail Kiosks"*, *"Dev Lab"*.
 2. **Answer the interview.** ~12 short questions — how reachable it is, whether it needs a login, what happens if data on it leaks or the box goes down, whether compromising it gives an attacker a path to anything else. No CVSS knowledge required.
 3. **Repeat for each location you care about.** Every environment gets its own saved profile.
-4. **Paste a CVSS vector.** localscore parses the base score and, for every environment you've defined, shows the *modified* score next to it — with a plain-English breakdown of exactly which answers caused each change. (Looking a vulnerability up by CVE ID against NVD works at the API level today — `GET /api/cve/:cveId` — but isn't wired into the UI yet; for now, paste the vector directly.)
+4. **Paste a CVSS vector, or look one up by CVE ID.** localscore parses the base score and, for every environment you've defined, shows the *modified* score next to it — with a plain-English breakdown of exactly which answers caused each change. A CVE lookup that finds multiple disagreeing NVD-reported scores lets you pick which one to score.
 
 A 9.8 "Critical" against a production database might land at 9.8 for your data center and 0.0 for a disposable dev environment that gets rebuilt from a pipeline every morning. Same vulnerability, two very different stories — and now you can see both.
 
@@ -24,8 +24,8 @@ The implementation spec is done ([`SPEC.md`](./SPEC.md)), and the app works end-
 - An npm-workspaces monorepo (`server/` = Hono + SQLite API, `web/` = React + Vite frontend), served from one process on one port.
 - The full 12-question interview catalog, and environment CRUD — you can create an environment, save interview answers, and have them derive into stored CVSS environmental metrics.
 - **Scoring works.** `POST /api/score` parses a CVSS v4.0/v3.1/v3.0 vector and returns the base score plus every environment's modified score, backed by `ae-cvss-calculator` validated against FIRST's reference vectors — including the exact worked example from `SPEC.md` §6 (a `9.8` base score landing at `0.0` for a disposable dev environment).
-- **A real frontend** — environments list, interview wizard, and a results screen where you paste a vector and see each environment's modified score, with the animated "a 10 might actually be a zero" reveal.
-- **NVD CVE lookup** (`GET /api/cve/:cveId`) — cache-first, throttled, and tolerant of NVD being unreachable — plus saved-vulnerability CRUD.
+- **A real frontend** — environments list, interview wizard, and a results screen (paste a vector or look up a CVE) where you see each environment's modified score, with the animated "a 10 might actually be a zero" reveal.
+- **NVD CVE lookup** (`GET /api/cve/:cveId`) — cache-first, throttled, and tolerant of NVD being unreachable — plus a saved-vulnerabilities screen backed by the saved-vulnerability CRUD routes.
 - A container image that builds and runs cleanly under Podman (or Docker), passes its own `HEALTHCHECK`, and comes in under 300 MB.
 
 What's not built yet:
@@ -80,7 +80,7 @@ npm run dev:web      # Vite dev server, proxies /api to :8080
 
 ## Using the API directly
 
-The frontend covers environments, the interview, and paste-a-vector scoring. NVD CVE lookup and saved-vulnerability CRUD exist as API routes but aren't wired into the UI yet — see [`API.md`](./API.md) for curl examples and response shapes for every route, including those two.
+Every route the UI uses — environments, the interview, scoring, CVE lookup, saved vulnerabilities — is also usable directly. See [`API.md`](./API.md) for curl examples and response shapes for every route.
 
 ## What it does *not* do
 
