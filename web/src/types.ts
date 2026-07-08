@@ -1,0 +1,109 @@
+export interface MetricEffect {
+  version: "4.0" | "3.1";
+  metric: string;
+  value: string;
+  effect: "override" | "cap";
+}
+
+export interface Option {
+  id: string;
+  label: string;
+  description?: string;
+  effects: MetricEffect[];
+}
+
+export interface Question {
+  id: string;
+  order: number;
+  question: string;
+  whyWeAsk: string;
+  options: Option[];
+}
+
+export interface Catalog {
+  catalogVersion: string;
+  questions: Question[];
+}
+
+export interface InterviewCompletion {
+  "4.0": boolean;
+  "3.1": boolean;
+}
+
+export interface Environment {
+  id: number;
+  name: string;
+  description: string;
+  catalogVersion: string;
+  createdAt: string;
+  updatedAt: string;
+  interviewCompletion: InterviewCompletion;
+}
+
+export interface Answer {
+  questionId: string;
+  optionId: string;
+}
+
+export interface DerivedMetric {
+  cvssVersion: "4.0" | "3.1";
+  metric: string;
+  value: string;
+  effect: "override" | "cap";
+}
+
+export interface EnvironmentDetail extends Environment {
+  answers: Answer[];
+  metrics: DerivedMetric[];
+}
+
+export type Severity = "None" | "Low" | "Medium" | "High" | "Critical";
+
+export interface BaseScoreResult {
+  version: "4.0" | "3.1";
+  vector: string;
+  score: number;
+  severity: Severity;
+  note?: string;
+  pastedVectorHasEnvironmentalMetrics: boolean;
+}
+
+export interface ScoreChange {
+  metric: string;
+  metricName: string;
+  fromValue: string;
+  fromValueName: string;
+  toValue: string;
+  toValueName: string;
+  effect: "override" | "cap";
+  questionId: string;
+  optionId: string;
+}
+
+export interface ScoredEnvironment {
+  id: number;
+  name: string;
+  hasProfile: true;
+  score: number;
+  severity: Severity;
+  vector: string;
+  delta: number;
+  changes: ScoreChange[];
+}
+
+export interface UnscoredEnvironment {
+  id: number;
+  name: string;
+  hasProfile: false;
+}
+
+export type EnvironmentScoreResult = ScoredEnvironment | UnscoredEnvironment;
+
+export interface ScoreResponse {
+  base: BaseScoreResult;
+  environments: EnvironmentScoreResult[];
+}
+
+export interface ApiError {
+  error: string;
+}

@@ -1,0 +1,65 @@
+import { useState } from "react";
+import type { Catalog, EnvironmentScoreResult } from "../types.js";
+import { AnimatedScore } from "./AnimatedScore.js";
+import { ScoreChanges } from "./ScoreChanges.js";
+
+function deltaClass(delta: number): string {
+  if (delta < 0) return "delta delta-down";
+  if (delta > 0) return "delta delta-up";
+  return "delta delta-flat";
+}
+
+function formatDelta(delta: number): string {
+  if (delta === 0) return "±0.0";
+  return delta > 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1);
+}
+
+export function EnvironmentResultRow({
+  result,
+  baseScore,
+  catalog,
+  onOpenInterview,
+}: {
+  result: EnvironmentScoreResult;
+  baseScore: number;
+  catalog: Catalog | null;
+  onOpenInterview: (environmentId: number) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  if (!result.hasProfile) {
+    return (
+      <li className="card result-row result-row-empty">
+        <span className="environment-name">{result.name}</span>
+        <span className="no-profile-note">
+          No profile yet —{" "}
+          <button type="button" className="link-button" onClick={() => onOpenInterview(result.id)}>
+            complete the interview
+          </button>
+        </span>
+      </li>
+    );
+  }
+
+  return (
+    <li className="card result-row">
+      <button type="button" className="result-row-summary" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
+        <span className="environment-name">{result.name}</span>
+        <span className="result-row-figures">
+          <AnimatedScore from={baseScore} to={result.score} />
+          <span className={deltaClass(result.delta)}>{formatDelta(result.delta)}</span>
+          <span className={`disclosure ${open ? "is-open" : ""}`} aria-hidden="true">
+            ▾
+          </span>
+        </span>
+      </button>
+
+      {open && (
+        <div className="result-row-detail">
+          <p className="vector-string">{result.vector}</p>
+          <ScoreChanges changes={result.changes} catalog={catalog} />
+        </div>
+      )}
+    </li>
+  );
+}

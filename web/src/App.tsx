@@ -1,26 +1,58 @@
-import { useEffect, useState } from "react";
-import { getHealth, type HealthResponse } from "./api.js";
+import { useState } from "react";
+import { EnvironmentsPage } from "./pages/EnvironmentsPage.js";
+import { InterviewPage } from "./pages/InterviewPage.js";
+import { ScorePage } from "./pages/ScorePage.js";
+
+type View = { name: "environments" } | { name: "interview"; environmentId: number } | { name: "score" };
 
 export function App() {
-  const [health, setHealth] = useState<HealthResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    getHealth().then(setHealth).catch((err: Error) => setError(err.message));
-  }, []);
+  const [view, setView] = useState<View>({ name: "environments" });
 
   return (
-    <main>
-      <h1>localscore</h1>
-      <p>
-        Turns a CVSS base score into the score that actually applies to your systems. See{" "}
-        <code>SPEC.md</code> for the implementation contract — this UI is scaffolding, not the
-        product yet.
-      </p>
-      <p>
-        API status:{" "}
-        {error ? <span className="error">{error}</span> : health ? (health.ok ? "ok" : "degraded") : "checking…"}
-      </p>
-    </main>
+    <div className="app">
+      <header className="topbar">
+        <div className="topbar-inner">
+          <a
+            className="wordmark"
+            href="#"
+            onClick={(e) => {
+              e.preventDefault();
+              setView({ name: "environments" });
+            }}
+          >
+            localscore
+            <small>real risk, not worst case</small>
+          </a>
+          <nav className="nav">
+            <button
+              type="button"
+              className={`nav-link ${view.name !== "score" ? "is-active" : ""}`}
+              onClick={() => setView({ name: "environments" })}
+            >
+              Environments
+            </button>
+            <button
+              type="button"
+              className={`nav-link ${view.name === "score" ? "is-active" : ""}`}
+              onClick={() => setView({ name: "score" })}
+            >
+              Score a vulnerability
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      <main>
+        {view.name === "environments" && (
+          <EnvironmentsPage onOpenInterview={(environmentId) => setView({ name: "interview", environmentId })} />
+        )}
+        {view.name === "interview" && (
+          <InterviewPage environmentId={view.environmentId} onDone={() => setView({ name: "environments" })} />
+        )}
+        {view.name === "score" && (
+          <ScorePage onOpenInterview={(environmentId) => setView({ name: "interview", environmentId })} />
+        )}
+      </main>
+    </div>
   );
 }
