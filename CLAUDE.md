@@ -21,6 +21,13 @@ Run from the repo root unless noted.
 
 `DATA_DIR` (default `./data`) and `PORT` (default `8080`) are read from the environment; see `.env.example`.
 
+### Container testing cleanup
+
+When you `podman run` a container to manually verify something (health check, a route, a full rebuild), it's a temporary test artifact, not something to leave running or lying around:
+
+- **Ask before deleting.** Once testing is done, tell the user what you're about to remove (container name, volume, image) and get a go-ahead before running `podman rm` / `podman rmi` / `podman volume rm` — don't delete silently, even though it's your own test container.
+- **Clean up after yourself.** Stop and remove test containers/volumes when done (after confirmation), and run `podman image prune -f` after repeated `podman build` runs against the same tag — each rebuild orphans the previous image as a dangling `<none>` (this happened during initial Podman verification: 4 dangling images, ~1.5 GB, from 3 build iterations of the same `localscore:local` tag).
+
 ## Source of truth
 
 **`SPEC.md` is the full implementation contract.** Read it in its entirety before writing any code — it specifies the mandated tech stack (§3), data model (§4), the exact interview question catalog with metric mappings (§5), scoring rules (§2, §6), API surface (§8), container packaging (§9), and testing requirements (§10). Treat every MUST/MUST NOT in it as a hard requirement and every SHOULD as the default unless there is a documented reason to deviate. Do not improvise architecture that SPEC.md already decided.
