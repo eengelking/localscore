@@ -17,15 +17,13 @@ Run from the repo root unless noted.
 - `npm start` — runs the built server (`server/dist/index.js`); serves the built frontend + API on one port.
 - `npm test` — runs the server's Vitest suite (`server/test/*.test.ts`). To run one file: `npm run test --workspace server -- test/catalog.test.ts`.
 - `npm run typecheck` / `npm run lint` — both workspaces.
-- `docker build -t localscore .` / `docker compose up` — container build per SPEC.md §9 (untested in this environment — no Docker available; verify before relying on it).
+- `podman build -t localscore .` / `podman compose up` — container build per SPEC.md §9. The maintainer uses **Podman, not Docker**; the Dockerfile/compose.yaml are plain OCI and must keep working under Docker too, but write any documentation/examples with `podman`.
 
 `DATA_DIR` (default `./data`) and `PORT` (default `8080`) are read from the environment; see `.env.example`.
 
 ## Source of truth
 
 **`SPEC.md` is the full implementation contract.** Read it in its entirety before writing any code — it specifies the mandated tech stack (§3), data model (§4), the exact interview question catalog with metric mappings (§5), scoring rules (§2, §6), API surface (§8), container packaging (§9), and testing requirements (§10). Treat every MUST/MUST NOT in it as a hard requirement and every SHOULD as the default unless there is a documented reason to deviate. Do not improvise architecture that SPEC.md already decided.
-
-Once code exists, update this section (and add real "commonly used commands") — this file currently can't reference a build/lint/test workflow because none exists.
 
 ## What this project is
 
@@ -41,7 +39,7 @@ Self-hosted single container, SQLite on a volume, no accounts, no cloud dependen
 - **Database**: SQLite via `better-sqlite3`, single file at `/data/localscore.db`, WAL mode. Migrations are sequential numbered SQL files (`migrations/0001_*.sql`, …) applied at startup inside a transaction, tracked in a `schema_migrations` table.
 - **Scoring**: MUST match FIRST's reference calculators exactly (v4.0 and v3.1). Use an existing maintained library (`ae-cvss-calculator` is the leading candidate) or vendor FIRST's reference code, validated against reference test vectors before committing. Hand-rolled scoring math without reference-validated test vectors is explicitly not acceptable.
 - **Testing**: Vitest. Tests are a release gate (§10).
-- **Container**: multi-stage Dockerfile, non-root user, `node:22-slim`/alpine runtime, final image < 300 MB, `HEALTHCHECK` on `/api/health`.
+- **Container**: multi-stage Dockerfile (plain OCI — builds and runs under Docker or Podman), non-root user, `node:22-slim`/alpine runtime, final image < 300 MB, `HEALTHCHECK` on `/api/health`. The maintainer runs Podman day-to-day, so use `podman`/`podman compose` in docs and examples.
 
 No external services, no telemetry. The only outbound network call anywhere in the app is the optional NVD CVE lookup.
 

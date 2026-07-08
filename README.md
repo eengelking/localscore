@@ -24,7 +24,7 @@ This repository currently contains the implementation spec ([`SPEC.md`](./SPEC.m
 ## Running it (once built)
 
 ```bash
-docker run -d --name localscore -p 8080:8080 \
+podman run -d --name localscore -p 8080:8080 \
   -v localscore-data:/data \
   ghcr.io/<owner>/localscore:latest
 ```
@@ -32,14 +32,14 @@ docker run -d --name localscore -p 8080:8080 \
 or with a bind mount so the database lands on disk somewhere you control:
 
 ```bash
-docker run -d --name localscore -p 8080:8080 \
+podman run -d --name localscore -p 8080:8080 \
   -v "$PWD/data:/data" \
   ghcr.io/<owner>/localscore:latest
 ```
 
 Then open `http://localhost:8080`.
 
-A `compose.yaml` equivalent will ship alongside the Dockerfile. See `SPEC.md` §9 for full container/operations details.
+Any OCI-compatible tool (Docker included) works the same way — the image and `compose.yaml` aren't Podman-specific. See `SPEC.md` §9 for full container/operations details.
 
 ## What it does *not* do
 

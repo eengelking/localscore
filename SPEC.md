@@ -380,18 +380,18 @@ The frontend is served for all non-`/api` paths (SPA fallback to `index.html`).
 
 ## 9. Container & operations
 
-- **Multi-stage Dockerfile**: build stage (install deps, build frontend + backend, prune dev deps) → runtime stage on `node:22-slim` (or alpine, whichever `better-sqlite3` prebuilds support cleanly). Runs as a non-root user. Final image SHOULD be < 300 MB.
+- **Multi-stage Dockerfile** (standard OCI build file — works with Docker, Podman, or any compatible builder): build stage (install deps, build frontend + backend, prune dev deps) → runtime stage on `node:22-slim` (or alpine, whichever `better-sqlite3` prebuilds support cleanly). Runs as a non-root user. Final image SHOULD be < 300 MB.
 - Port **8080** (`PORT` env var to override). Data directory `/data` (`DATA_DIR` to override); the app creates the DB file and runs migrations on boot. If `/data` isn't writable, fail fast with a clear log message about mounting a volume.
 - `HEALTHCHECK` wired to `/api/health`.
-- Documented run commands (these go in the README verbatim):
+- The primary maintainer runs **Podman**, not Docker — document run commands with `podman`, but nothing in the image or build should be Podman-specific (it MUST also build and run under plain Docker). Documented run commands (these go in the README verbatim):
 
 ```bash
-docker run -d --name localscore -p 8080:8080 -v localscore-data:/data ghcr.io/<owner>/localscore:latest
+podman run -d --name localscore -p 8080:8080 -v localscore-data:/data ghcr.io/<owner>/localscore:latest
 # or with a bind mount:
-docker run -d --name localscore -p 8080:8080 -v "$PWD/data:/data" ghcr.io/<owner>/localscore:latest
+podman run -d --name localscore -p 8080:8080 -v "$PWD/data:/data" ghcr.io/<owner>/localscore:latest
 ```
 
-plus an equivalent `compose.yaml`. Graceful shutdown on SIGTERM (close DB, drain server).
+plus an equivalent `compose.yaml` (works with `podman compose` / `podman-compose` as well as `docker compose`). Graceful shutdown on SIGTERM (close DB, drain server).
 
 ---
 
