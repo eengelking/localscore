@@ -19,14 +19,34 @@ A 9.8 "Critical" against a production database might land at 9.8 for your data c
 
 ## Status
 
-This repository currently contains the implementation spec ([`SPEC.md`](./SPEC.md)) and no application code yet. `SPEC.md` is the full contract — data model, the exact interview question catalog and how each answer maps to CVSS metrics, scoring rules, API surface, and container packaging — for whoever (human or agent) builds this next.
+The implementation spec is done ([`SPEC.md`](./SPEC.md)); scaffolding is built on top of it. What works today:
 
-## Running it (once built)
+- An npm-workspaces monorepo (`server/` = Hono + SQLite API, `web/` = React + Vite frontend), served from one process on one port.
+- The full 12-question interview catalog, and environment CRUD — you can create an environment, save interview answers, and have them derive into stored CVSS environmental metrics.
+- A container image that builds and runs cleanly under Podman (or Docker), passes its own `HEALTHCHECK`, and comes in under 300 MB.
+
+What's not built yet:
+
+- **Scoring** (`POST /api/score`) and **NVD CVE lookup** (`GET /api/cve/:cveId`) return `501 Not Implemented`. `SPEC.md` §2.4 requires validating a CVSS scoring library against reference test vectors before that math gets written — it hasn't been picked yet.
+- The frontend is a placeholder page (just an API health check) — none of the interview, scoring, or results screens exist yet.
+- No published image — `ghcr.io/<owner>/localscore` doesn't exist yet, so the commands below only work against a local build for now.
+
+## Running it
+
+There's no published image yet, so build locally first:
+
+```bash
+podman build --format docker -t localscore .
+```
+
+(The `--format docker` flag matters: Podman defaults to the OCI image format, which silently drops the Dockerfile's `HEALTHCHECK` instruction. Without it, `podman ps` and `podman inspect` won't show a health status.)
+
+Then run it:
 
 ```bash
 podman run -d --name localscore -p 8080:8080 \
   -v localscore-data:/data \
-  ghcr.io/<owner>/localscore:latest
+  localscore
 ```
 
 or with a bind mount so the database lands on disk somewhere you control:
@@ -34,20 +54,26 @@ or with a bind mount so the database lands on disk somewhere you control:
 ```bash
 podman run -d --name localscore -p 8080:8080 \
   -v "$PWD/data:/data" \
-  ghcr.io/<owner>/localscore:latest
+  localscore
 ```
 
-Then open `http://localhost:8080`.
+Then open `http://localhost:8080`. Once a version is published, the plan is to run it straight from `ghcr.io/<owner>/localscore:latest` — same commands, just swap the image name.
 
-Any OCI-compatible tool (Docker included) works the same way — the image and `compose.yaml` aren't Podman-specific. See `SPEC.md` §9 for full container/operations details.
+Any OCI-compatible tool (Docker included) works the same way — the image and `compose.yaml` aren't Podman-specific.
 
-### Building locally
+Also see `compose.yaml` for the same setup as a single `podman compose up` (or `docker compose up`). See `SPEC.md` §9 for full container/operations details.
+
+## Developing locally
+
+Without a container, for iterating on the code:
 
 ```bash
-podman build --format docker -t localscore .
+npm install
+npm run dev:server   # API on :8080, reloads on change
+npm run dev:web      # Vite dev server, proxies /api to :8080
 ```
 
-The `--format docker` flag matters: Podman defaults to the OCI image format, which silently drops the Dockerfile's `HEALTHCHECK` instruction. Without it, `podman ps` and `podman inspect` won't show a health status.
+`npm test`, `npm run typecheck`, and `npm run lint` all run against both workspaces. See [`CLAUDE.md`](./CLAUDE.md) for the full command reference and architecture notes.
 
 ## What it does *not* do
 

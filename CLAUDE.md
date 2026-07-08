@@ -17,7 +17,11 @@ Run from the repo root unless noted.
 - `npm start` — runs the built server (`server/dist/index.js`); serves the built frontend + API on one port.
 - `npm test` — runs the server's Vitest suite (`server/test/*.test.ts`). To run one file: `npm run test --workspace server -- test/catalog.test.ts`.
 - `npm run typecheck` / `npm run lint` — both workspaces.
-- `podman build --format docker -t localscore .` / `podman compose up` — container build per SPEC.md §9. The maintainer uses **Podman, not Docker**; the Dockerfile/compose.yaml are plain OCI and must keep working under Docker too, but write any documentation/examples with `podman`. **`--format docker` is required** — Podman's default OCI build format silently drops the Dockerfile's `HEALTHCHECK` instruction with just a warning, no error. Verified: `podman build --format docker` + `podman run` produces a container `podman inspect` reports as `healthy`, and the API/frontend work end-to-end (2026-07-07).
+- `podman build --format docker -t localscore .` then `podman run ...` — container build per SPEC.md §9. The maintainer uses **Podman, not Docker**; the Dockerfile/compose.yaml are plain OCI and must keep working under Docker too, but write any documentation/examples with `podman`. **`--format docker` is required for a direct `podman build`** — Podman's default OCI build format silently drops the Dockerfile's `HEALTHCHECK` instruction with just a warning, no error.
+- `podman compose up` — builds and runs via `compose.yaml`. Verified this does **not** need `--format docker`: going through the external `docker-compose` provider already produces a Docker-format image with `HEALTHCHECK` intact (confirmed by `podman inspect` reporting `healthy`). So the flag only matters for a bare `podman build`, not for compose.
+- No image is published yet (`ghcr.io/<owner>/localscore` doesn't exist) — only local builds work right now.
+
+Verified end-to-end (2026-07-08): both `podman build --format docker` + `podman run`, and `podman compose up`, produce a container `podman inspect` reports as `healthy`, with the API/frontend reachable and a full create-environment round trip working.
 
 `DATA_DIR` (default `./data`) and `PORT` (default `8080`) are read from the environment; see `.env.example`.
 
@@ -27,6 +31,12 @@ When you `podman run` a container to manually verify something (health check, a 
 
 - **Ask before deleting.** Once testing is done, tell the user what you're about to remove (container name, volume, image) and get a go-ahead before running `podman rm` / `podman rmi` / `podman volume rm` — don't delete silently, even though it's your own test container.
 - **Clean up after yourself.** Stop and remove test containers/volumes when done (after confirmation), and run `podman image prune -f` after repeated `podman build` runs against the same tag — each rebuild orphans the previous image as a dangling `<none>` (this happened during initial Podman verification: 4 dangling images, ~1.5 GB, from 3 build iterations of the same `localscore:local` tag).
+
+### Known gotchas
+
+- **npm workspace hoisting affects the Dockerfile.** `npm ci` hoists shared dependencies to the workspace-root `node_modules`, not `server/node_modules` — the runtime image stage copies `/app/node_modules` (root), not a per-workspace one. If you add a server-only dependency that npm decides *not* to hoist (e.g. a conflicting version), the runtime COPY may need to also grab `server/node_modules` — check after `npm ci` whether it exists before assuming it doesn't.
+- **`npm audit` reports 5 vulnerabilities** (3 moderate, 1 high, 1 critical) in the `vite`/`vitest`/`esbuild` dev-tooling chain (dev-server-only exposure, not a runtime/production risk). Fixing requires a breaking major-version bump to `vite`/`vitest` — left as-is; don't be surprised by it, and don't `npm audit fix --force` without deliberately taking that upgrade.
+- **`podman compose build`/`up` can fail locally** with `error listing credentials - err: exec: "docker-credential-desktop": executable file not found` if `~/.docker/config.json` has `"credsStore": "desktop"` left over from Docker Desktop, even though Podman is what's actually running. Workaround for a one-off command: `DOCKER_CONFIG=<empty-dir-with-{}-config.json> podman compose ...`. Don't edit the user's real `~/.docker/config.json` to fix this — it's outside the project and outside this repo's concern.
 
 ## Source of truth
 
