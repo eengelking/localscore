@@ -80,6 +80,15 @@ export interface ScoreChange {
   optionId: string;
 }
 
+export interface AnsweredQuestionNote {
+  questionId: string;
+  question: string;
+  optionId: string;
+  optionLabel: string;
+  status: "no-effect" | "capped-by-base" | "not-applicable-to-version";
+  reason: string;
+}
+
 export interface ScoredEnvironment {
   id: number;
   name: string;
@@ -89,6 +98,7 @@ export interface ScoredEnvironment {
   vector: string;
   delta: number;
   changes: ScoreChange[];
+  notes: AnsweredQuestionNote[];
 }
 
 export interface UnscoredEnvironment {

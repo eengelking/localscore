@@ -109,6 +109,42 @@ describe("POST /api/score", () => {
     expect(body.environments).toEqual([{ id: expect.any(Number), name: "Safety Only", hasProfile: false }]);
   });
 
+  it("explains answered questions that produced no visible change", async () => {
+    // Mirrors a real report: every answer here is either the worst-case
+    // option (no effect), a cap no less severe than the base vector's own
+    // value (dropped), or a v4.0-only question against a v3.1 vector.
+    await createEnvironment("Eddard", [
+      { questionId: "reachability", optionId: "internet" },
+      { questionId: "network_protections", optionId: "basic" },
+      { questionId: "accounts", optionId: "user_required" },
+      { questionId: "human_use", optionId: "interactive" },
+      { questionId: "confidentiality", optionId: "painful" },
+      { questionId: "safety", optionId: "no" },
+    ]);
+
+    const res = await app.request("/api/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vector: "CVSS:3.1/AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H" }),
+    });
+    const body = await res.json();
+    const env = body.environments[0];
+
+    const byQuestion = Object.fromEntries(
+      env.notes.map((n: { questionId: string; status: string }) => [n.questionId, n.status]),
+    );
+    expect(byQuestion).toMatchObject({
+      reachability: "no-effect",
+      network_protections: "no-effect",
+      accounts: "capped-by-base",
+      human_use: "no-effect",
+      safety: "not-applicable-to-version",
+    });
+    // The one answer that actually changed something isn't repeated in notes.
+    expect(byQuestion.confidentiality).toBeUndefined();
+    expect(env.changes.some((c: { questionId: string }) => c.questionId === "confidentiality")).toBe(true);
+  });
+
   it("sorts scored environments by score descending", async () => {
     await createEnvironment("Low Risk", [
       { questionId: "reachability", optionId: "internal_only" },

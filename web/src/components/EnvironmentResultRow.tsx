@@ -57,7 +57,7 @@ export function EnvironmentResultRow({
       {open && (
         <div className="result-row-detail">
           <p className="vector-string">{result.vector}</p>
-          <ScoreChanges changes={result.changes} catalog={catalog} />
+          <ScoreChanges changes={result.changes} notes={result.notes} catalog={catalog} />
         </div>
       )}
     </li>
