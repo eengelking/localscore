@@ -51,7 +51,9 @@ export function AnimatedScore({ from, to, size = "lg" }: { from: number; to: num
       <span className={className} style={{ color: colorFor(severity) }}>
         {value.toFixed(1)}
       </span>
-      <SeverityPill severity={severityFromScore(to)} />
+      <span className="severity-slot">
+        <SeverityPill severity={severity} />
+      </span>
     </span>
   );
 }

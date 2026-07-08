@@ -5,7 +5,7 @@
 import { CATALOG } from "../catalog/catalog.js";
 import type { Answer, DerivedMetric } from "../catalog/derive.js";
 import type { CvssVersion } from "../catalog/types.js";
-import { baseCounterpartMetric, isLessSevere } from "./orderings.js";
+import { baseCounterpartMetric, isLessSevere, severityDirection } from "./orderings.js";
 import type { CvssInstance, ParsedVector } from "./parse.js";
 import { parseBaseVector } from "./parse.js";
 import type { Severity } from "./severity.js";
@@ -30,6 +30,7 @@ export interface AppliedChange {
   toValue: string;
   toValueName: string;
   effect: "override" | "cap";
+  direction: "worse" | "better" | "neutral";
   questionId: string;
   optionId: string;
 }
@@ -50,6 +51,7 @@ function valueName(instance: CvssInstance, metric: string, shortName: string): s
 }
 
 function buildChange(instance: CvssInstance, m: DerivedMetric, fromValue: string): AppliedChange {
+  const baseMetric = baseCounterpartMetric(m.metric) ?? m.metric;
   return {
     metric: m.metric,
     metricName: componentName(instance, m.metric),
@@ -58,6 +60,7 @@ function buildChange(instance: CvssInstance, m: DerivedMetric, fromValue: string
     toValue: m.value,
     toValueName: valueName(instance, m.metric, m.value),
     effect: m.effect,
+    direction: severityDirection(m.cvssVersion, baseMetric, fromValue, m.value),
     questionId: m.questionId,
     optionId: m.optionId,
   };

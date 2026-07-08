@@ -43,7 +43,9 @@ export function ScoreResult({
         <span className="base-score-label">Base score</span>
         <span className="base-score-figures">
           <span className="score-figure score-figure-hero">{result.base.score.toFixed(1)}</span>
-          <SeverityPill severity={result.base.severity} />
+          <span className="severity-slot">
+            <SeverityPill severity={result.base.severity} />
+          </span>
         </span>
         <p className="vector-string">{result.base.vector}</p>
         {result.base.note && <p className="base-score-note">{result.base.note}</p>}
@@ -57,7 +59,7 @@ export function ScoreResult({
         {onSave && (
           <div className="save-panel">
             {!saveOpen && !saved && (
-              <button type="button" className="button button-quiet" onClick={() => setSaveOpen(true)}>
+              <button type="button" className="button" onClick={() => setSaveOpen(true)}>
                 Save
               </button>
             )}
