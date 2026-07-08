@@ -10,7 +10,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-The product works end-to-end: an npm-workspaces monorepo (`server/` = Hono + better-sqlite3 API, `web/` = React + Vite frontend), the full interview catalog (SPEC.md §5.2), environment CRUD with answer-derivation, the initial DB migration, a working **scoring engine** (`POST /api/score`, `server/src/scoring/`), and a real **frontend** (environments list → interview wizard → paste-a-vector results screen, all wired to the API — no more placeholder page). **NVD lookup and saved-vulnerability CRUD are still stubbed (HTTP 501)** — those are the remaining unbuilt pieces.
+The product works end-to-end: an npm-workspaces monorepo (`server/` = Hono + better-sqlite3 API, `web/` = React + Vite frontend), the full interview catalog (SPEC.md §5.2), environment CRUD with answer-derivation, the initial DB migration, a working **scoring engine** (`POST /api/score`, `server/src/scoring/`), a real **frontend** (environments list → interview wizard → paste-a-vector results screen, all wired to the API), **NVD CVE lookup** (`GET /api/cve/:cveId`, `server/src/lib/nvd.ts`), and **saved-vulnerability CRUD** (`server/src/routes/vulnerabilities.ts`). No remaining stubbed API routes — the frontend doesn't yet have UI for CVE lookup/saved vulnerabilities (only the paste-a-vector flow), which would be the natural next slice of work.
+
+### NVD lookup & saved vulnerabilities
+
+- `server/src/lib/nvd.ts` — fetches `services.nvd.nist.gov`, throttled module-wide (~1 req/6s unauthenticated, faster with `NVD_API_KEY`) since NVD's unauthenticated rate limit is shared across all callers in the process, not per-request. `extractVectorOptions()` parses every `cvssMetricV40`/`V31`/`V30` entry NVD returns (deliberately skips `cvssMetricV2` — v2 isn't a supported score) so the UI can show all disagreeing sources per SPEC.md §7; `pickPrimaryVector()` picks the highest-version/Primary-sourced one as the default.
+- `GET /api/cve/:cveId` (`server/src/routes/cve.ts`) is cache-first against the `vulnerabilities` table (same table doubles as the NVD cache and the saved-vulnerability list, per SPEC.md §4's schema comment) — a cached CVE is served with no network call unless `?refresh=1`. A failed refresh falls back to serving the stale cache rather than erroring, per §7's offline behavior.
+- `server/src/routes/vulnerabilities.ts` always re-parses and re-scores the vector server-side on save (`parseBaseVector` + `computeScore`) rather than trusting a client-supplied score — consistent with treating derived values as recomputed, not client state, elsewhere in the app.
+- Tests mock global `fetch` via `vi.stubGlobal` (`server/test/cve-route.test.ts`); the throttle's module-level `lastRequestAt` needed a test-only reset hook (`__resetNvdThrottleForTests`) since otherwise it bleeds across unrelated test cases sharing the same process and causes spurious 5s+ timeouts.
 
 ### Frontend
 
@@ -60,6 +67,13 @@ Run from the repo root unless noted.
 Verified end-to-end (2026-07-08): both `podman build --format docker` + `podman run`, and `podman compose up`, produce a container `podman inspect` reports as `healthy`, with the API/frontend reachable and a full create-environment round trip working.
 
 `DATA_DIR` (default `./data`) and `PORT` (default `8080`) are read from the environment; see `.env.example`.
+
+### Testing during development vs. before merge
+
+Two distinct testing procedures — don't conflate them:
+
+- **Test 2 (npm, during development)** — the default while iterating. Build and run the built server directly on port 8081 (`PORT=8081`), not the Vite dev server: `npm run build && PORT=8081 node server/dist/index.js`. This matches how the container actually runs (one process, built frontend + API) without the overhead of a full container build on every check. **Always stop the process cleanly when done** (kill it — don't leave it running in the background between tasks). Use this for functional checks, API round trips, and UI verification via Playwright (see "Verifying frontend changes" above) throughout the work.
+- **Test 1 (container, last step before merge)** — the final gate confirming the container builds and runs as it will in production, on port 8080. Container name `localscore-test`, image tag `localscore:local`. Before building: check whether a container named `localscore-test` (or anything else) is already bound to port 8080 — if so, **ask the user before taking it down**, don't stop it unilaterally. Always build a fresh image (don't reuse a stale one) — `podman build --format docker -t localscore:local .` — then `podman run --name localscore-test -p 8080:8080 ...` and confirm `/api/health` reports healthy and the frontend loads. Clean up afterward per "Container testing cleanup" below (ask before removing).
 
 ### Container testing cleanup
 
