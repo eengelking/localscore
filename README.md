@@ -78,6 +78,10 @@ npm run dev:web      # Vite dev server, proxies /api to :8080
 
 `npm test`, `npm run typecheck`, and `npm run lint` all run against both workspaces. See [`CLAUDE.md`](./CLAUDE.md) for the full command reference and architecture notes.
 
+## Using the API directly
+
+The frontend covers environments, the interview, and paste-a-vector scoring. NVD CVE lookup and saved-vulnerability CRUD exist as API routes but aren't wired into the UI yet — see [`API.md`](./API.md) for curl examples and response shapes for every route, including those two.
+
 ## What it does *not* do
 
 - It doesn't scan anything or talk to your infrastructure — you tell it about a location by answering questions, and you paste in vectors or CVE IDs.
