@@ -5,12 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Workflow
 
 - Never commit directly to `main`. Before starting any work, create a new branch off `main` (branch off the latest `main`, not an existing feature branch).
+- Before committing, always update documentation affected by the change — `CLAUDE.md` (Status, and whichever architecture section covers what changed), `README.md`, `API.md`, and `SPEC.md` if the change alters mandated behavior. Check each for now-stale claims (a feature described as "not built yet" that this change built, a route/shape that changed, a screen that didn't exist before) and fix them in the same commit as the code, not a follow-up. Do this as a deliberate last step prior to committing, not opportunistically while coding.
 - When the work is done, commit the changes and push the branch to the remote.
 - After pushing, generate a Markdown summary of the changes so the user can open the PR on GitHub manually — do not open the PR yourself. (This is manual for now; may be automated later.)
 
 ## Status
 
-The product works end-to-end: an npm-workspaces monorepo (`server/` = Hono + better-sqlite3 API, `web/` = React + Vite frontend), the full interview catalog (SPEC.md §5.2), environment CRUD with answer-derivation, the initial DB migration, a working **scoring engine** (`POST /api/score`, `server/src/scoring/`), a real **frontend** (environments list → interview wizard → paste-a-vector results screen, all wired to the API), **NVD CVE lookup** (`GET /api/cve/:cveId`, `server/src/lib/nvd.ts`), and **saved-vulnerability CRUD** (`server/src/routes/vulnerabilities.ts`). No remaining stubbed API routes — the frontend doesn't yet have UI for CVE lookup/saved vulnerabilities (only the paste-a-vector flow), which would be the natural next slice of work.
+The product works end-to-end: an npm-workspaces monorepo (`server/` = Hono + better-sqlite3 API, `web/` = React + Vite frontend), the full interview catalog (SPEC.md §5.2), environment CRUD with answer-derivation, the initial DB migration, a working **scoring engine** (`POST /api/score`, `server/src/scoring/`), a real **frontend** (environments list → interview wizard → results screen with both a paste-a-vector flow and a CVE-lookup flow, plus a saved-vulnerabilities list, all wired to the API), **NVD CVE lookup** (`GET /api/cve/:cveId`, `server/src/lib/nvd.ts`), and **saved-vulnerability CRUD** (`server/src/routes/vulnerabilities.ts`). No remaining stubbed API routes and no remaining unbuilt UI surface for the routes above — see "Frontend" below for what's built and the one documented backend-shape gap it works around.
 
 ### NVD lookup & saved vulnerabilities
 
@@ -21,7 +22,13 @@ The product works end-to-end: an npm-workspaces monorepo (`server/` = Hono + bet
 
 ### Frontend
 
-`web/src/` — `App.tsx` does simple state-based view switching (`environments` / `interview` / `score`), no router library. `pages/` holds the three screens, `components/` the shared pieces (`SeverityPill`, `AnimatedScore`, `ScoreChanges`, `EnvironmentResultRow`). `api.ts` wraps every `/api/*` call; `types.ts` mirrors the server's response shapes.
+`web/src/` — `App.tsx` does simple state-based view switching (`environments` / `interview` / `score` / `vulnerabilities`), no router library. `pages/` holds the four screens, `components/` the shared pieces (`SeverityPill`, `AnimatedScore`, `ScoreChanges`, `EnvironmentResultRow`, `ScoreResult`, `NvdVectorPicker`). `api.ts` wraps every `/api/*` call; `types.ts` mirrors the server's response shapes.
+
+- `ScorePage.tsx` has two input modes (a segmented `.mode-toggle`, styled like the nav's `is-active` treatment): paste-a-vector (unchanged) and look-up-a-CVE. The CVE mode shows a cached/fresh indicator with a Refresh action, and — when NVD returns more than one disagreeing CVSS entry (per SPEC.md §7) — a picker built from the interview page's existing `.option-card` selectable-card pattern rather than inventing a new one. Both modes render through the shared `ScoreResult` component.
+- `ScoreResult.tsx` (extracted from what used to be inline in `ScorePage.tsx`) renders the base-score-card + per-environment result list, and optionally an inline-expand "Save" action (`onSave` prop) that POSTs to `/api/vulnerabilities`. Omitting `onSave` hides the control — used when viewing an already-saved item from `SavedVulnerabilitiesPage.tsx`.
+- `SavedVulnerabilitiesPage.tsx` lists saved vulnerabilities (mirrors `EnvironmentsPage.tsx`'s list/empty-state/delete structure) with inline expand-to-view-and-rescore per row via `ScoreResult`.
+- **Known gap, by design**: `POST /api/vulnerabilities` doesn't accept/store the raw NVD JSON blob, so a vulnerability saved from a CVE lookup won't show the `NvdVectorPicker` on its saved-vulnerabilities detail view until that CVE ID is separately re-looked-up through the Score page (which is what upserts the `nvd_json` cache column). Accepted as a documented limitation rather than expanding `vulnerabilities.ts`'s scope for this UI-only slice of work.
+- `web/src/lib/severity.ts` — `nvdSeverityToAppSeverity(raw, baseScore)` maps NVD's upper-case `baseSeverity` strings (or the score-band fallback when NVD omits one) onto the app's title-case `Severity` union; also reused to score-derive a severity pill for the saved-vulnerabilities list, which doesn't carry `baseSeverity` at all.
 
 Design system lives in `web/src/styles.css` as CSS custom properties (no framework, per SPEC.md §3): IBM Plex Mono for headlines/scores/vector strings, Archivo for body copy (via `@fontsource/*`, self-hosted — **never** load fonts from a CDN, SPEC.md requires the app work fully offline). Import only the `latin-*.css` subset files from `@fontsource` packages, not the bare weight files — the latter pull in every unicode subset (cyrillic, vietnamese, greek, ...) and roughly quadruple the font payload for no reason in an English-only UI.
 
