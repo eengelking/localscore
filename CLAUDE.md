@@ -4,7 +4,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-Scaffolding is in place: an npm-workspaces monorepo (`server/` = Hono + better-sqlite3 API, `web/` = React + Vite frontend), the full interview catalog (SPEC.md §5.2), environment CRUD with answer-derivation, and the initial DB migration. **Scoring (`POST /api/score`), NVD lookup, and saved-vulnerability CRUD are stubbed (HTTP 501)** — SPEC.md §2.4 requires evaluating a reference-validated CVSS library before writing that code; see `server/src/scoring/index.ts`.
+Scaffolding is in place: an npm-workspaces monorepo (`server/` = Hono + better-sqlite3 API, `web/` = React + Vite frontend), the full interview catalog (SPEC.md §5.2), environment CRUD with answer-derivation, the initial DB migration, and a working **scoring engine** (`POST /api/score`, `server/src/scoring/`). **NVD lookup and saved-vulnerability CRUD are still stubbed (HTTP 501)** — those are the remaining unbuilt pieces.
+
+### Scoring engine
+
+Built on `ae-cvss-calculator` (metaeffekt, Apache-2.0, zero runtime deps, covers CVSS 2.0/3.0/3.1/4.0) after evaluating it per SPEC.md §2.4 — reproduces the spec's worked example (base `9.8` → environmental `0.0`) and known reference vectors exactly; see `server/test/scoring.test.ts`. It's a CommonJS package under `"type": "module"` — import it with `import pkg from "ae-cvss-calculator"; const { Cvss3P1, Cvss4P0 } = pkg;`, not named imports (TS's `NodeNext` resolution will reject named imports from a CJS package).
+
+- `server/src/scoring/parse.ts` — version detection/routing (§2.5) and friendly parse errors. Note: `AV:X` is *not* an invalid value — `X` is the real "Not Defined" enum member shared by every metric — so it's caught separately as "missing required base metrics" via `isBaseFullyDefined()`, not as an unknown-value error.
+- `server/src/scoring/orderings.ts` — the §2.2 cap severity orderings, and `baseCounterpartMetric()` (strip a leading `M` — works uniformly for every M-prefixed metric, cap or override; CR/IR/AR and the v4 supplemental metrics have no base counterpart).
+- `server/src/scoring/index.ts` — `applyEnvironment()` (mutates a parsed vector per override/cap rules, returns human-readable change explanations with question/option provenance for a future "why" panel) and `scoreForEnvironment()` (parse + apply + compute in one call).
+- `server/src/catalog/derive.ts` — `DerivedMetric` now carries `questionId`/`optionId` provenance (used for change explanations), in addition to what's persisted to `environment_metrics`.
+- `POST /api/score` recomputes each environment's derived metrics fresh from `environment_answers` at request time rather than reading the persisted `environment_metrics` cache — simpler and self-consistent, at negligible cost (12 questions).
 
 ### Commands
 
@@ -77,7 +87,7 @@ Scoring flow (§6): parse the pasted vector → detect version (v4.0 / v3.1 / v3
 
 An environment with zero answers MUST reproduce the base score exactly — this is both a design invariant (§2.3) and a required test (§10.2).
 
-## Domain rules to internalize before touching scoring code
+## Domain rules for the scoring code
 
 - CVSS v3.0 vectors are scored using v3.1 equations against the v3.1 profile, with a UI-visible disclosure — never silent (§2.5).
 - v2.0 vectors (including bare `AV:N/AC:L/Au:N/...` syntax) get a friendly "not supported yet" rejection, not an attempted parse.

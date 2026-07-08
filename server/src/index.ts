@@ -32,7 +32,7 @@ export function createApp(db = openDb()) {
   api.route("/", healthRoutes(db));
   api.route("/", catalogRoutes());
   api.route("/", environmentRoutes(db));
-  api.route("/", scoreRoutes());
+  api.route("/", scoreRoutes(db));
   api.route("/", cveRoutes());
   api.route("/", vulnerabilityRoutes());
   app.route("/api", api);

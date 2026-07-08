@@ -13,8 +13,8 @@ describe("deriveMetrics", () => {
 
   it("caps only apply, no override for a plain cap question", () => {
     const result = deriveMetrics([{ questionId: "reachability", optionId: "internal_only" }]);
-    expect(result).toContainEqual({ cvssVersion: "4.0", metric: "MAV", value: "A", effect: "cap" });
-    expect(result).toContainEqual({ cvssVersion: "3.1", metric: "MAV", value: "A", effect: "cap" });
+    expect(result).toContainEqual(expect.objectContaining({ cvssVersion: "4.0", metric: "MAV", value: "A", effect: "cap" }));
+    expect(result).toContainEqual(expect.objectContaining({ cvssVersion: "3.1", metric: "MAV", value: "A", effect: "cap" }));
   });
 
   it("Q9 safety override wins over Q8 blast-radius for MSI/MSA (SPEC.md §5.3 conflict rule)", () => {
@@ -23,9 +23,9 @@ describe("deriveMetrics", () => {
       { questionId: "safety", optionId: "yes" }, // MSI=S, MSA=S (later question, wins)
     ]);
 
-    expect(result).toContainEqual({ cvssVersion: "4.0", metric: "MSC", value: "H", effect: "override" });
-    expect(result).toContainEqual({ cvssVersion: "4.0", metric: "MSI", value: "S", effect: "override" });
-    expect(result).toContainEqual({ cvssVersion: "4.0", metric: "MSA", value: "S", effect: "override" });
+    expect(result).toContainEqual(expect.objectContaining({ cvssVersion: "4.0", metric: "MSC", value: "H", effect: "override" }));
+    expect(result).toContainEqual(expect.objectContaining({ cvssVersion: "4.0", metric: "MSI", value: "S", effect: "override" }));
+    expect(result).toContainEqual(expect.objectContaining({ cvssVersion: "4.0", metric: "MSA", value: "S", effect: "override" }));
   });
 
   it("order independence does not matter — later question order in the catalog always wins, not answer submission order", () => {
@@ -36,8 +36,8 @@ describe("deriveMetrics", () => {
 
     // blast_radius (Q8) is processed before safety (Q9) regardless of answer
     // array order, because derivation walks CATALOG order — so safety still wins.
-    expect(result).toContainEqual({ cvssVersion: "4.0", metric: "MSI", value: "S", effect: "override" });
-    expect(result).toContainEqual({ cvssVersion: "4.0", metric: "MSA", value: "S", effect: "override" });
+    expect(result).toContainEqual(expect.objectContaining({ cvssVersion: "4.0", metric: "MSI", value: "S", effect: "override" }));
+    expect(result).toContainEqual(expect.objectContaining({ cvssVersion: "4.0", metric: "MSA", value: "S", effect: "override" }));
   });
 
   it("a cap never displaces an existing override", () => {
@@ -46,6 +46,14 @@ describe("deriveMetrics", () => {
     const result = deriveMetrics([
       { questionId: "confidentiality", optionId: "catastrophic" }, // CR=H override
     ]);
-    expect(result).toContainEqual({ cvssVersion: "4.0", metric: "CR", value: "H", effect: "override" });
+    expect(result).toContainEqual(expect.objectContaining({ cvssVersion: "4.0", metric: "CR", value: "H", effect: "override" }));
+  });
+
+  it("includes provenance (questionId/optionId) on every derived metric", () => {
+    const result = deriveMetrics([{ questionId: "reachability", optionId: "internal_only" }]);
+    for (const metric of result) {
+      expect(metric.questionId).toBe("reachability");
+      expect(metric.optionId).toBe("internal_only");
+    }
   });
 });
