@@ -16,6 +16,10 @@ Built on `ae-cvss-calculator` (metaeffekt, Apache-2.0, zero runtime deps, covers
 - `server/src/catalog/derive.ts` — `DerivedMetric` now carries `questionId`/`optionId` provenance (used for change explanations), in addition to what's persisted to `environment_metrics`.
 - `POST /api/score` recomputes each environment's derived metrics fresh from `environment_answers` at request time rather than reading the persisted `environment_metrics` cache — simpler and self-consistent, at negligible cost (12 questions).
 
+### Frontend design
+
+When designing or building UI in `web/` — new screens, layout/visual changes, or anything touching typography/color/spacing — invoke the `frontend-design` skill first. It's installed and available in this environment (verified 2026-07-08). Use it before writing JSX/CSS, not as an afterthought, so the interview and results screens read as intentionally designed rather than default scaffolding.
+
 ### Commands
 
 Run from the repo root unless noted.
@@ -62,7 +66,7 @@ Self-hosted single container, SQLite on a volume, no accounts, no cloud dependen
 
 - **Runtime**: Node 22 LTS, TypeScript everywhere, strict mode.
 - **Backend**: Hono (Fastify only if Hono proves awkward) serving both the JSON API and the built frontend static assets from one process on one port (default 8080).
-- **Frontend**: React + Vite, built to static assets at image build time. Plain CSS (custom properties for theming) or a tiny utility layer — no heavy UI framework, no large-runtime component library.
+- **Frontend**: React + Vite, built to static assets at image build time. Plain CSS (custom properties for theming) or a tiny utility layer — no heavy UI framework, no large-runtime component library. Use the `frontend-design` skill for any UI/visual work — see "Frontend design" under Status.
 - **Database**: SQLite via `better-sqlite3`, single file at `/data/localscore.db`, WAL mode. Migrations are sequential numbered SQL files (`migrations/0001_*.sql`, …) applied at startup inside a transaction, tracked in a `schema_migrations` table.
 - **Scoring**: MUST match FIRST's reference calculators exactly (v4.0 and v3.1). Use an existing maintained library (`ae-cvss-calculator` is the leading candidate) or vendor FIRST's reference code, validated against reference test vectors before committing. Hand-rolled scoring math without reference-validated test vectors is explicitly not acceptable.
 - **Testing**: Vitest. Tests are a release gate (§10).
