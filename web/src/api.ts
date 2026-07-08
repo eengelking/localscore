@@ -2,8 +2,11 @@ import type {
   Answer,
   ApiError,
   Catalog,
+  CveResponse,
   Environment,
   EnvironmentDetail,
+  SavedVulnerability,
+  SavedVulnerabilityDetail,
   ScoreResponse,
 } from "./types.js";
 
@@ -73,6 +76,35 @@ export function scoreVector(vector: string): Promise<ScoreResponse> {
     method: "POST",
     body: JSON.stringify({ vector }),
   });
+}
+
+export function lookupCve(cveId: string, opts?: { refresh?: boolean }): Promise<CveResponse> {
+  const qs = opts?.refresh ? "?refresh=1" : "";
+  return request(`/api/cve/${encodeURIComponent(cveId)}${qs}`);
+}
+
+export function listVulnerabilities(): Promise<SavedVulnerability[]> {
+  return request("/api/vulnerabilities");
+}
+
+export function saveVulnerability(body: {
+  vector: string;
+  label?: string;
+  cveId?: string;
+  nvdJson?: unknown;
+}): Promise<SavedVulnerability> {
+  return request("/api/vulnerabilities", {
+    method: "POST",
+    body: JSON.stringify(body),
+  });
+}
+
+export function getVulnerability(id: number): Promise<SavedVulnerabilityDetail> {
+  return request(`/api/vulnerabilities/${id}`);
+}
+
+export function deleteVulnerability(id: number): Promise<void> {
+  return request(`/api/vulnerabilities/${id}`, { method: "DELETE" });
 }
 
 export { ApiRequestError };

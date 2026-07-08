@@ -117,3 +117,37 @@ export interface ScoreResponse {
 export interface ApiError {
   error: string;
 }
+
+export interface NvdVectorOption {
+  source: string;
+  type: string;
+  version: "4.0" | "3.1" | "3.0";
+  vector: string;
+  baseScore: number;
+  baseSeverity: string;
+}
+
+export interface CveResponse {
+  cveId: string;
+  cached: boolean;
+  fetchedAt: string | null;
+  primaryVector: string;
+  primaryVersion: string;
+  vectors: NvdVectorOption[];
+}
+
+export interface SavedVulnerability {
+  id: number;
+  label: string;
+  source: "vector" | "nvd";
+  cveId: string | null;
+  vector: string;
+  cvssVersion: string;
+  baseScore: number;
+  fetchedAt: string | null;
+  createdAt: string;
+}
+
+export interface SavedVulnerabilityDetail extends SavedVulnerability {
+  vectors: NvdVectorOption[];
+}
