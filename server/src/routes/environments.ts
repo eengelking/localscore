@@ -42,6 +42,20 @@ function completionStatus(metrics: MetricRow[], answers: AnswerRow[]) {
   };
 }
 
+// Every environment response (list, detail, create, rename) shares this
+// camelCase shape so the frontend has one consistent contract.
+function serializeEnvironment(env: EnvironmentRow, answers: AnswerRow[], metrics: MetricRow[]) {
+  return {
+    id: env.id,
+    name: env.name,
+    description: env.description,
+    catalogVersion: env.catalog_version,
+    createdAt: env.created_at,
+    updatedAt: env.updated_at,
+    interviewCompletion: completionStatus(metrics, answers),
+  };
+}
+
 export function environmentRoutes(db: Database.Database) {
   const app = new Hono();
 
@@ -54,15 +68,7 @@ export function environmentRoutes(db: Database.Database) {
       const metrics = db
         .prepare("SELECT * FROM environment_metrics WHERE environment_id = ?")
         .all(env.id) as MetricRow[];
-      return {
-        id: env.id,
-        name: env.name,
-        description: env.description,
-        catalogVersion: env.catalog_version,
-        createdAt: env.created_at,
-        updatedAt: env.updated_at,
-        interviewCompletion: completionStatus(metrics, answers),
-      };
+      return serializeEnvironment(env, answers, metrics);
     });
     return c.json(result);
   });
@@ -79,7 +85,7 @@ export function environmentRoutes(db: Database.Database) {
       )
       .run(body.name.trim(), body.description ?? "", CATALOG_VERSION, now, now);
     const env = getEnvironmentOr404(db, Number(info.lastInsertRowid));
-    return c.json(env, 201);
+    return c.json(serializeEnvironment(env, [], []), 201);
   });
 
   app.get("/environments/:id", (c) => {
@@ -88,13 +94,7 @@ export function environmentRoutes(db: Database.Database) {
     const answers = db.prepare("SELECT * FROM environment_answers WHERE environment_id = ?").all(id) as AnswerRow[];
     const metrics = db.prepare("SELECT * FROM environment_metrics WHERE environment_id = ?").all(id) as MetricRow[];
     return c.json({
-      id: env.id,
-      name: env.name,
-      description: env.description,
-      catalogVersion: env.catalog_version,
-      createdAt: env.created_at,
-      updatedAt: env.updated_at,
-      interviewCompletion: completionStatus(metrics, answers),
+      ...serializeEnvironment(env, answers, metrics),
       answers: answers.map((a) => ({ questionId: a.question_id, optionId: a.option_id })),
       metrics: metrics.map((m) => ({
         cvssVersion: m.cvss_version,
@@ -117,7 +117,10 @@ export function environmentRoutes(db: Database.Database) {
       now,
       id,
     );
-    return c.json(getEnvironmentOr404(db, id));
+    const env = getEnvironmentOr404(db, id);
+    const answers = db.prepare("SELECT * FROM environment_answers WHERE environment_id = ?").all(id) as AnswerRow[];
+    const metrics = db.prepare("SELECT * FROM environment_metrics WHERE environment_id = ?").all(id) as MetricRow[];
+    return c.json(serializeEnvironment(env, answers, metrics));
   });
 
   app.put("/environments/:id/answers", async (c) => {

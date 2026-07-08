@@ -4,7 +4,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Status
 
-Scaffolding is in place: an npm-workspaces monorepo (`server/` = Hono + better-sqlite3 API, `web/` = React + Vite frontend), the full interview catalog (SPEC.md §5.2), environment CRUD with answer-derivation, the initial DB migration, and a working **scoring engine** (`POST /api/score`, `server/src/scoring/`). **NVD lookup and saved-vulnerability CRUD are still stubbed (HTTP 501)** — those are the remaining unbuilt pieces.
+The product works end-to-end: an npm-workspaces monorepo (`server/` = Hono + better-sqlite3 API, `web/` = React + Vite frontend), the full interview catalog (SPEC.md §5.2), environment CRUD with answer-derivation, the initial DB migration, a working **scoring engine** (`POST /api/score`, `server/src/scoring/`), and a real **frontend** (environments list → interview wizard → paste-a-vector results screen, all wired to the API — no more placeholder page). **NVD lookup and saved-vulnerability CRUD are still stubbed (HTTP 501)** — those are the remaining unbuilt pieces.
+
+### Frontend
+
+`web/src/` — `App.tsx` does simple state-based view switching (`environments` / `interview` / `score`), no router library. `pages/` holds the three screens, `components/` the shared pieces (`SeverityPill`, `AnimatedScore`, `ScoreChanges`, `EnvironmentResultRow`). `api.ts` wraps every `/api/*` call; `types.ts` mirrors the server's response shapes.
+
+Design system lives in `web/src/styles.css` as CSS custom properties (no framework, per SPEC.md §3): IBM Plex Mono for headlines/scores/vector strings, Archivo for body copy (via `@fontsource/*`, self-hosted — **never** load fonts from a CDN, SPEC.md requires the app work fully offline). Import only the `latin-*.css` subset files from `@fontsource` packages, not the bare weight files — the latter pull in every unicode subset (cyrillic, vietnamese, greek, ...) and roughly quadruple the font payload for no reason in an English-only UI.
+
+The results screen's signature interaction: each environment's score animates from the base score to its modified score on load (`AnimatedScore`), with color morphing through the severity scale in transit — the "a 10 might actually be a zero" moment, dramatized once. Respects `prefers-reduced-motion`. `None` severity deliberately renders with no color at all (quiet muted text, no pill) rather than a fifth hue — see "Frontend design" below for why.
 
 ### Scoring engine
 
@@ -19,6 +27,14 @@ Built on `ae-cvss-calculator` (metaeffekt, Apache-2.0, zero runtime deps, covers
 ### Frontend design
 
 When designing or building UI in `web/` — new screens, layout/visual changes, or anything touching typography/color/spacing — invoke the `frontend-design` skill first. It's installed and available in this environment (verified 2026-07-08). Use it before writing JSX/CSS, not as an afterthought, so the interview and results screens read as intentionally designed rather than default scaffolding.
+
+For any color tied to *data* specifically — severity/status colors, deltas, chart series, stat tiles — also invoke the `dataviz` skill and run its `validate_palette.js` against candidate hexes rather than picking colors by eye. This is how the current severity palette (`--severity-low/medium/high/critical` in `web/src/styles.css`) was derived: the skill's reserved status palette (good/warning/serious/critical), contrast-checked with near-black text on every fill. `None` deliberately has no color at all (quiet muted text) — a content-driven choice, not an oversight, so don't "fix" it by giving it a hue.
+
+### Verifying frontend changes
+
+This environment has no built-in browser/screenshot tool, but a system Chrome install is available at `/Applications/Google Chrome.app`. To actually see and click through UI changes rather than trusting the code: `npm install --no-save playwright-core` (ad-hoc — do **not** add it to any `package.json`, it's a verification tool, not an app dependency), then drive it with `chromium.launch({ executablePath: "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome", headless: true })`. Screenshot with `page.screenshot({ path, fullPage: true })`.
+
+Pitfall hit while building the interview UI: Playwright's `text=` selector does a case-insensitive substring match, so `page.click("text=Next")` can silently click a non-interactive element whose text happens to contain "next" (e.g. an option description like "...wiped on the **next** automated rebuild") instead of the actual Next button — no error, just a no-op. Use `page.getByRole("button", { name, exact: true })` or scope with a specific CSS class (e.g. `.interview-nav .button-primary`) instead of loose text matching.
 
 ### Commands
 
