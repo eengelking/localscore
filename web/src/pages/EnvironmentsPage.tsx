@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
 import { createEnvironment, deleteEnvironment, listEnvironments } from "../api.js";
 import type { Environment } from "../types.js";
+import { ConfirmModal } from "../components/Modal.js";
+import { Icon } from "../components/Icon.js";
 
 export function EnvironmentsPage({ onOpenInterview }: { onOpenInterview: (environmentId: number) => void }) {
   const [environments, setEnvironments] = useState<Environment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [creating, setCreating] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState<{ id: number; name: string } | null>(null);
 
   function refresh() {
     listEnvironments()
@@ -33,8 +36,8 @@ export function EnvironmentsPage({ onOpenInterview }: { onOpenInterview: (enviro
     }
   }
 
-  async function handleDelete(id: number, name: string) {
-    if (!window.confirm(`Delete "${name}"? This can't be undone.`)) return;
+  async function handleDelete(id: number) {
+    setPendingDelete(null);
     try {
       await deleteEnvironment(id);
       refresh();
@@ -103,13 +106,27 @@ export function EnvironmentsPage({ onOpenInterview }: { onOpenInterview: (enviro
                 <button type="button" className="button" onClick={() => onOpenInterview(env.id)}>
                   {env.interviewCompletion["3.1"] ? "Edit interview" : "Answer interview"}
                 </button>
-                <button type="button" className="button button-quiet" onClick={() => handleDelete(env.id, env.name)}>
-                  Delete
+                <button
+                  type="button"
+                  className="icon-button icon-button-delete"
+                  aria-label="Delete"
+                  onClick={() => setPendingDelete({ id: env.id, name: env.name })}
+                >
+                  <Icon name="trash" />
                 </button>
               </div>
             </li>
           ))}
         </ul>
+      )}
+
+      {pendingDelete && (
+        <ConfirmModal
+          title={`Delete "${pendingDelete.name}"?`}
+          description="This can't be undone."
+          onConfirm={() => handleDelete(pendingDelete.id)}
+          onCancel={() => setPendingDelete(null)}
+        />
       )}
     </div>
   );

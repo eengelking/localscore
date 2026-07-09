@@ -4,6 +4,8 @@ import { NvdVectorPicker } from "../components/NvdVectorPicker.js";
 import { ScoreResult } from "../components/ScoreResult.js";
 import { nvdSeverityToAppSeverity } from "../lib/severity.js";
 import { SeverityPill } from "../components/SeverityPill.js";
+import { ConfirmModal } from "../components/Modal.js";
+import { Icon } from "../components/Icon.js";
 import type { Catalog, SavedVulnerability, SavedVulnerabilityDetail, ScoreResponse } from "../types.js";
 
 interface Viewing {
@@ -23,6 +25,7 @@ export function SavedVulnerabilitiesPage({
   const [error, setError] = useState<string | null>(null);
   const [viewing, setViewing] = useState<Viewing | null>(null);
   const [viewLoading, setViewLoading] = useState<number | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ id: number; label: string } | null>(null);
 
   function refresh() {
     listVulnerabilities()
@@ -69,8 +72,8 @@ export function SavedVulnerabilitiesPage({
     }
   }
 
-  async function handleDelete(id: number, label: string) {
-    if (!window.confirm(`Delete "${label}"? This can't be undone.`)) return;
+  async function handleDelete(id: number) {
+    setPendingDelete(null);
     try {
       await deleteVulnerability(id);
       if (viewing?.id === id) setViewing(null);
@@ -130,13 +133,14 @@ export function SavedVulnerabilitiesPage({
                   </button>
                   <button
                     type="button"
-                    className="button button-quiet"
+                    className="icon-button icon-button-delete"
+                    aria-label="Delete"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDelete(vuln.id, vuln.label);
+                      setPendingDelete({ id: vuln.id, label: vuln.label });
                     }}
                   >
-                    Delete
+                    <Icon name="trash" />
                   </button>
                 </div>
               </div>
@@ -161,6 +165,15 @@ export function SavedVulnerabilitiesPage({
             </li>
           ))}
         </ul>
+      )}
+
+      {pendingDelete && (
+        <ConfirmModal
+          title={`Delete "${pendingDelete.label}"?`}
+          description="This can't be undone."
+          onConfirm={() => handleDelete(pendingDelete.id)}
+          onCancel={() => setPendingDelete(null)}
+        />
       )}
     </div>
   );
