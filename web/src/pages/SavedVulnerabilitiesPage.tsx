@@ -102,25 +102,39 @@ export function SavedVulnerabilitiesPage({
       {vulnerabilities && vulnerabilities.length > 0 && (
         <ul className="environment-list">
           {vulnerabilities.map((vuln) => (
-            <li key={vuln.id} className="stack">
-              <div className="card vulnerability-row">
+            <li key={vuln.id} className="card vulnerability-row">
+              <div
+                className="vulnerability-row-header"
+                onClick={() => handleView(vuln.id)}
+                aria-expanded={viewing?.id === vuln.id}
+              >
                 <div className="environment-row-main">
                   <h3 className="environment-name">{vuln.label}</h3>
                   <div className="badge-row">
                     <span className="badge">{vuln.source === "nvd" ? "NVD" : "Pasted vector"}</span>
                     {vuln.cveId && <span className="badge">{vuln.cveId}</span>}
-                    <SeverityPill severity={nvdSeverityToAppSeverity("", vuln.baseScore)} />
+                    <SeverityPill severity={nvdSeverityToAppSeverity("", vuln.baseScore)} variant="outline" />
                     <span className="score-figure">{vuln.baseScore.toFixed(1)}</span>
                   </div>
                 </div>
                 <div className="environment-row-actions">
-                  <button type="button" className="button" onClick={() => handleView(vuln.id)}>
+                  <button
+                    type="button"
+                    className="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleView(vuln.id);
+                    }}
+                  >
                     {viewLoading === vuln.id ? "Loading…" : viewing?.id === vuln.id ? "Hide" : "View"}
                   </button>
                   <button
                     type="button"
                     className="button button-quiet"
-                    onClick={() => handleDelete(vuln.id, vuln.label)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDelete(vuln.id, vuln.label);
+                    }}
                   >
                     Delete
                   </button>
@@ -128,7 +142,7 @@ export function SavedVulnerabilitiesPage({
               </div>
 
               {viewing?.id === vuln.id && (
-                <div className="stack">
+                <div className="result-row-detail stack">
                   {viewing.detail.vectors.length > 1 && (
                     <NvdVectorPicker
                       vectors={viewing.detail.vectors}
