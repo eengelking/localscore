@@ -15,6 +15,7 @@ interface VulnerabilityRow {
   nvd_json: string | null;
   fetched_at: string | null;
   created_at: string;
+  saved: number;
 }
 
 function serializeCveResponse(cveId: string, row: VulnerabilityRow, cached: boolean) {
@@ -30,7 +31,10 @@ function serializeCveResponse(cveId: string, row: VulnerabilityRow, cached: bool
 }
 
 // NVD lookup per docs/SPEC01.md §7. Cache-first: a cached CVE is served from
-// `vulnerabilities` without a network call unless ?refresh=1 is passed.
+// `vulnerabilities` without a network call unless ?refresh=1 is passed. The
+// `vulnerabilities` table doubles as this cache and the saved-vulnerability
+// list (docs/SPEC02.md §7.1) — lookups here never flip an existing row's
+// `saved` flag, they only keep vector/nvd_json fresh.
 export function cveRoutes(db: Database.Database) {
   const app = new Hono();
 
@@ -73,8 +77,10 @@ export function cveRoutes(db: Database.Database) {
         "UPDATE vulnerabilities SET vector = ?, cvss_version = ?, base_score = ?, nvd_json = ?, fetched_at = ? WHERE id = ?",
       ).run(primary.vector, primary.version, primary.baseScore, nvdJsonText, now, cached.id);
     } else {
+      // New cache-only row: saved = 0 until the user explicitly saves it
+      // (POST /api/vulnerabilities upserts this row and sets saved = 1).
       db.prepare(
-        "INSERT INTO vulnerabilities (label, source, cve_id, vector, cvss_version, base_score, nvd_json, fetched_at, created_at) VALUES (?, 'nvd', ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO vulnerabilities (label, source, cve_id, vector, cvss_version, base_score, nvd_json, fetched_at, created_at, saved) VALUES (?, 'nvd', ?, ?, ?, ?, ?, ?, ?, 0)",
       ).run(cveId, cveId, primary.vector, primary.version, primary.baseScore, nvdJsonText, now, now);
     }
 
@@ -89,6 +95,7 @@ export function cveRoutes(db: Database.Database) {
       nvd_json: nvdJsonText,
       fetched_at: now,
       created_at: cached?.created_at ?? now,
+      saved: cached?.saved ?? 0,
     };
 
     return c.json(serializeCveResponse(cveId, row, false));
