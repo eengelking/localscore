@@ -226,7 +226,7 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
           title={cveTabDisabled ? OFFLINE_TOOLTIP : undefined}
           onClick={() => setMode("cve")}
         >
-          Look up a CVE
+          Look Up a CVE
         </button>
         <button
           type="button"
@@ -279,7 +279,7 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
             <span className="hint">e.g. {PLACEHOLDER}</span>
           </div>
           <button type="submit" className="button button-primary" disabled={scoring || !vector.trim()}>
-            {scoring ? "Scoring…" : "Score it"}
+            {scoring ? "Scoring…" : "Score It"}
           </button>
         </form>
       )}
@@ -303,7 +303,7 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
               />
             </div>
             <button type="submit" className="button button-primary" disabled={lookingUp || !cveId.trim()}>
-              {lookingUp ? "Looking up…" : "Look up"}
+              {lookingUp ? "Looking Up…" : "Look Up"}
             </button>
           </form>
 
@@ -336,7 +336,7 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
               )}
 
               <button type="button" className="button button-primary" onClick={handleScoreCveVector} disabled={scoring}>
-                {scoring ? "Scoring…" : "Score it"}
+                {scoring ? "Scoring…" : "Score It"}
               </button>
 
               {cveLookup.details && <CveDetailsView details={cveLookup.details} />}

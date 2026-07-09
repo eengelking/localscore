@@ -93,7 +93,7 @@ export function EnvironmentsPage({
               onChange={(e) => setNewName(e.target.value)}
             />
             <button type="submit" className="button button-primary" disabled={creating || !newName.trim()}>
-              Create &amp; start interview
+              Create &amp; Start Interview
             </button>
           </div>
         </div>
@@ -148,7 +148,7 @@ export function EnvironmentsPage({
                   </button>
                 ) : (
                   <button type="button" className="button" onClick={() => onOpenEdit(env.id)}>
-                    Answer interview
+                    Answer Interview
                   </button>
                 )}
                 <button

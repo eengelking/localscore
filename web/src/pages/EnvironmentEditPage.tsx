@@ -128,7 +128,7 @@ export function EnvironmentEditPage({
           </p>
         </div>
         <button type="button" className="button button-primary" onClick={() => onOpenInterview(environmentId)}>
-          {hasStarted ? "Re-answer interview" : "Answer interview"}
+          {hasStarted ? "Re-Answer Interview" : "Answer Interview"}
         </button>
       </div>
 
