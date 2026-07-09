@@ -810,6 +810,77 @@ main {
 }
 
 /* ---------------------------------------------------------------------
+   "More" expander (SPEC02 §6.1 / §8.1) — a page-level collapsible/
+   re-collapsible disclosure, distinct from the interview's smaller
+   .fine-print treatment.
+   ------------------------------------------------------------------ */
+
+.more-expander {
+  margin-top: var(--space-2);
+}
+
+.more-expander summary {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--accent);
+  cursor: pointer;
+  width: fit-content;
+  list-style: none;
+}
+
+.more-expander summary::-webkit-details-marker {
+  display: none;
+}
+
+.more-expander summary:hover {
+  text-decoration: underline;
+}
+
+.more-expander-body {
+  margin-top: var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--ink-secondary);
+  max-width: 42rem;
+}
+
+.more-expander-body p {
+  margin-bottom: var(--space-3);
+}
+
+.more-expander-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* ---------------------------------------------------------------------
+   Environment edit view (SPEC02 §8.3)
+   ------------------------------------------------------------------ */
+
+.environment-edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.environment-edit-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.environment-edit-actions-right {
+  display: flex;
+  gap: var(--space-3);
+}
+
+.environment-edit-interview {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+/* ---------------------------------------------------------------------
    Markdown-rendered description fields
    ------------------------------------------------------------------ */
 
@@ -1267,6 +1338,12 @@ main {
   cursor: pointer;
   padding: 0;
   text-decoration: underline;
+}
+
+.page-header .link-button {
+  display: block;
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-2);
 }
 
 .mode-toggle {

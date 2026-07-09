@@ -60,6 +60,13 @@ export function createEnvironment(name: string, description?: string): Promise<E
   });
 }
 
+export function updateEnvironment(id: number, body: { name?: string; description?: string }): Promise<Environment> {
+  return request(`/api/environments/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
 export function deleteEnvironment(id: number): Promise<void> {
   return request(`/api/environments/${id}`, { method: "DELETE" });
 }

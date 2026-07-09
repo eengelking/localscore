@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { EnvironmentEditPage } from "./pages/EnvironmentEditPage.js";
 import { EnvironmentsPage } from "./pages/EnvironmentsPage.js";
 import { InterviewPage } from "./pages/InterviewPage.js";
 import { SavedVulnerabilitiesPage } from "./pages/SavedVulnerabilitiesPage.js";
@@ -7,6 +8,7 @@ import { ThemeToggle } from "./components/ThemeToggle.js";
 
 type View =
   | { name: "environments" }
+  | { name: "environment-edit"; environmentId: number }
   | { name: "interview"; environmentId: number }
   | { name: "score" }
   | { name: "vulnerabilities" };
@@ -58,10 +60,23 @@ export function App() {
 
       <main>
         {view.name === "environments" && (
-          <EnvironmentsPage onOpenInterview={(environmentId) => setView({ name: "interview", environmentId })} />
+          <EnvironmentsPage
+            onOpenInterview={(environmentId) => setView({ name: "interview", environmentId })}
+            onOpenEdit={(environmentId) => setView({ name: "environment-edit", environmentId })}
+          />
+        )}
+        {view.name === "environment-edit" && (
+          <EnvironmentEditPage
+            environmentId={view.environmentId}
+            onDone={() => setView({ name: "environments" })}
+            onOpenInterview={(environmentId) => setView({ name: "interview", environmentId })}
+          />
         )}
         {view.name === "interview" && (
-          <InterviewPage environmentId={view.environmentId} onDone={() => setView({ name: "environments" })} />
+          <InterviewPage
+            environmentId={view.environmentId}
+            onDone={() => setView({ name: "environment-edit", environmentId: view.environmentId })}
+          />
         )}
         {view.name === "score" && (
           <ScorePage onOpenInterview={(environmentId) => setView({ name: "interview", environmentId })} />
