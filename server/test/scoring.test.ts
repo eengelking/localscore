@@ -76,6 +76,16 @@ describe("reference score parity", () => {
     expect(byMetric.AR).toBe("better");
     expect(byMetric.MA).toBe("better");
     expect(byMetric.MS).toBe("neutral"); // base vector's Scope was already Unchanged
+
+    // Each change's `impact` is a running difference of the actual computed
+    // score at each step (see applyEnvironment), so they telescope exactly
+    // to the environment's total delta: 0.0 - 9.8 = -9.8.
+    const totalImpact = Math.round(changes.reduce((sum, c) => sum + c.impact, 0) * 10) / 10;
+    expect(totalImpact).toBe(-9.8);
+    const impactByMetric = Object.fromEntries(changes.map((c) => [c.metric, c.impact]));
+    expect(impactByMetric.MS).toBe(0); // redundant override of the base vector's already-Unchanged Scope
+    expect(impactByMetric.MAV).toBeLessThan(0);
+    expect(impactByMetric.CR).toBeLessThanOrEqual(0);
   });
 
   it("worked example reproduced end-to-end via the real catalog derivation", () => {
@@ -189,6 +199,46 @@ describe("cap/override behavior", () => {
     // "safety" also emits a real scoring effect (MSI/MSA:S) so scores should
     // match between the two runs — S itself must not move the number.
     expect(full.score).toBe(partial.score);
+  });
+});
+
+// Each AppliedChange.impact is a running difference across the sequence of
+// scores produced as changes are applied one at a time (see applyEnvironment)
+// — not an independent per-metric attribution, since CVSS scoring isn't
+// additive. That running-difference construction guarantees the impacts
+// always telescope exactly to the environment's total delta.
+describe("per-line score impact", () => {
+  it("impacts sum exactly to the total delta in a mixed positive/negative example", () => {
+    const metrics = deriveMetrics([
+      { questionId: "reachability", optionId: "internal_only" },
+      { questionId: "network_protections", optionId: "layered" },
+      { questionId: "accounts", optionId: "user_required" },
+      { questionId: "confidentiality", optionId: "catastrophic" },
+      { questionId: "integrity", optionId: "catastrophic" },
+      { questionId: "availability", optionId: "immediate" },
+      { questionId: "blast_radius", optionId: "stepping_stone" },
+    ]);
+    const vector = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H";
+    const { result, changes } = scoreForEnvironment(vector, metrics);
+
+    const totalImpact = Math.round(changes.reduce((sum, c) => sum + c.impact, 0) * 10) / 10;
+    const expectedDelta = Math.round((result.score - 9.8) * 10) / 10;
+    expect(totalImpact).toBe(expectedDelta);
+
+    // Confirms this isn't a trivial all-one-sign case: blast-radius raises
+    // the score (Modified Scope: Unchanged -> Changed) while the
+    // exploitability caps lower it — direction must reflect impact's sign.
+    expect(changes.some((c) => c.impact > 0 && c.direction === "worse")).toBe(true);
+    expect(changes.some((c) => c.impact < 0 && c.direction === "better")).toBe(true);
+  });
+
+  it("a single-change environment has no ambiguity: impact equals the total delta", () => {
+    const metrics = deriveMetrics([{ questionId: "reachability", optionId: "internal_only" }]);
+    const vector = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H";
+    const { result, changes } = scoreForEnvironment(vector, metrics);
+    expect(changes).toHaveLength(1);
+    const expectedDelta = Math.round((result.score - 9.8) * 10) / 10;
+    expect(changes[0]?.impact).toBe(expectedDelta);
   });
 });
 

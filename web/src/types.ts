@@ -76,6 +76,7 @@ export interface ScoreChange {
   toValue: string;
   toValueName: string;
   effect: "override" | "cap";
+  impact: number;
   direction: "worse" | "better" | "neutral";
   questionId: string;
   optionId: string;
