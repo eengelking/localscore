@@ -77,15 +77,15 @@ export function ScoreResult({
                 <div className="save-form-actions">
                   <button
                     type="button"
-                    className="button button-primary"
+                    className="button button-save"
                     onClick={handleConfirmSave}
                     disabled={saving}
                   >
-                    {saving ? "Saving…" : "Confirm"}
+                    {saving ? "Saving…" : "Save"}
                   </button>
                   <button
                     type="button"
-                    className="button button-quiet"
+                    className="button button-cancel"
                     onClick={() => {
                       setSaveOpen(false);
                       setSaveError(null);

@@ -45,6 +45,20 @@
   --severity-high-text: #cb4a17;
   --severity-critical-text: #d03b3b;
 
+  /* Semantic action colors (SPEC02 §2.2) — deliberately distinct hues from
+     the severity palette above, which is reserved and never reused. Solid
+     fills (--action-green/--action-yellow) pair with near-black text, same
+     pattern as the severity pills; validated 4.5:1+ via the dataviz skill's
+     validate_palette.js contrast() against both light/dark fills. The
+     "-text" variants are for outline/icon-only usage (Delete, Edit) where
+     the color sits directly on the app surface as foreground — separately
+     validated per-theme like --severity-*-text above. */
+  --action-green: #1a8f4c;
+  --action-yellow: #e3ae0c;
+  --action-ink: #0b0b0b;
+  --action-red-text: #c23b2f;
+  --action-yellow-text: #8a6300;
+
   --font-display: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --font-body: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
 
@@ -80,6 +94,14 @@
   color-scheme: light dark;
 }
 
+/* Dark-mode tokens are defined twice on purpose: once behind the media
+   query (for the pre-JS/no-stored-preference default, so the page never
+   flashes the wrong theme before React mounts) and once behind
+   :root[data-theme="dark"] (higher specificity than a bare :root, so the
+   in-app toggle always wins regardless of system preference — SPEC02 §3).
+   :root[data-theme="light"] mirrors the base :root light values so an
+   explicit light choice also overrides a system dark preference. Keep the
+   three blocks in sync when editing dark-mode tokens. */
 @media (prefers-color-scheme: dark) {
   :root {
     --surface: #0d0d0d;
@@ -103,7 +125,60 @@
     --severity-medium-text: #fab219;
     --severity-high-text: #ec835a;
     --severity-critical-text: #d75858;
+
+    --action-red-text: #e0685b;
+    --action-yellow-text: #e0b400;
   }
+}
+
+:root[data-theme="dark"] {
+  --surface: #0d0d0d;
+  --surface-card: #1a1a19;
+  --surface-sunken: #151513;
+  --ink: #ffffff;
+  --ink-secondary: #c3c2b7;
+  --ink-muted: #898781;
+  --border: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.18);
+
+  --accent: #7c93f0;
+  --accent-ink: #0d0d0d;
+  --accent-wash: rgba(124, 147, 240, 0.12);
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
+
+  --severity-low-text: #0ca30c;
+  --severity-medium-text: #fab219;
+  --severity-high-text: #ec835a;
+  --severity-critical-text: #d75858;
+
+  --action-red-text: #e0685b;
+  --action-yellow-text: #e0b400;
+}
+
+:root[data-theme="light"] {
+  --surface: #f9f9f7;
+  --surface-card: #fcfcfb;
+  --surface-sunken: #f0efec;
+  --ink: #0b0b0b;
+  --ink-secondary: #52514e;
+  --ink-muted: #898781;
+  --border: rgba(11, 11, 11, 0.1);
+  --border-strong: rgba(11, 11, 11, 0.18);
+
+  --accent: #3452c4;
+  --accent-ink: #ffffff;
+  --accent-wash: rgba(52, 82, 196, 0.08);
+
+  --shadow-card: 0 1px 2px rgba(11, 11, 11, 0.04), 0 1px 1px rgba(11, 11, 11, 0.03);
+
+  --severity-low-text: #0a880a;
+  --severity-medium-text: #9c6b03;
+  --severity-high-text: #cb4a17;
+  --severity-critical-text: #d03b3b;
+
+  --action-red-text: #c23b2f;
+  --action-yellow-text: #8a6300;
 }
 
 /* ---------------------------------------------------------------------
@@ -215,6 +290,7 @@ a {
 .nav {
   display: flex;
   gap: var(--space-1);
+  margin-right: auto;
 }
 
 .nav-link {
@@ -349,6 +425,97 @@ main {
 .button-quiet:hover {
   background: var(--surface-sunken);
   color: var(--ink);
+}
+
+/* Semantic action buttons (SPEC02 §2.2). Save/Cancel share .button's
+   size/padding/radius and only override fill + text color; Delete/Edit are
+   icon-only and use .icon-button below instead. */
+.button-save {
+  border-color: var(--action-green);
+  background: var(--action-green);
+  color: var(--action-ink);
+}
+
+.button-save:hover {
+  filter: brightness(1.08);
+  background: var(--action-green);
+}
+
+.button-cancel {
+  border-color: var(--action-yellow);
+  background: var(--action-yellow);
+  color: var(--action-ink);
+}
+
+.button-cancel:hover {
+  filter: brightness(1.08);
+  background: var(--action-yellow);
+}
+
+/* Icon-only square button — same footprint regardless of which icon it
+   carries, so Delete/Edit controls line up next to each other and against
+   text buttons of the same row. */
+.icon-button {
+  appearance: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: transparent;
+  color: var(--ink-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  flex-shrink: 0;
+}
+
+.icon-button:hover {
+  background: var(--surface-sunken);
+  color: var(--ink);
+}
+
+.icon-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.icon-button-delete {
+  border-color: var(--action-red-text);
+  color: var(--action-red-text);
+}
+
+.icon-button-delete:hover {
+  background: color-mix(in srgb, var(--action-red-text) 12%, transparent);
+  color: var(--action-red-text);
+}
+
+.icon-button-edit {
+  border-color: var(--action-yellow-text);
+  color: var(--action-yellow-text);
+}
+
+.icon-button-edit:hover {
+  background: color-mix(in srgb, var(--action-yellow-text) 14%, transparent);
+  color: var(--action-yellow-text);
+}
+
+.icon-button-quiet {
+  border-color: transparent;
+}
+
+/* Text-labeled destructive confirm button (inside the delete confirmation
+   modal) — same red family as .icon-button-delete, but a normal-sized
+   outline button with a label rather than an icon-only square. */
+.button-delete-confirm {
+  border-color: var(--action-red-text);
+  color: var(--action-red-text);
+  background: transparent;
+}
+
+.button-delete-confirm:hover {
+  background: color-mix(in srgb, var(--action-red-text) 12%, transparent);
 }
 
 .field {
@@ -521,6 +688,64 @@ main {
   color: var(--severity-critical);
   font-size: var(--text-sm);
   font-weight: 600;
+}
+
+/* ---------------------------------------------------------------------
+   Modal (SPEC02 §2.4) — shared by delete confirmations and the interview
+   question-help modal.
+   ------------------------------------------------------------------ */
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-5);
+  z-index: 100;
+}
+
+.modal {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.25);
+  padding: var(--space-6);
+  width: 100%;
+  max-width: 26rem;
+  max-height: calc(100vh - var(--space-8));
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  margin-bottom: var(--space-3);
+}
+
+.modal-header h2 {
+  font-size: var(--text-lg);
+}
+
+.modal-body {
+  font-size: var(--text-sm);
+  color: var(--ink-secondary);
+}
+
+.modal-body p + p {
+  margin-top: var(--space-3);
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  margin-top: var(--space-5);
 }
 
 /* ---------------------------------------------------------------------

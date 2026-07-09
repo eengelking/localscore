@@ -3,6 +3,7 @@ import { EnvironmentsPage } from "./pages/EnvironmentsPage.js";
 import { InterviewPage } from "./pages/InterviewPage.js";
 import { SavedVulnerabilitiesPage } from "./pages/SavedVulnerabilitiesPage.js";
 import { ScorePage } from "./pages/ScorePage.js";
+import { ThemeToggle } from "./components/ThemeToggle.js";
 
 type View =
   | { name: "environments" }
@@ -41,16 +42,17 @@ export function App() {
               className={`nav-link ${view.name === "score" ? "is-active" : ""}`}
               onClick={() => setView({ name: "score" })}
             >
-              Score a vulnerability
+              Scoring
             </button>
             <button
               type="button"
               className={`nav-link ${view.name === "vulnerabilities" ? "is-active" : ""}`}
               onClick={() => setView({ name: "vulnerabilities" })}
             >
-              Saved vulnerabilities
+              Saved
             </button>
           </nav>
+          <ThemeToggle />
         </div>
       </header>
 
