@@ -8,6 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Before committing, always update documentation affected by the change — `CLAUDE.md` (Status, and whichever architecture section covers what changed), `README.md`, `API.md`, and `SPEC.md` if the change alters mandated behavior. Check each for now-stale claims (a feature described as "not built yet" that this change built, a route/shape that changed, a screen that didn't exist before) and fix them in the same commit as the code, not a follow-up. Do this as a deliberate last step prior to committing, not opportunistically while coding.
 - When the work is done, commit the changes and push the branch to the remote.
 - After pushing, generate a Markdown summary of the changes so the user can open the PR on GitHub manually — do not open the PR yourself. (This is manual for now; may be automated later.)
+- **Any non-dev container build (i.e. a build meant to be published, not a local `localscore:local` verification build) MUST be tagged, pushed, and verified per "Publishing a release image" below** — never `podman push` an ad-hoc/untagged image or push only `latest`.
 
 ## Status
 
@@ -71,7 +72,7 @@ Run from the repo root unless noted.
 - `npm run typecheck` / `npm run lint` — both workspaces.
 - `podman build --format docker -t localscore .` then `podman run ...` — container build per SPEC.md §9. The maintainer uses **Podman, not Docker**; the Dockerfile/compose.yaml are plain OCI and must keep working under Docker too, but write any documentation/examples with `podman`. **`--format docker` is required for a direct `podman build`** — Podman's default OCI build format silently drops the Dockerfile's `HEALTHCHECK` instruction with just a warning, no error.
 - `podman compose up` — builds and runs via `compose.yaml`. Verified this does **not** need `--format docker`: going through the external `docker-compose` provider already produces a Docker-format image with `HEALTHCHECK` intact (confirmed by `podman inspect` reporting `healthy`). So the flag only matters for a bare `podman build`, not for compose.
-- Published image: `docker.io/eengelking/localscore` (tags `latest`, `0.1.0`) — pushed with `podman push`. SPEC.md §9's example commands reference `ghcr.io/<owner>/localscore`; the maintainer chose Docker Hub instead, so README.md documents `docker.io/eengelking/localscore` as the real, working registry path.
+- Published image: `docker.io/eengelking/localscore` (tags `latest`, `0.1.0`) — pushed with `podman push`. SPEC.md §9's example commands reference `ghcr.io/<owner>/localscore`; the maintainer chose Docker Hub instead, so README.md documents `docker.io/eengelking/localscore` as the real, working registry path. See "Publishing a release image" below for the required tag/push/verify procedure — never push an untagged or `latest`-only build.
 
 Verified end-to-end (2026-07-08): both `podman build --format docker` + `podman run`, and `podman compose up`, produce a container `podman inspect` reports as `healthy`, with the API/frontend reachable and a full create-environment round trip working.
 
@@ -83,6 +84,22 @@ Two distinct testing procedures — don't conflate them:
 
 - **Test 2 (npm, during development)** — the default while iterating. Build and run the built server directly on port 8081 (`PORT=8081`), not the Vite dev server: `npm run build && PORT=8081 node server/dist/index.js`. This matches how the container actually runs (one process, built frontend + API) without the overhead of a full container build on every check. **Always stop the process cleanly when done** (kill it — don't leave it running in the background between tasks). Use this for functional checks, API round trips, and UI verification via Playwright (see "Verifying frontend changes" above) throughout the work.
 - **Test 1 (container, last step before merge)** — the final gate confirming the container builds and runs as it will in production, on port 8080. Container name `localscore-test`, image tag `localscore:local`. Before building: check whether a container named `localscore-test` (or anything else) is already bound to port 8080 — if so, **ask the user before taking it down**, don't stop it unilaterally. Always build a fresh image (don't reuse a stale one) — `podman build --format docker -t localscore:local .` — then `podman run --name localscore-test -p 8080:8080 ...` and confirm `/api/health` reports healthy and the frontend loads. Clean up afterward per "Container testing cleanup" below (ask before removing).
+
+### Publishing a release image
+
+This is separate from Test 1 (which only builds `localscore:local` for local verification and is never pushed). A release build is any container image meant to be published to `docker.io/eengelking/localscore`.
+
+1. **Decide the version bump.** Current version lives in the root `package.json` (`server/package.json` and `web/package.json` are kept in sync with it — bump all three together). Default to a **patch or minor bump** from the prior published tag (e.g. `0.1.0` → `0.1.1` or `0.2.0`) for normal releases. Only bump the **major** version (`0.x.y` → `1.0.0`) when the user has explicitly said this is a major/breaking release — never infer "major" on your own from the diff size. If it's ambiguous which bump applies, ask the user rather than guessing.
+2. **Update the version** in `package.json`, `server/package.json`, `web/package.json` to the new version number, and update any docs that literally quote the current published tag (README.md's image line, CLAUDE.md's "Published image" line below) so they don't go stale.
+3. **Build fresh** — don't reuse a stale local image: `podman build --format docker -t localscore:<new-version> .` (`--format docker` is required for the `HEALTHCHECK` to survive, per the gotcha above).
+4. **Tag** the built image for the registry with both the new version and `latest`:
+   - `podman tag localscore:<new-version> docker.io/eengelking/localscore:<new-version>`
+   - `podman tag localscore:<new-version> docker.io/eengelking/localscore:latest`
+5. **Push both tags**:
+   - `podman push docker.io/eengelking/localscore:<new-version>`
+   - `podman push docker.io/eengelking/localscore:latest`
+6. **Verify the push succeeded** — don't just trust a clean exit code from `podman push`. Confirm the new tag is actually live on the registry, e.g. `podman manifest inspect docker.io/eengelking/localscore:<new-version>` (or `skopeo inspect docker://docker.io/eengelking/localscore:<new-version>` if available) and check that `latest` now resolves to the same digest as `<new-version>`.
+7. Clean up the local release build per "Container testing cleanup" below (ask before removing) once the push is verified.
 
 ### Container testing cleanup
 
