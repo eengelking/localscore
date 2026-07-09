@@ -5,6 +5,7 @@ import type {
   CveResponse,
   Environment,
   EnvironmentDetail,
+  MajorCvesResponse,
   SavedVulnerability,
   SavedVulnerabilityDetail,
   ScoreResponse,
@@ -88,6 +89,10 @@ export function scoreVector(vector: string): Promise<ScoreResponse> {
 export function lookupCve(cveId: string, opts?: { refresh?: boolean }): Promise<CveResponse> {
   const qs = opts?.refresh ? "?refresh=1" : "";
   return request(`/api/cve/${encodeURIComponent(cveId)}${qs}`);
+}
+
+export function getMajorCves(): Promise<MajorCvesResponse> {
+  return request("/api/major-cves");
 }
 
 export function listVulnerabilities(): Promise<SavedVulnerability[]> {

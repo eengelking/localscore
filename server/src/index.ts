@@ -11,6 +11,7 @@ import { catalogRoutes } from "./routes/catalog.js";
 import { cveRoutes } from "./routes/cve.js";
 import { environmentRoutes } from "./routes/environments.js";
 import { healthRoutes } from "./routes/health.js";
+import { majorCvesRoutes } from "./routes/major-cves.js";
 import { scoreRoutes } from "./routes/score.js";
 import { vulnerabilityRoutes } from "./routes/vulnerabilities.js";
 
@@ -34,6 +35,7 @@ export function createApp(db = openDb()) {
   api.route("/", environmentRoutes(db));
   api.route("/", scoreRoutes(db));
   api.route("/", cveRoutes(db));
+  api.route("/", majorCvesRoutes(db));
   api.route("/", vulnerabilityRoutes(db));
   app.route("/api", api);
 

@@ -190,8 +190,6 @@ curl -X POST http://localhost:8080/api/score -H 'Content-Type: application/json'
 
 ## NVD CVE lookup
 
-**Not yet wired into the frontend** — this only works via direct API calls today (see `CLAUDE.md`).
-
 ```bash
 curl http://localhost:8080/api/cve/CVE-2021-44228
 ```
@@ -225,6 +223,26 @@ If NVD can't be reached and there's no cache, this 502s with a friendly message 
 ```
 
 NVD's unauthenticated rate limit is low (~5 requests/30s); set `NVD_API_KEY` (see `.env.example`) to raise it.
+
+## Major CVEs
+
+Top 10 most critical CVEs published in the last 30 days, sourced from NVD (`docs/SPEC02.md` §6.5). A distinct endpoint from the per-CVE lookup above — it is not a way to look up a specific CVE.
+
+```bash
+curl http://localhost:8080/api/major-cves
+```
+
+```json
+{
+  "cached": true,
+  "fetchedAt": "2026-07-09T09:00:00.000Z",
+  "cves": [
+    { "cveId": "CVE-2026-57983", "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", "version": "3.1", "baseScore": 10, "baseSeverity": "CRITICAL", "published": "2026-07-03T00:00:00.000" }
+  ]
+}
+```
+
+Server-cached for 24 hours (single-row cache table, `fetched_at` disclosed in the response) with lazy refresh on access — no background scheduler. A refresh failure serves the stale cache rather than erroring, same as the per-CVE lookup above; if there's no cache at all and the refresh fails, this 502s the same way.
 
 ## Saved vulnerabilities
 

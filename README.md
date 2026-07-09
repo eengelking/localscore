@@ -26,6 +26,8 @@ The implementation spec is done ([`docs/SPEC01.md`](./docs/SPEC01.md)), and the 
 - **Scoring works.** `POST /api/score` parses a CVSS v4.0/v3.1/v3.0 vector and returns the base score plus every environment's modified score, backed by `ae-cvss-calculator` validated against FIRST's reference vectors — including the exact worked example from `docs/SPEC01.md` §6 (a `9.8` base score landing at `0.0` for a disposable dev environment).
 - **A real frontend** — environments list, interview wizard, and a results screen (paste a vector or look up a CVE) where you see each environment's modified score, with the animated "a 10 might actually be a zero" reveal.
 - **NVD CVE lookup** (`GET /api/cve/:cveId`) — cache-first, throttled, and tolerant of NVD being unreachable — plus a saved-vulnerabilities screen backed by the saved-vulnerability CRUD routes.
+- **A Major CVEs feed** (`GET /api/major-cves`) — the top 10 most critical CVEs published in the last 30 days, refreshed daily, one click away from scoring against your environments.
+- A design system with light/dark theming, markdown-rendered descriptions, and offline-aware UI — the CVE-lookup and Major CVEs tabs disable themselves with an explanatory tooltip when there's no network, rather than hanging or erroring.
 - A container image that builds and runs cleanly under Podman (or Docker), passes its own `HEALTHCHECK`, and comes in under 300 MB.
 - **A published image** — `docker.io/eengelking/localscore` (tags `latest` and `0.1.0`), so you can run it without building locally.
 

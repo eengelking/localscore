@@ -1293,17 +1293,16 @@ main {
 }
 
 /* ---------------------------------------------------------------------
-   More-vulnerable warning (SPEC02 §7.4) — shown whenever an environment's
-   modified score exceeds the base score, in both the Scoring results and
-   the saved-vulnerability detail view (both render through
-   EnvironmentResultRow, so one implementation covers both).
+   Warning callout — a red-accented card + icon, used anywhere the design
+   system needs to say something went wrong or is worth flagging without
+   resorting to bare red text (SPEC02 §6.3's CVE-lookup-error banner and
+   §7.4's more-vulnerable warning both use this same base).
    ------------------------------------------------------------------ */
 
-.more-vulnerable-warning {
+.callout-warning {
   display: flex;
   align-items: flex-start;
   gap: var(--space-2);
-  margin: var(--space-3) 0;
   padding: var(--space-3) var(--space-4);
   border-radius: var(--radius-md);
   background: var(--warning-wash);
@@ -1312,15 +1311,23 @@ main {
   font-size: var(--text-sm);
 }
 
-.more-vulnerable-warning svg {
+.callout-warning svg {
   flex-shrink: 0;
   margin-top: 0.15em;
   color: var(--action-red-text);
 }
 
-.more-vulnerable-warning p {
+.callout-warning p {
   margin: 0;
   color: var(--ink);
+}
+
+/* Shown inside EnvironmentResultRow's expanded detail whenever an
+   environment's modified score exceeds the base score (§7.4) — both the
+   Scoring results and the saved-vulnerability detail view render through
+   that component, so one implementation covers both. */
+.more-vulnerable-warning {
+  margin: var(--space-3) 0;
 }
 
 .sr-only {
@@ -1439,6 +1446,75 @@ main {
   box-shadow: var(--shadow-card);
 }
 
+.mode-toggle-option:disabled {
+  color: var(--ink-muted);
+  cursor: not-allowed;
+}
+
+/* ---------------------------------------------------------------------
+   Major CVEs tab (SPEC02 §6.5)
+   ------------------------------------------------------------------ */
+
+.major-cves-meta {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  margin-bottom: var(--space-3);
+}
+
+.major-cves-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.major-cve-row {
+  appearance: none;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-display);
+}
+
+.major-cve-row:hover {
+  background: var(--surface-sunken);
+}
+
+.major-cve-id {
+  font-weight: 600;
+}
+
+.major-cve-figures {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.major-cve-date {
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+  min-width: 6rem;
+  text-align: right;
+}
+
+@media (max-width: 480px) {
+  .major-cve-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2);
+  }
+}
+
 .cve-lookup-result {
   display: flex;
   flex-direction: column;
@@ -1489,6 +1565,12 @@ main {
 .save-form-actions {
   display: flex;
   gap: var(--space-2);
+}
+
+.save-overwrite-note {
+  font-size: var(--text-sm);
+  color: var(--ink-secondary);
+  font-style: italic;
 }
 
 .vulnerability-row {
