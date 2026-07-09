@@ -176,7 +176,9 @@ When you `podman run` a container to manually verify something (health check, a 
 
 ## Source of truth
 
-**`docs/SPEC03.md` (v1.2) is fully implemented and, like `docs/SPEC01.md` (v1) and `docs/SPEC02.md` (v1.1) before it, is now historical rather than active** — none of the three drive new work. "docs/SPEC0N.md §N" citations throughout this file and the code are historical rationale for existing behavior, not a to-do list. Future spec rounds continue the numbering in `docs/` (SPEC04.md, …); when one lands, update this section to point at it as the active contract.
+**`docs/SPEC04.md` (v1.3) is the active implementation contract** — it is the current to-do list: a color-system refresh (accent-colored neutral buttons/badges/tabs, legible Edit control, white-family light-theme pill text), Title Case button labels, a per-environment score-raising warning on the Environments pages, NVD-description prefill on CVE saves, and a collapsed-by-default CVE-details disclosure. Nothing in SPEC04 has been implemented yet.
+
+`docs/SPEC01.md` (v1), `docs/SPEC02.md` (v1.1), and `docs/SPEC03.md` (v1.2) are fully implemented and historical — "docs/SPEC0N.md §N" citations for those three throughout this file and the code are historical rationale for existing behavior, not a to-do list. Future spec rounds continue the numbering in `docs/` (SPEC05.md, …); when one lands, update this section to point at it as the active contract.
 
 ## What this project is
 

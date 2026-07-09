@@ -19,7 +19,9 @@ A 9.8 "Critical" against a production database might land at 9.8 for your data c
 
 ## Status
 
-The v1 ([`docs/SPEC01.md`](./docs/SPEC01.md)), v1.1 ([`docs/SPEC02.md`](./docs/SPEC02.md)), and v1.2 ([`docs/SPEC03.md`](./docs/SPEC03.md)) specs are all fully implemented, and the app works end-to-end:
+The v1 ([`docs/SPEC01.md`](./docs/SPEC01.md)), v1.1 ([`docs/SPEC02.md`](./docs/SPEC02.md)), and v1.2 ([`docs/SPEC03.md`](./docs/SPEC03.md)) specs are all fully implemented, and the app works end-to-end. The next round of work (a color-system refresh, per-environment risk warnings, and other UI improvements) is specified in [`docs/SPEC04.md`](./docs/SPEC04.md) (v1.3, not yet implemented).
+
+What works today:
 
 - An npm-workspaces monorepo (`server/` = Hono + SQLite API, `web/` = React + Vite frontend), served from one process on one port.
 - The full 12-question interview catalog, and environment CRUD — you can create an environment, save interview answers, and have them derive into stored CVSS environmental metrics.
