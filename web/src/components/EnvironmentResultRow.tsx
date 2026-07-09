@@ -55,7 +55,7 @@ export function EnvironmentResultRow({
         <div className="result-row-detail">
           <p className="vector-string">{result.vector}</p>
           {result.delta > 0 && (
-            <div className="more-vulnerable-warning">
+            <div className="callout-warning more-vulnerable-warning">
               <Icon name="warning" size={18} />
               <p>Higher than the base score — this environment's answers make this vulnerability more severe here.</p>
             </div>

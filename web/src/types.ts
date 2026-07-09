@@ -139,6 +139,21 @@ export interface CveResponse {
   vectors: NvdVectorOption[];
 }
 
+export interface MajorCveEntry {
+  cveId: string;
+  vector: string;
+  version: "4.0" | "3.1" | "3.0";
+  baseScore: number;
+  baseSeverity: string;
+  published: string;
+}
+
+export interface MajorCvesResponse {
+  cached: boolean;
+  fetchedAt: string;
+  cves: MajorCveEntry[];
+}
+
 export interface SavedVulnerability {
   id: number;
   label: string;

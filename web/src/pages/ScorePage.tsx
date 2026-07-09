@@ -1,19 +1,40 @@
 import { useEffect, useRef, useState } from "react";
-import { getCatalog, lookupCve, saveVulnerability, scoreVector } from "../api.js";
+import {
+  ApiRequestError,
+  getCatalog,
+  getMajorCves,
+  listVulnerabilities,
+  lookupCve,
+  saveVulnerability,
+  scoreVector,
+} from "../api.js";
+import { MoreExpander } from "../components/MoreExpander.js";
 import { NvdVectorPicker } from "../components/NvdVectorPicker.js";
 import { ScoreResult } from "../components/ScoreResult.js";
-import type { Catalog, CveResponse, ScoreResponse } from "../types.js";
+import { SeverityPill } from "../components/SeverityPill.js";
+import { WarningBanner } from "../components/WarningBanner.js";
+import { useOnlineStatus } from "../lib/online.js";
+import { nvdSeverityToAppSeverity } from "../lib/severity.js";
+import type { Catalog, CveResponse, MajorCvesResponse, SavedVulnerability, ScoreResponse } from "../types.js";
 
 const PLACEHOLDER = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H";
+const OFFLINE_TOOLTIP = "Internet connection required to look up a CVE.";
+
+type Mode = "cve" | "paste" | "major";
 
 function formatFetchedAt(iso: string | null): string {
   if (!iso) return "";
   return new Date(iso).toLocaleString();
 }
 
+function formatPublished(iso: string): string {
+  return new Date(iso).toLocaleDateString();
+}
+
 export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId: number) => void }) {
   const [catalog, setCatalog] = useState<Catalog | null>(null);
-  const [mode, setMode] = useState<"paste" | "cve">("paste");
+  const [isOnline, setIsOnline] = useOnlineStatus();
+  const [mode, setMode] = useState<Mode>(() => (typeof navigator === "undefined" || navigator.onLine ? "cve" : "paste"));
   const vectorInputRef = useRef<HTMLTextAreaElement>(null);
 
   const [vector, setVector] = useState("");
@@ -29,6 +50,15 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
   const [refreshing, setRefreshing] = useState(false);
   const [selectedVectorIndex, setSelectedVectorIndex] = useState(0);
 
+  const [majorCves, setMajorCves] = useState<MajorCvesResponse | null>(null);
+  const [majorCvesError, setMajorCvesError] = useState<string | null>(null);
+  const [majorCvesLoading, setMajorCvesLoading] = useState(true);
+
+  const [savedVulnerabilities, setSavedVulnerabilities] = useState<SavedVulnerability[] | null>(null);
+
+  const majorCvesTabDisabled = !isOnline && !majorCves;
+  const cveTabDisabled = !isOnline;
+
   useEffect(() => {
     getCatalog()
       .then(setCatalog)
@@ -36,8 +66,41 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
   }, []);
 
   useEffect(() => {
+    listVulnerabilities()
+      .then(setSavedVulnerabilities)
+      .catch(() => undefined);
+  }, []);
+
+  function refreshSavedVulnerabilities() {
+    listVulnerabilities()
+      .then(setSavedVulnerabilities)
+      .catch(() => undefined);
+  }
+
+  useEffect(() => {
+    setMajorCvesLoading(true);
+    getMajorCves()
+      .then((res) => {
+        setMajorCves(res);
+        setMajorCvesError(null);
+      })
+      .catch((err) => {
+        setMajorCvesError(err instanceof Error ? err.message : "Couldn't load major CVEs right now.");
+      })
+      .finally(() => setMajorCvesLoading(false));
+  }, []);
+
+  useEffect(() => {
     if (mode === "paste") vectorInputRef.current?.focus();
   }, [mode]);
+
+  // If we go offline while on a tab that requires the network, fall back to
+  // the paste tab per SPEC02 §6.4.
+  useEffect(() => {
+    if (!isOnline && (mode === "cve" || (mode === "major" && !majorCves))) {
+      setMode("paste");
+    }
+  }, [isOnline, mode, majorCves]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -68,7 +131,14 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
     } catch (err) {
       setCveLookup(null);
       setCveError(err instanceof Error ? err.message : "Couldn't look up that CVE");
-      setMode("paste");
+      // NVD-unreachable specifically (not "not found" / "no CVSS data") means
+      // we likely have no real connectivity — redirect to the paste tab per
+      // v1 behavior (§6.3), and treat it as evidence the browser is offline
+      // even if navigator.onLine disagreed.
+      if (err instanceof ApiRequestError && err.status === 502) {
+        setIsOnline(false);
+        setMode("paste");
+      }
     } finally {
       setLookingUp(false);
       setRefreshing(false);
@@ -98,38 +168,97 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
     }
   }
 
+  function handleMajorCveClick(id: string) {
+    setMode("cve");
+    setCveId(id);
+    void performCveLookup(id, false);
+  }
+
+  const overwriteTarget =
+    result && savedVulnerabilities
+      ? savedVulnerabilities.find((v) =>
+          lookupSource?.cveId ? v.cveId === lookupSource.cveId : v.vector === result.base.vector,
+        )
+      : undefined;
+
   return (
     <div className="stack">
       <div className="page-header">
         <div>
-          <h1>Score a vulnerability</h1>
-          <p>Paste a CVSS v4.0, v3.1, or v3.0 vector — or look up a CVE — to see the base score against every environment you've defined.</p>
+          <h1>Scoring</h1>
+          <p>
+            Paste a CVSS score or vector from a scanner, or look up a CVE by ID, to see how it plays out for every
+            location you've defined — not just the worst case.
+          </p>
+          <MoreExpander>
+            <p>
+              A <strong>CVE</strong> (Common Vulnerabilities and Exposures) is a published, uniquely-numbered
+              vulnerability record — you'll find CVE IDs in scanner output, vendor advisories, and security news. A{" "}
+              <strong>CVSS vector</strong> is the short string (like <code>{PLACEHOLDER}</code>) that encodes how
+              severe a vulnerability is under the official scoring standard; it's what NVD, MITRE, and most scanners
+              (Trivy, Grype, and similar) report alongside a CVE.
+            </p>
+            <p>
+              localscore takes that vector, applies the environmental profile you built in the interview for each
+              location, and shows you the score that actually applies there — which can be much lower (or higher)
+              than the published worst-case number.
+            </p>
+            <p>
+              Look one up directly: <a href="https://nvd.nist.gov/vuln/search" target="_blank" rel="noopener noreferrer">NVD's CVE search</a>{" "}
+              or <a href="https://cve.mitre.org/cve/search_cve_list.html" target="_blank" rel="noopener noreferrer">MITRE's CVE list</a>.
+            </p>
+          </MoreExpander>
         </div>
       </div>
 
-      <div className="mode-toggle" role="tablist">
+      <div className="mode-toggle" role="tablist" aria-label="Scoring input mode">
         <button
           type="button"
           role="tab"
-          aria-selected={mode === "paste"}
-          className={`mode-toggle-option ${mode === "paste" ? "is-active" : ""}`}
-          onClick={() => setMode("paste")}
-        >
-          Paste a vector
-        </button>
-        <button
-          type="button"
-          role="tab"
+          id="tab-cve"
           aria-selected={mode === "cve"}
+          aria-controls="panel-cve"
           className={`mode-toggle-option ${mode === "cve" ? "is-active" : ""}`}
+          disabled={cveTabDisabled}
+          title={cveTabDisabled ? OFFLINE_TOOLTIP : undefined}
           onClick={() => setMode("cve")}
         >
           Look up a CVE
         </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-paste"
+          aria-selected={mode === "paste"}
+          aria-controls="panel-paste"
+          className={`mode-toggle-option ${mode === "paste" ? "is-active" : ""}`}
+          onClick={() => setMode("paste")}
+        >
+          Paste a Vector
+        </button>
+        <button
+          type="button"
+          role="tab"
+          id="tab-major"
+          aria-selected={mode === "major"}
+          aria-controls="panel-major"
+          className={`mode-toggle-option ${mode === "major" ? "is-active" : ""}`}
+          disabled={majorCvesTabDisabled}
+          title={majorCvesTabDisabled ? OFFLINE_TOOLTIP : undefined}
+          onClick={() => setMode("major")}
+        >
+          Major CVEs
+        </button>
       </div>
 
       {mode === "paste" && (
-        <form className="card score-form" onSubmit={handleSubmit}>
+        <form
+          className="card score-form"
+          id="panel-paste"
+          role="tabpanel"
+          aria-labelledby="tab-paste"
+          onSubmit={handleSubmit}
+        >
           <div className="field">
             <label htmlFor="vector-input">CVSS vector</label>
             <textarea
@@ -150,7 +279,7 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
       )}
 
       {mode === "cve" && (
-        <div className="card score-form">
+        <div className="card score-form" id="panel-cve" role="tabpanel" aria-labelledby="tab-cve">
           <form className="score-form" onSubmit={handleCveSubmit}>
             <div className="field">
               <label htmlFor="cve-input">CVE ID</label>
@@ -167,6 +296,8 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
               {lookingUp ? "Looking up…" : "Look up"}
             </button>
           </form>
+
+          {cveError && <WarningBanner>{cveError}</WarningBanner>}
 
           {cveLookup && (
             <div className="cve-lookup-result">
@@ -202,7 +333,41 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
         </div>
       )}
 
-      {cveError && <p className="error-text">{cveError}</p>}
+      {mode === "major" && (
+        <div className="card major-cves-panel" id="panel-major" role="tabpanel" aria-labelledby="tab-major">
+          {majorCvesLoading && !majorCves && <p>Loading…</p>}
+          {majorCvesError && !majorCves && <WarningBanner>{majorCvesError}</WarningBanner>}
+          {majorCves && (
+            <>
+              <p className="major-cves-meta">
+                {majorCves.cached ? `Last updated ${formatFetchedAt(majorCves.fetchedAt)}` : "Updated just now"}
+              </p>
+              {majorCves.cves.length === 0 ? (
+                <p>No critical CVEs published in the last 30 days.</p>
+              ) : (
+                <ul className="major-cves-list">
+                  {majorCves.cves.map((cve) => (
+                    <li key={cve.cveId}>
+                      <button type="button" className="major-cve-row" onClick={() => handleMajorCveClick(cve.cveId)}>
+                        <span className="major-cve-id">{cve.cveId}</span>
+                        <span className="major-cve-figures">
+                          <SeverityPill
+                            severity={nvdSeverityToAppSeverity(cve.baseSeverity, cve.baseScore)}
+                            variant="outline"
+                          />
+                          <span className="score-figure">{cve.baseScore.toFixed(1)}</span>
+                          <span className="major-cve-date">{formatPublished(cve.published)}</span>
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </>
+          )}
+        </div>
+      )}
+
       {error && <p className="error-text">{error}</p>}
 
       {result && (
@@ -212,8 +377,10 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
           catalog={catalog}
           onOpenInterview={onOpenInterview}
           defaultSaveLabel={lookupSource?.cveId}
+          overwriteLabel={overwriteTarget ? (overwriteTarget.cveId ?? overwriteTarget.label) : undefined}
           onSave={async (label) => {
             await saveVulnerability({ vector: result.base.vector, label, cveId: lookupSource?.cveId });
+            refreshSavedVulnerabilities();
           }}
         />
       )}

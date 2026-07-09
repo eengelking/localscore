@@ -115,3 +115,107 @@ export function pickPrimaryVector(options: NvdVectorOption[]): NvdVectorOption |
     return a.type === "Primary" ? -1 : b.type === "Primary" ? 1 : 0;
   })[0];
 }
+
+export interface MajorCveEntry {
+  cveId: string;
+  vector: string;
+  version: NvdVectorOption["version"];
+  baseScore: number;
+  baseSeverity: string;
+  published: string;
+}
+
+interface NvdCveListItem {
+  cve: {
+    id: string;
+    published: string;
+    metrics?: Record<string, NvdCvssEntry[]>;
+  };
+}
+
+async function fetchNvdCveSearch(
+  params: Record<string, string>,
+  apiKey: string | undefined,
+): Promise<NvdCveListItem[]> {
+  await throttle(Boolean(apiKey));
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  const qs = new URLSearchParams(params);
+
+  let res: Response;
+  try {
+    res = await fetch(`${NVD_BASE_URL}?${qs.toString()}`, {
+      signal: controller.signal,
+      headers: apiKey ? { apiKey } : undefined,
+    });
+  } catch {
+    throw new HttpError(502, "Couldn't reach NVD.");
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  if (!res.ok) {
+    throw new HttpError(502, "Couldn't reach NVD.");
+  }
+
+  const body = (await res.json()) as { vulnerabilities?: NvdCveListItem[] };
+  return body.vulnerabilities ?? [];
+}
+
+// Top 10 most critical CVEs published in the last 30 days (docs/SPEC02.md
+// §6.5). NVD's search API doesn't support an OR across cvssV3Severity and
+// cvssV4Severity, so this runs two separate queries over the same date
+// window and merges/dedupes the results, preferring the v4.0 CVSS entry
+// when a CVE has both (pickPrimaryVector already encodes that preference).
+export async function fetchMajorCves(apiKey: string | undefined): Promise<MajorCveEntry[]> {
+  const now = new Date();
+  const start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const pubStartDate = start.toISOString();
+  const pubEndDate = now.toISOString();
+
+  const [v3Results, v4Results] = await Promise.all([
+    fetchNvdCveSearch({ cvssV3Severity: "CRITICAL", pubStartDate, pubEndDate, resultsPerPage: "200" }, apiKey),
+    fetchNvdCveSearch({ cvssV4Severity: "CRITICAL", pubStartDate, pubEndDate, resultsPerPage: "200" }, apiKey),
+  ]);
+
+  const byId = new Map<string, NvdCveListItem>();
+  for (const item of [...v3Results, ...v4Results]) {
+    byId.set(item.cve.id, item);
+  }
+
+  const entries: MajorCveEntry[] = [];
+  for (const item of byId.values()) {
+    const options: NvdVectorOption[] = [];
+    const groups: { key: string; version: NvdVectorOption["version"] }[] = [
+      { key: "cvssMetricV40", version: "4.0" },
+      { key: "cvssMetricV31", version: "3.1" },
+      { key: "cvssMetricV30", version: "3.0" },
+    ];
+    for (const { key, version } of groups) {
+      for (const entry of item.cve.metrics?.[key] ?? []) {
+        options.push({
+          source: entry.source,
+          type: entry.type,
+          version,
+          vector: entry.cvssData.vectorString,
+          baseScore: entry.cvssData.baseScore,
+          baseSeverity: entry.cvssData.baseSeverity ?? "",
+        });
+      }
+    }
+    const primary = pickPrimaryVector(options);
+    if (!primary) continue;
+    entries.push({
+      cveId: item.cve.id,
+      vector: primary.vector,
+      version: primary.version,
+      baseScore: primary.baseScore,
+      baseSeverity: primary.baseSeverity,
+      published: item.cve.published,
+    });
+  }
+
+  entries.sort((a, b) => b.baseScore - a.baseScore || b.published.localeCompare(a.published));
+  return entries.slice(0, 10);
+}

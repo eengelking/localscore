@@ -9,12 +9,14 @@ export function ScoreResult({
   onOpenInterview,
   onSave,
   defaultSaveLabel,
+  overwriteLabel,
 }: {
   result: ScoreResponse;
   catalog: Catalog | null;
   onOpenInterview: (environmentId: number) => void;
   onSave?: (label: string | undefined) => Promise<void>;
   defaultSaveLabel?: string;
+  overwriteLabel?: string;
 }) {
   const [saveOpen, setSaveOpen] = useState(false);
   const [label, setLabel] = useState(defaultSaveLabel ?? "");
@@ -66,6 +68,9 @@ export function ScoreResult({
             {saved && !saveOpen && <span className="save-confirmation">Saved</span>}
             {saveOpen && (
               <div className="save-form">
+                {overwriteLabel && (
+                  <p className="save-overwrite-note">This updates your existing saved entry for {overwriteLabel}.</p>
+                )}
                 <input
                   type="text"
                   className="input"
