@@ -58,12 +58,12 @@ export function InterviewPage({ environmentId, onDone }: { environmentId: number
     <div className="stack">
       <div className="page-header">
         <div>
+          <button type="button" className="link-button" onClick={onDone}>
+            ← Back to environment
+          </button>
           <h1>{environment.name}</h1>
           <p>{question.whyWeAsk ? "Answer a few plain-English questions about this location." : ""}</p>
         </div>
-        <button type="button" className="button button-quiet" onClick={onDone}>
-          Save &amp; exit
-        </button>
       </div>
 
       <div className="interview-progress" role="progressbar" aria-valuemin={0} aria-valuemax={questions.length} aria-valuenow={answeredCount}>

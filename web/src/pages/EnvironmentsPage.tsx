@@ -4,11 +4,19 @@ import type { Environment } from "../types.js";
 import { ConfirmModal } from "../components/Modal.js";
 import { Icon } from "../components/Icon.js";
 import { MarkdownContent } from "../components/MarkdownContent.js";
+import { MoreExpander } from "../components/MoreExpander.js";
 
-export function EnvironmentsPage({ onOpenInterview }: { onOpenInterview: (environmentId: number) => void }) {
+export function EnvironmentsPage({
+  onOpenInterview,
+  onOpenEdit,
+}: {
+  onOpenInterview: (environmentId: number) => void;
+  onOpenEdit: (environmentId: number) => void;
+}) {
   const [environments, setEnvironments] = useState<Environment[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
+  const [newDescription, setNewDescription] = useState("");
   const [creating, setCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{ id: number; name: string } | null>(null);
 
@@ -26,8 +34,9 @@ export function EnvironmentsPage({ onOpenInterview }: { onOpenInterview: (enviro
     setCreating(true);
     setError(null);
     try {
-      const env = await createEnvironment(newName.trim());
+      const env = await createEnvironment(newName.trim(), newDescription.trim());
       setNewName("");
+      setNewDescription("");
       refresh();
       onOpenInterview(env.id);
     } catch (err) {
@@ -53,9 +62,22 @@ export function EnvironmentsPage({ onOpenInterview }: { onOpenInterview: (enviro
         <div>
           <h1>Environments</h1>
           <p>
-            Each location — a data center, a fleet of kiosks, a dev lab — gets its own profile from a short
-            interview.
+            An environment is a location — a data center, a fleet of kiosks, a dev lab — where you run software.
+            Answer a few questions about it once, and localscore reuses that profile to adjust any vulnerability's
+            score to fit reality there.
           </p>
+          <MoreExpander>
+            <p>
+              A CVSS base score assumes the worst case: an attacker with the easiest possible path and no
+              mitigations in place. Real locations rarely look like that — a kiosk on an isolated network, or a
+              dev lab rebuilt nightly, carries a different real-world risk than the base score implies.
+            </p>
+            <p>
+              The interview turns your plain-English answers about a location into CVSS environmental metrics.
+              When you score a vulnerability against this environment, those metrics are layered onto the base
+              vector to produce a score that reflects this specific place — not the worst case everywhere.
+            </p>
+          </MoreExpander>
         </div>
       </div>
 
@@ -74,6 +96,17 @@ export function EnvironmentsPage({ onOpenInterview }: { onOpenInterview: (enviro
               Create &amp; start interview
             </button>
           </div>
+        </div>
+        <div className="field">
+          <label htmlFor="new-environment-description">Description (optional)</label>
+          <textarea
+            id="new-environment-description"
+            className="textarea"
+            rows={2}
+            placeholder="What is this location? Markdown supported."
+            value={newDescription}
+            onChange={(e) => setNewDescription(e.target.value)}
+          />
         </div>
       </form>
 
@@ -104,9 +137,20 @@ export function EnvironmentsPage({ onOpenInterview }: { onOpenInterview: (enviro
                 </div>
               </div>
               <div className="environment-row-actions">
-                <button type="button" className="button" onClick={() => onOpenInterview(env.id)}>
-                  {env.interviewCompletion["3.1"] ? "Edit interview" : "Answer interview"}
-                </button>
+                {env.interviewCompletion["3.1"] ? (
+                  <button
+                    type="button"
+                    className="icon-button icon-button-edit"
+                    aria-label="Edit"
+                    onClick={() => onOpenEdit(env.id)}
+                  >
+                    <Icon name="pencil" />
+                  </button>
+                ) : (
+                  <button type="button" className="button" onClick={() => onOpenEdit(env.id)}>
+                    Answer interview
+                  </button>
+                )}
                 <button
                   type="button"
                   className="icon-button icon-button-delete"
