@@ -12,7 +12,7 @@ This document is the **active implementation contract** for the next round of wo
 
 Scope of v1.2: a copy/branding pass (bold product name, em-dash removal, Save-button consistency), light-theme severity-pill legibility, the primary-button/tab contrast treatment SPEC02 §2.1 mandated but v1.1 didn't fully deliver, real tab styling with per-tab purpose text, several small layout bugs (create-form spacing, half-width CVE result, zero-padding edit form), richer question-help modals, Major-CVEs typography + NVD links, **CVE detail enrichment** (description / references / affected products from NVD, carried through to saved entries), an inline more-vulnerable alert on result rows, and Saved-page affordance fixes (eye toggle, no loading flash, long-vector overflow).
 
-**Implementation status: not started.**
+**Implementation status: fully implemented.** See `CLAUDE.md`'s "SPEC03 UI polish, tabs, and CVE detail enrichment" section for the finding-by-finding map to what changed.
 
 ---
 

@@ -62,20 +62,20 @@ export function EnvironmentsPage({
         <div>
           <h1>Environments</h1>
           <p>
-            An environment is a location — a data center, a fleet of kiosks, a dev lab — where you run software.
-            Answer a few questions about it once, and localscore reuses that profile to adjust any vulnerability's
-            score to fit reality there.
+            An environment is a location: a data center, a fleet of kiosks, a dev lab, where you run software.
+            Answer a few questions about it once, and <strong>localscore</strong> reuses that profile to adjust any
+            vulnerability's score to fit reality there.
           </p>
           <MoreExpander>
             <p>
               A CVSS base score assumes the worst case: an attacker with the easiest possible path and no
-              mitigations in place. Real locations rarely look like that — a kiosk on an isolated network, or a
+              mitigations in place. Real locations rarely look like that. A kiosk on an isolated network, or a
               dev lab rebuilt nightly, carries a different real-world risk than the base score implies.
             </p>
             <p>
               The interview turns your plain-English answers about a location into CVSS environmental metrics.
               When you score a vulnerability against this environment, those metrics are layered onto the base
-              vector to produce a score that reflects this specific place — not the worst case everywhere.
+              vector to produce a score that reflects this specific place, not the worst case everywhere.
             </p>
           </MoreExpander>
         </div>

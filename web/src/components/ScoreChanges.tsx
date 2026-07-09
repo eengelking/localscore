@@ -43,7 +43,7 @@ export function ScoreChanges({
     <div className="why">
       {changes.length === 0 ? (
         <p className="why-empty">
-          None of this environment's answers changed the score for this vector — see why below.
+          None of this environment's answers changed the score for this vector. See why below.
         </p>
       ) : (
         <>
@@ -71,7 +71,7 @@ export function ScoreChanges({
 
           {changes.length > 1 && (
             <p className="why-order-note">
-              Shown in the order these apply — the total always matches, though the split between changes can shift
+              Shown in the order these apply. The total always matches, though the split between changes can shift
               if the order changes.
             </p>
           )}

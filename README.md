@@ -19,13 +19,13 @@ A 9.8 "Critical" against a production database might land at 9.8 for your data c
 
 ## Status
 
-The v1 ([`docs/SPEC01.md`](./docs/SPEC01.md)) and v1.1 ([`docs/SPEC02.md`](./docs/SPEC02.md)) specs are fully implemented, and the app works end-to-end ([`docs/SPEC03.md`](./docs/SPEC03.md) is the next round of work — UI polish and CVE detail enrichment — not yet built):
+The v1 ([`docs/SPEC01.md`](./docs/SPEC01.md)), v1.1 ([`docs/SPEC02.md`](./docs/SPEC02.md)), and v1.2 ([`docs/SPEC03.md`](./docs/SPEC03.md)) specs are all fully implemented, and the app works end-to-end:
 
 - An npm-workspaces monorepo (`server/` = Hono + SQLite API, `web/` = React + Vite frontend), served from one process on one port.
 - The full 12-question interview catalog, and environment CRUD — you can create an environment, save interview answers, and have them derive into stored CVSS environmental metrics.
 - **Scoring works.** `POST /api/score` parses a CVSS v4.0/v3.1/v3.0 vector and returns the base score plus every environment's modified score, backed by `ae-cvss-calculator` validated against FIRST's reference vectors — including the exact worked example from `docs/SPEC01.md` §6 (a `9.8` base score landing at `0.0` for a disposable dev environment).
 - **A real frontend** — environments list, interview wizard, and a results screen (paste a vector or look up a CVE) where you see each environment's modified score, with the animated "a 10 might actually be a zero" reveal.
-- **NVD CVE lookup** (`GET /api/cve/:cveId`) — cache-first, throttled, and tolerant of NVD being unreachable — plus a saved-vulnerabilities screen backed by the saved-vulnerability CRUD routes.
+- **NVD CVE lookup** (`GET /api/cve/:cveId`) — cache-first, throttled, and tolerant of NVD being unreachable — with a description, references, and affected products pulled from the same cached NVD response, plus a saved-vulnerabilities screen backed by the saved-vulnerability CRUD routes.
 - **A Major CVEs feed** (`GET /api/major-cves`) — the top 10 most critical CVEs published in the last 30 days, refreshed daily, one click away from scoring against your environments.
 - A design system with light/dark theming, markdown-rendered descriptions, and offline-aware UI — the CVE-lookup and Major CVEs tabs disable themselves with an explanatory tooltip when there's no network, rather than hanging or erroring.
 - A container image that builds and runs cleanly under Podman (or Docker), passes its own `HEALTHCHECK`, and comes in under 300 MB.

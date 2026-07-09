@@ -1,7 +1,7 @@
 import { Hono } from "hono";
 import type Database from "better-sqlite3";
 import { HttpError } from "../lib/errors.js";
-import { extractVectorOptions } from "../lib/nvd.js";
+import { extractCveDetails, extractVectorOptions } from "../lib/nvd.js";
 import { computeScore, parseBaseVector } from "../scoring/index.js";
 
 interface VulnerabilityRow {
@@ -109,9 +109,11 @@ export function vulnerabilityRoutes(db: Database.Database) {
   app.get("/vulnerabilities/:id", (c) => {
     const id = Number(c.req.param("id"));
     const row = getVulnerabilityOr404(db, id);
+    const parsedNvdJson = row.nvd_json ? JSON.parse(row.nvd_json) : null;
     return c.json({
       ...serializeVulnerability(row),
-      vectors: row.nvd_json ? extractVectorOptions(JSON.parse(row.nvd_json)) : [],
+      vectors: parsedNvdJson ? extractVectorOptions(parsedNvdJson) : [],
+      details: parsedNvdJson ? extractCveDetails(parsedNvdJson) : null,
     });
   });
 

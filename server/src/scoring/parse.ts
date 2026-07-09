@@ -41,12 +41,12 @@ export function parseBaseVector(raw: string): ParsedVector {
   }
 
   if (trimmed.startsWith("CVSS:2.0/") || isBareV2Vector(trimmed)) {
-    throw new HttpError(400, "CVSS v2.0 isn't supported yet — paste a v3.0, v3.1, or v4.0 vector instead.");
+    throw new HttpError(400, "CVSS v2.0 isn't supported yet. Paste a v3.0, v3.1, or v4.0 vector instead.");
   }
 
   throw new HttpError(
     400,
-    'Unrecognized CVSS vector format — expected it to start with "CVSS:4.0/", "CVSS:3.1/", or "CVSS:3.0/".',
+    'Unrecognized CVSS vector format. Expected it to start with "CVSS:4.0/", "CVSS:3.1/", or "CVSS:3.0/".',
   );
 }
 

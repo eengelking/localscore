@@ -46,7 +46,7 @@ export async function fetchNvdCve(cveId: string, apiKey: string | undefined): Pr
       headers: apiKey ? { apiKey } : undefined,
     });
   } catch {
-    throw new HttpError(502, "Couldn't reach NVD — paste the CVSS vector directly instead.");
+    throw new HttpError(502, "Couldn't reach NVD. Paste the CVSS vector directly instead.");
   } finally {
     clearTimeout(timeout);
   }
@@ -55,7 +55,7 @@ export async function fetchNvdCve(cveId: string, apiKey: string | undefined): Pr
     throw new HttpError(404, `NVD has no record of ${cveId}.`);
   }
   if (!res.ok) {
-    throw new HttpError(502, "Couldn't reach NVD — paste the CVSS vector directly instead.");
+    throw new HttpError(502, "Couldn't reach NVD. Paste the CVSS vector directly instead.");
   }
 
   return res.json();
@@ -114,6 +114,117 @@ export function pickPrimaryVector(options: NvdVectorOption[]): NvdVectorOption |
     if (versionDiff !== 0) return versionDiff;
     return a.type === "Primary" ? -1 : b.type === "Primary" ? 1 : 0;
   })[0];
+}
+
+export interface CveReference {
+  url: string;
+  source?: string;
+  tags?: string[];
+}
+
+export interface CveDetails {
+  description: string | null;
+  published: string | null;
+  lastModified: string | null;
+  references: CveReference[];
+  affectedProducts: { items: string[]; moreCount: number };
+}
+
+const MAX_REFERENCES = 20;
+const MAX_AFFECTED_PRODUCTS = 15;
+const PATCH_LIKE_TAGS = new Set(["Patch", "Vendor Advisory"]);
+
+interface NvdDescription {
+  lang?: string;
+  value?: string;
+}
+
+interface NvdReference {
+  url?: string;
+  source?: string;
+  tags?: string[];
+}
+
+interface NvdCpeMatch {
+  criteria?: string;
+}
+
+interface NvdConfigNode {
+  cpeMatch?: NvdCpeMatch[];
+}
+
+interface NvdConfiguration {
+  nodes?: NvdConfigNode[];
+}
+
+interface NvdCveDetail {
+  descriptions?: NvdDescription[];
+  published?: string;
+  lastModified?: string;
+  references?: NvdReference[];
+  configurations?: NvdConfiguration[];
+}
+
+// Best-effort "vendor product" pair parsed from a cpe:2.3: URI, e.g.
+// "cpe:2.3:a:google:chrome:*:*:*:*:*:*:*:*" -> "google chrome". Malformed
+// or short criteria strings are skipped rather than throwing.
+function vendorProductFromCpe(criteria: string): string | null {
+  const parts = criteria.split(":");
+  const vendor = parts[3];
+  const product = parts[4];
+  if (!vendor || !product || vendor === "*" || product === "*") return null;
+  return `${vendor} ${product}`.replace(/_/g, " ");
+}
+
+// Extracts human-oriented CVE context (description, references, affected
+// products) from an already-cached NVD payload, at read time, per
+// docs/SPEC03.md §7.4. No migration: this is derived from the same
+// `nvd_json` blob extractVectorOptions() already reads. Every field is
+// optional/empty-tolerant since NVD payload shapes vary and older cached
+// rows must not 500.
+export function extractCveDetails(nvdJson: unknown): CveDetails {
+  const cve = (nvdJson as { vulnerabilities?: { cve?: NvdCveDetail }[] })?.vulnerabilities?.[0]?.cve;
+  if (!cve) {
+    return { description: null, published: null, lastModified: null, references: [], affectedProducts: { items: [], moreCount: 0 } };
+  }
+
+  const descriptions = cve.descriptions ?? [];
+  const description = descriptions.find((d) => d.lang === "en")?.value ?? descriptions[0]?.value ?? null;
+
+  const references: CveReference[] = (cve.references ?? [])
+    .filter((r): r is NvdReference & { url: string } => Boolean(r.url))
+    .map((r) => ({ url: r.url, source: r.source, tags: r.tags }))
+    .sort((a, b) => {
+      const aPatch = (a.tags ?? []).some((t) => PATCH_LIKE_TAGS.has(t));
+      const bPatch = (b.tags ?? []).some((t) => PATCH_LIKE_TAGS.has(t));
+      if (aPatch === bPatch) return 0;
+      return aPatch ? -1 : 1;
+    })
+    .slice(0, MAX_REFERENCES);
+
+  const vendorProducts = new Set<string>();
+  for (const config of cve.configurations ?? []) {
+    for (const node of config.nodes ?? []) {
+      for (const match of node.cpeMatch ?? []) {
+        if (!match.criteria) continue;
+        const pair = vendorProductFromCpe(match.criteria);
+        if (pair) vendorProducts.add(pair);
+      }
+    }
+  }
+  const allProducts = [...vendorProducts];
+  const affectedProducts = {
+    items: allProducts.slice(0, MAX_AFFECTED_PRODUCTS),
+    moreCount: Math.max(0, allProducts.length - MAX_AFFECTED_PRODUCTS),
+  };
+
+  return {
+    description,
+    published: cve.published ?? null,
+    lastModified: cve.lastModified ?? null,
+    references,
+    affectedProducts,
+  };
 }
 
 export interface MajorCveEntry {

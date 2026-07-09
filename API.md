@@ -31,6 +31,7 @@ curl http://localhost:8080/api/catalog
       "order": 1,
       "question": "How could an outsider reach the systems at this location?",
       "whyWeAsk": "A vulnerability that's exploitable \"from the internet\" only matters that way if the internet can actually reach you.",
+      "helpDetail": [ "This is about the network path, not the internet in general. ..." ],
       "options": [
         { "id": "internet", "label": "Directly from the internet", "description": "...", "effects": [] },
         { "id": "internal_only", "label": "Only from inside our network", "description": "...", "effects": [ /* MetricEffect[] */ ] }
@@ -40,7 +41,7 @@ curl http://localhost:8080/api/catalog
 }
 ```
 
-The full interview question set, versioned by `catalogVersion`. See `docs/SPEC01.md` §5.1 for the `Question`/`Option`/`MetricEffect` shape.
+The full interview question set, versioned by `catalogVersion`. See `docs/SPEC01.md` §5.1 for the `Question`/`Option`/`MetricEffect` shape. `helpDetail` (`docs/SPEC03.md` §6.3) is optional, richer plain-English elaboration shown in the interview's question-help modal, on top of the shorter `whyWeAsk`; every shipped question has one.
 
 ## Environments
 
@@ -185,7 +186,7 @@ curl -X POST http://localhost:8080/api/score -H 'Content-Type: application/json'
 ```
 
 ```json
-{ "error": "Unrecognized CVSS vector format — expected it to start with \"CVSS:4.0/\", \"CVSS:3.1/\", or \"CVSS:3.0/\"." }
+{ "error": "Unrecognized CVSS vector format. Expected it to start with \"CVSS:4.0/\", \"CVSS:3.1/\", or \"CVSS:3.0/\"." }
 ```
 
 ## NVD CVE lookup
@@ -204,11 +205,22 @@ curl http://localhost:8080/api/cve/CVE-2021-44228
   "vectors": [
     { "source": "nvd@nist.gov", "type": "Primary", "version": "3.1", "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H", "baseScore": 10, "baseSeverity": "CRITICAL" },
     { "source": "134c704f-9b21-4f2e-91b3-4a467353bcc0", "type": "Secondary", "version": "3.1", "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H", "baseScore": 10, "baseSeverity": "CRITICAL" }
-  ]
+  ],
+  "details": {
+    "description": "Apache Log4j2 2.0-beta9 through 2.15.0 ...",
+    "published": "2021-12-10T10:15:09.143",
+    "lastModified": "2026-06-17T18:22:56.190",
+    "references": [
+      { "url": "https://security.apache.org/...", "source": "security@apache.org", "tags": ["Patch", "Vendor Advisory"] }
+    ],
+    "affectedProducts": { "items": ["apache log4j"], "moreCount": 0 }
+  }
 }
 ```
 
 `vectors` lists every CVSS entry NVD published for the CVE (NVD's own score, a CNA's, etc.) — per `docs/SPEC01.md` §7, when sources disagree, present all of them and let the caller pick. `primaryVector`/`primaryVersion` is just a sensible default (highest CVSS version, "Primary" source preferred).
+
+`details` (`docs/SPEC03.md` §7.4) is derived at read time from the same cached NVD payload `vectors` comes from — no extra network call, no extra stored column. `description` prefers the English (`lang: "en"`) NVD entry; `references` preserve NVD's tags (`Patch`, `Vendor Advisory`, `Exploit`, …), capped at 20, with `Patch`/`Vendor Advisory`-tagged entries first; `affectedProducts` is a best-effort, deduped `vendor product` list parsed from the CVE's CPE configurations (capped at 15, with `moreCount` for the remainder) — orientation, not a version-accurate applicability check. `details` is `null` when there's no cached NVD payload to derive it from (never the case for this route, since a successful lookup always caches one).
 
 Cache-first: a CVE already looked up is served from the `vulnerabilities` table with no network call and `"cached": true`. Force a re-fetch with `?refresh=1`:
 
@@ -219,7 +231,7 @@ curl "http://localhost:8080/api/cve/CVE-2021-44228?refresh=1"
 If NVD can't be reached and there's no cache, this 502s with a friendly message rather than a stack trace:
 
 ```json
-{ "error": "Couldn't reach NVD — paste the CVSS vector directly instead." }
+{ "error": "Couldn't reach NVD. Paste the CVSS vector directly instead." }
 ```
 
 NVD's unauthenticated rate limit is low (~5 requests/30s); set `NVD_API_KEY` (see `.env.example`) to raise it.
@@ -296,4 +308,4 @@ curl http://localhost:8080/api/vulnerabilities/2
 curl -X DELETE http://localhost:8080/api/vulnerabilities/2   # 204 No Content
 ```
 
-The detail route additionally includes `vectors` (parsed from the cached NVD JSON, same shape as the CVE lookup route) when `source` is `"nvd"`.
+The detail route additionally includes `vectors` and `details` (same shapes as the CVE lookup route above, both derived from the row's cached NVD JSON) when `source` is `"nvd"`; both are `[]`/`null` for a plain pasted-vector save, which has no cached NVD payload to derive them from.

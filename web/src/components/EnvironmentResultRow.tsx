@@ -29,7 +29,7 @@ export function EnvironmentResultRow({
       <li className="card result-row result-row-empty">
         <span className="environment-name">{result.name}</span>
         <span className="no-profile-note">
-          No profile yet —{" "}
+          No profile yet.{" "}
           <button type="button" className="link-button" onClick={() => onOpenInterview(result.id)}>
             complete the interview
           </button>
@@ -43,6 +43,14 @@ export function EnvironmentResultRow({
       <button type="button" className="result-row-summary" onClick={() => setOpen((v) => !v)} aria-expanded={open}>
         <span className="environment-name">{result.name}</span>
         <span className="result-row-figures">
+          {result.delta > 0 && (
+            <Icon
+              name="warning"
+              className="more-vulnerable-icon"
+              size={28}
+              aria-label="Scores higher than the base score here"
+            />
+          )}
           <AnimatedScore from={baseScore} to={result.score} />
           <span className={deltaClass(result.delta)}>{formatSignedScore(result.delta)}</span>
           <span className={`disclosure ${open ? "is-open" : ""}`} aria-hidden="true">
@@ -57,7 +65,7 @@ export function EnvironmentResultRow({
           {result.delta > 0 && (
             <div className="callout-warning more-vulnerable-warning">
               <Icon name="warning" size={18} />
-              <p>Higher than the base score — this environment's answers make this vulnerability more severe here.</p>
+              <p>Higher than the base score. This environment's answers make this vulnerability more severe here.</p>
             </div>
           )}
           <ScoreChanges changes={result.changes} notes={result.notes} catalog={catalog} />

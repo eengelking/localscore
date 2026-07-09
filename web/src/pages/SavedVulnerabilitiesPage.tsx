@@ -7,6 +7,7 @@ import {
   scoreVector,
   updateVulnerability,
 } from "../api.js";
+import { CveDetailsView } from "../components/CveDetailsView.js";
 import { NvdVectorPicker } from "../components/NvdVectorPicker.js";
 import { ScoreResult } from "../components/ScoreResult.js";
 import { nvdSeverityToAppSeverity } from "../lib/severity.js";
@@ -128,7 +129,7 @@ export function SavedVulnerabilitiesPage({
       <div className="page-header">
         <div>
           <h1>Saved vulnerabilities</h1>
-          <p>Vulnerabilities you've saved from a scored result — pasted vectors or NVD lookups.</p>
+          <p>Vulnerabilities you've saved from a scored result: pasted vectors or NVD lookups.</p>
         </div>
       </div>
 
@@ -147,7 +148,7 @@ export function SavedVulnerabilitiesPage({
           {vulnerabilities.map((vuln) =>
             editingId === vuln.id ? (
               <li key={vuln.id} className="card vulnerability-row">
-                <div className="environment-edit-form">
+                <div className="vulnerability-row-edit environment-edit-form">
                   <div className="field">
                     <label htmlFor={`vuln-edit-label-${vuln.id}`}>Label</label>
                     <input
@@ -206,13 +207,15 @@ export function SavedVulnerabilitiesPage({
                   <div className="environment-row-actions">
                     <button
                       type="button"
-                      className="button"
+                      className="icon-button icon-button-quiet"
+                      aria-label={viewing?.id === vuln.id ? "Hide details" : "View details"}
+                      disabled={viewLoading === vuln.id}
                       onClick={(e) => {
                         e.stopPropagation();
                         handleView(vuln.id);
                       }}
                     >
-                      {viewLoading === vuln.id ? "Loading…" : viewing?.id === vuln.id ? "Hide" : "View"}
+                      <Icon name={viewing?.id === vuln.id ? "eye-off" : "eye"} />
                     </button>
                     <button
                       type="button"
@@ -241,6 +244,7 @@ export function SavedVulnerabilitiesPage({
 
                 {viewing?.id === vuln.id && (
                   <div className="result-row-detail stack">
+                    {viewing.detail.details && <CveDetailsView details={viewing.detail.details} />}
                     {viewing.detail.vectors.length > 1 && (
                       <NvdVectorPicker
                         vectors={viewing.detail.vectors}
