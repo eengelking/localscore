@@ -1,4 +1,4 @@
--- Initial schema. See SPEC.md §4 (data model) and §5.1 (catalog shape).
+-- Initial schema. See docs/SPEC01.md §4 (data model) and §5.1 (catalog shape).
 
 CREATE TABLE environments (
   id              INTEGER PRIMARY KEY,

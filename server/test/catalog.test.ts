@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CATALOG, CATALOG_VERSION } from "../src/catalog/index.js";
 
-// Per SPEC.md §10.4 (catalog integrity):
+// Per docs/SPEC01.md §10.4 (catalog integrity):
 //  - every option's effects reference valid metrics for the declared version
 //  - every scoring-relevant metric in §2.1 is touched by at least one option,
 //    or is documented as intentionally uncollected
@@ -71,7 +71,7 @@ describe("interview catalog", () => {
     }
   });
 
-  it("touches every scoring-relevant metric from SPEC.md §2.1 at least once, per version", () => {
+  it("touches every scoring-relevant metric from docs/SPEC01.md §2.1 at least once, per version", () => {
     const touched: Record<"4.0" | "3.1", Set<string>> = { "4.0": new Set(), "3.1": new Set() };
     for (const question of CATALOG) {
       for (const option of question.options) {

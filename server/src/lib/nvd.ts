@@ -1,4 +1,4 @@
-// NVD CVE lookup per SPEC.md §7. Unauthenticated NVD rate limits are low
+// NVD CVE lookup per docs/SPEC01.md §7. Unauthenticated NVD rate limits are low
 // (~5 requests/30s), so every call goes through a shared throttle, and every
 // successful response is cached by the caller (see routes/cve.ts) — this
 // module only knows how to fetch and how to parse.

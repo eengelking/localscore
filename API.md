@@ -1,6 +1,6 @@
 # API usage
 
-All routes are JSON, under `/api`, served from the same process/port as the frontend (default `8080`). No authentication in v1. Errors are always `{ "error": "message" }` with an appropriate status code — never a stack trace. See `SPEC.md` §8 for the contract this implements.
+All routes are JSON, under `/api`, served from the same process/port as the frontend (default `8080`). No authentication in v1. Errors are always `{ "error": "message" }` with an appropriate status code — never a stack trace. See `docs/SPEC01.md` §8 for the contract this implements.
 
 Examples below assume the server is running at `http://localhost:8080` — swap the port if you're running the dev server (`npm run dev:server`, default `8080` too) or a custom `PORT`.
 
@@ -40,7 +40,7 @@ curl http://localhost:8080/api/catalog
 }
 ```
 
-The full interview question set, versioned by `catalogVersion`. See `SPEC.md` §5.1 for the `Question`/`Option`/`MetricEffect` shape.
+The full interview question set, versioned by `catalogVersion`. See `docs/SPEC01.md` §5.1 for the `Question`/`Option`/`MetricEffect` shape.
 
 ## Environments
 
@@ -64,7 +64,7 @@ curl -X POST http://localhost:8080/api/environments \
 }
 ```
 
-`interviewCompletion` reports whether enough answers exist to score against each CVSS version — an environment with zero answers scores identically to the base vector (SPEC.md §2.3), so this is what the frontend uses to show "no profile yet" instead of a fake score.
+`interviewCompletion` reports whether enough answers exist to score against each CVSS version — an environment with zero answers scores identically to the base vector (docs/SPEC01.md §2.3), so this is what the frontend uses to show "no profile yet" instead of a fake score.
 
 ### List
 
@@ -95,7 +95,7 @@ curl http://localhost:8080/api/environments/1
 }
 ```
 
-`metrics` is the materialized cache re-derived from `answers` on every save (SPEC.md's architecture note: `environment_answers` is the source of truth, `environment_metrics` is never hand-edited).
+`metrics` is the materialized cache re-derived from `answers` on every save (docs/SPEC01.md's architecture note: `environment_answers` is the source of truth, `environment_metrics` is never hand-edited).
 
 ### Rename / edit description
 
@@ -176,7 +176,7 @@ curl -X POST http://localhost:8080/api/score \
 }
 ```
 
-This is the worked example from `SPEC.md` §6 — a `9.8 Critical` base score landing at `0.0 None` for a "disposable dev lab" profile. Every environment with a completed interview for the vector's CVSS version gets scored; ones without a profile for that version come back as `{ "id", "name", "hasProfile": false }` (no fake score) instead. `changes` is the plain-English "why" data (question/answer provenance, not just raw metric codes) that powers the frontend's expandable panel. `notes` explains answered questions that produced *no* visible change (e.g. capped by an already-less-severe base value) — see `server/test/score-route.test.ts` for the full set of `status` values.
+This is the worked example from `docs/SPEC01.md` §6 — a `9.8 Critical` base score landing at `0.0 None` for a "disposable dev lab" profile. Every environment with a completed interview for the vector's CVSS version gets scored; ones without a profile for that version come back as `{ "id", "name", "hasProfile": false }` (no fake score) instead. `changes` is the plain-English "why" data (question/answer provenance, not just raw metric codes) that powers the frontend's expandable panel. `notes` explains answered questions that produced *no* visible change (e.g. capped by an already-less-severe base value) — see `server/test/score-route.test.ts` for the full set of `status` values.
 
 A malformed vector 400s with a specific, non-generic message:
 
@@ -210,7 +210,7 @@ curl http://localhost:8080/api/cve/CVE-2021-44228
 }
 ```
 
-`vectors` lists every CVSS entry NVD published for the CVE (NVD's own score, a CNA's, etc.) — per `SPEC.md` §7, when sources disagree, present all of them and let the caller pick. `primaryVector`/`primaryVersion` is just a sensible default (highest CVSS version, "Primary" source preferred).
+`vectors` lists every CVSS entry NVD published for the CVE (NVD's own score, a CNA's, etc.) — per `docs/SPEC01.md` §7, when sources disagree, present all of them and let the caller pick. `primaryVector`/`primaryVersion` is just a sensible default (highest CVSS version, "Primary" source preferred).
 
 Cache-first: a CVE already looked up is served from the `vulnerabilities` table with no network call and `"cached": true`. Force a re-fetch with `?refresh=1`:
 

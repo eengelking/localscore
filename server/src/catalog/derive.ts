@@ -1,4 +1,4 @@
-// Derivation rules per SPEC.md §5.3: process answered questions in catalog
+// Derivation rules per docs/SPEC01.md §5.3: process answered questions in catalog
 // order; a later question's `override` always wins over an earlier value; a
 // `cap` never displaces an existing `override`.
 

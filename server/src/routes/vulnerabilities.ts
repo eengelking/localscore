@@ -37,7 +37,7 @@ function getVulnerabilityOr404(db: Database.Database, id: number): Vulnerability
   return row;
 }
 
-// Saved-vulnerability CRUD per SPEC.md §8. A save happens from a scored
+// Saved-vulnerability CRUD per docs/SPEC01.md §8. A save happens from a scored
 // result (§6.4) — the vector is always re-parsed/re-scored server-side
 // rather than trusting a client-supplied score.
 export function vulnerabilityRoutes(db: Database.Database) {

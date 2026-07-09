@@ -29,7 +29,7 @@ function serializeCveResponse(cveId: string, row: VulnerabilityRow, cached: bool
   };
 }
 
-// NVD lookup per SPEC.md §7. Cache-first: a cached CVE is served from
+// NVD lookup per docs/SPEC01.md §7. Cache-first: a cached CVE is served from
 // `vulnerabilities` without a network call unless ?refresh=1 is passed.
 export function cveRoutes(db: Database.Database) {
   const app = new Hono();

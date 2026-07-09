@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { deriveMetrics } from "../src/catalog/derive.js";
 
 describe("deriveMetrics", () => {
-  it("empty answers produce no metrics (empty-profile identity, SPEC.md §2.3/§10.2)", () => {
+  it("empty answers produce no metrics (empty-profile identity, docs/SPEC01.md §2.3/§10.2)", () => {
     expect(deriveMetrics([])).toEqual([]);
   });
 
@@ -17,7 +17,7 @@ describe("deriveMetrics", () => {
     expect(result).toContainEqual(expect.objectContaining({ cvssVersion: "3.1", metric: "MAV", value: "A", effect: "cap" }));
   });
 
-  it("Q9 safety override wins over Q8 blast-radius for MSI/MSA (SPEC.md §5.3 conflict rule)", () => {
+  it("Q9 safety override wins over Q8 blast-radius for MSI/MSA (docs/SPEC01.md §5.3 conflict rule)", () => {
     const result = deriveMetrics([
       { questionId: "blast_radius", optionId: "stepping_stone" }, // MSC=H, MSI=H, MSA=H
       { questionId: "safety", optionId: "yes" }, // MSI=S, MSA=S (later question, wins)

@@ -1,7 +1,7 @@
-// The v1 interview question catalog. Source of truth: SPEC.md §5.2.
+// The v1 interview question catalog. Source of truth: docs/SPEC01.md §5.2.
 //
 // Wording here may be polished, but the metric effects MUST NOT change
-// without updating SPEC.md first — this is the implementation contract.
+// without updating docs/SPEC01.md first — this is the implementation contract.
 
 import type { MetricEffect, Option, Question } from "./types.js";
 
