@@ -50,12 +50,16 @@ export function ScoreChanges({
             {changes.map((change) => (
               <li key={change.metric} className="why-item">
                 <span className="why-metric">
-                  <span className={`why-direction why-direction-${change.direction}`} aria-hidden="true">
-                    {DIRECTION_GLYPH[change.direction]}
+                  <span className="why-indicator">
+                    <span className={`why-direction why-direction-${change.direction}`} aria-hidden="true">
+                      {DIRECTION_GLYPH[change.direction]}
+                    </span>
+                    <span className="sr-only">{DIRECTION_LABEL[change.direction]}</span>
+                    <span className="why-impact">{formatSignedScore(change.impact)}</span>
                   </span>
-                  <span className="sr-only">{DIRECTION_LABEL[change.direction]}</span>
-                  <span className="why-impact">{formatSignedScore(change.impact)}</span>{" "}
-                  {change.metricName}: {change.fromValueName} → {change.toValueName}
+                  <span>
+                    {change.metricName}: {change.fromValueName} → {change.toValueName}
+                  </span>
                 </span>
                 <span className="why-reason">
                   because you answered &ldquo;{optionLabel(catalog, change.questionId, change.optionId)}&rdquo;
