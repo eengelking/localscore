@@ -4,6 +4,7 @@ import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { openDb } from "../src/db/index.js";
 import { createApp } from "../src/index.js";
+import { __resetNvdThrottleForTests } from "../src/lib/nvd.js";
 
 const VECTOR = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H";
 
@@ -16,6 +17,7 @@ describe("saved-vulnerability CRUD", () => {
     dataDir = mkdtempSync(path.join(tmpdir(), "localscore-test-"));
     db = openDb(dataDir);
     app = createApp(db);
+    __resetNvdThrottleForTests();
   });
 
   afterEach(() => {
@@ -238,6 +240,129 @@ describe("saved-vulnerability CRUD", () => {
       const relookupRes = await app.request(`/api/cve/${CVE_ID}`);
       expect(relookupRes.status).toBe(200);
       expect((await relookupRes.json()).cached).toBe(true);
+
+      vi.unstubAllGlobals();
+    });
+  });
+
+  describe("PUT /vulnerabilities/:id (docs/SPEC02.md §7.2)", () => {
+    it("edits label and description in place", async () => {
+      const createRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR, label: "Original label" }),
+      });
+      const created = await createRes.json();
+      expect(created.description).toBe("");
+
+      const putRes = await app.request(`/api/vulnerabilities/${created.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: "Renamed", description: "Some *markdown* notes" }),
+      });
+      expect(putRes.status).toBe(200);
+      const updated = await putRes.json();
+      expect(updated).toMatchObject({
+        id: created.id,
+        label: "Renamed",
+        description: "Some *markdown* notes",
+        vector: VECTOR,
+        baseScore: created.baseScore,
+      });
+
+      const getRes = await app.request(`/api/vulnerabilities/${created.id}`);
+      expect(await getRes.json()).toMatchObject({ label: "Renamed", description: "Some *markdown* notes" });
+    });
+
+    it("does not allow editing vector, score, or cveId", async () => {
+      const createRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR, cveId: "CVE-2026-55200" }),
+      });
+      const created = await createRes.json();
+
+      const putRes = await app.request(`/api/vulnerabilities/${created.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          label: "Renamed",
+          vector: "CVSS:3.1/AV:P/AC:H/PR:H/UI:R/S:U/C:N/I:N/A:N",
+          baseScore: 0.1,
+          cveId: "CVE-9999-99999",
+        }),
+      });
+      const updated = await putRes.json();
+      expect(updated).toMatchObject({
+        vector: VECTOR,
+        baseScore: created.baseScore,
+        cveId: "CVE-2026-55200",
+      });
+    });
+
+    it("404s when editing an unknown id", async () => {
+      const res = await app.request("/api/vulnerabilities/999999", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: "x" }),
+      });
+      expect(res.status).toBe(404);
+    });
+  });
+
+  describe("NVD data carries through on save (docs/SPEC02.md §7.3)", () => {
+    const CVE_ID = "CVE-2026-55200";
+
+    it("a CVE saved without an explicit nvdJson still serves multiple vectors on its detail view", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            vulnerabilities: [
+              {
+                cve: {
+                  id: CVE_ID,
+                  metrics: {
+                    cvssMetricV31: [
+                      {
+                        source: "nvd@nist.gov",
+                        type: "Primary",
+                        cvssData: { version: "3.1", vectorString: VECTOR, baseScore: 9.8, baseSeverity: "CRITICAL" },
+                      },
+                      {
+                        source: "some-other-source",
+                        type: "Secondary",
+                        cvssData: {
+                          version: "3.1",
+                          vectorString: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:L",
+                          baseScore: 9.3,
+                          baseSeverity: "CRITICAL",
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+
+      await app.request(`/api/cve/${CVE_ID}`);
+
+      // Client saves without sending nvdJson — the server must carry the
+      // cache row's nvd_json forward onto the saved row.
+      const saveRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR, cveId: CVE_ID }),
+      });
+      const saved = await saveRes.json();
+
+      const detailRes = await app.request(`/api/vulnerabilities/${saved.id}`);
+      const detail = await detailRes.json();
+      expect(detail.vectors).toHaveLength(2);
 
       vi.unstubAllGlobals();
     });

@@ -16,12 +16,14 @@ interface VulnerabilityRow {
   fetched_at: string | null;
   created_at: string;
   saved: number;
+  description: string;
 }
 
 function serializeVulnerability(row: VulnerabilityRow) {
   return {
     id: row.id,
     label: row.label,
+    description: row.description,
     source: row.source,
     cveId: row.cve_id,
     vector: row.vector,
@@ -111,6 +113,23 @@ export function vulnerabilityRoutes(db: Database.Database) {
       ...serializeVulnerability(row),
       vectors: row.nvd_json ? extractVectorOptions(JSON.parse(row.nvd_json)) : [],
     });
+  });
+
+  // Editable fields per docs/SPEC02.md §7.2 — label and description only.
+  // Score/vector/cve_id identity is fixed at save time and never touched here.
+  app.put("/vulnerabilities/:id", async (c) => {
+    const id = Number(c.req.param("id"));
+    const current = getVulnerabilityOr404(db, id);
+    const body = await c.req
+      .json<{ label?: string; description?: string }>()
+      .catch(() => ({}) as { label?: string; description?: string });
+    db.prepare("UPDATE vulnerabilities SET label = ?, description = ? WHERE id = ?").run(
+      body.label?.trim() || current.label,
+      body.description ?? current.description,
+      id,
+    );
+    const row = getVulnerabilityOr404(db, id);
+    return c.json(serializeVulnerability(row));
   });
 
   app.delete("/vulnerabilities/:id", (c) => {

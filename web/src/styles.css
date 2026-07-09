@@ -59,6 +59,14 @@
   --action-red-text: #c23b2f;
   --action-yellow-text: #8a6300;
 
+  /* Subtle red-tinted background for warning callouts (§7.4's "more
+     vulnerable" note) — a translucent wash of --action-red-text, same
+     pattern as --accent-wash. Body text on top stays --ink (already
+     high-contrast against --surface-card, and this wash is too faint to
+     meaningfully change that), so no separate contrast validation is
+     needed beyond what --action-red-text's icon usage already has. */
+  --warning-wash: rgba(194, 59, 47, 0.08);
+
   --font-display: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
   --font-body: "Archivo", system-ui, -apple-system, "Segoe UI", sans-serif;
 
@@ -128,6 +136,7 @@
 
     --action-red-text: #e0685b;
     --action-yellow-text: #e0b400;
+    --warning-wash: rgba(224, 104, 91, 0.12);
   }
 }
 
@@ -154,6 +163,7 @@
 
   --action-red-text: #e0685b;
   --action-yellow-text: #e0b400;
+  --warning-wash: rgba(224, 104, 91, 0.12);
 }
 
 :root[data-theme="light"] {
@@ -179,6 +189,7 @@
 
   --action-red-text: #c23b2f;
   --action-yellow-text: #8a6300;
+  --warning-wash: rgba(194, 59, 47, 0.08);
 }
 
 /* ---------------------------------------------------------------------
@@ -1154,20 +1165,24 @@ main {
   gap: var(--space-2);
 }
 
+/* Delta figures (SPEC02 §7.4) — significantly more prominent than the
+   surrounding UI, using the text-safe severity variants (not the raw fill
+   hues, which fail contrast used as foreground text — see the --severity-*-
+   text tokens' validation note above). */
 .delta {
   font-family: var(--font-display);
-  font-size: var(--text-sm);
-  font-weight: 600;
-  min-width: 3.5rem;
+  font-size: var(--text-lg);
+  font-weight: 700;
+  min-width: 4.5rem;
   text-align: right;
 }
 
 .delta-down {
-  color: var(--severity-low);
+  color: var(--severity-low-text);
 }
 
 .delta-up {
-  color: var(--severity-critical);
+  color: var(--severity-critical-text);
 }
 
 .delta-flat {
@@ -1175,7 +1190,7 @@ main {
 }
 
 .disclosure {
-  font-size: var(--text-lg);
+  display: inline-flex;
   color: var(--ink-secondary);
   transition: transform 0.15s ease;
 }
@@ -1242,7 +1257,9 @@ main {
 
 .why-impact {
   display: inline-block;
-  min-width: 3.5ch;
+  min-width: 4ch;
+  font-size: var(--text-base);
+  font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1260,6 +1277,50 @@ main {
   font-family: var(--font-display);
   font-weight: 600;
   font-size: var(--text-sm);
+}
+
+/* Total-line coloring (SPEC02 §7.4) — bold red when the environment made
+   things worse (score increased), bold green when it made things safer
+   (score decreased). Zero stays neutral/unstyled. */
+.why-total-worse {
+  font-weight: 700;
+  color: var(--severity-critical-text);
+}
+
+.why-total-better {
+  font-weight: 700;
+  color: var(--severity-low-text);
+}
+
+/* ---------------------------------------------------------------------
+   More-vulnerable warning (SPEC02 §7.4) — shown whenever an environment's
+   modified score exceeds the base score, in both the Scoring results and
+   the saved-vulnerability detail view (both render through
+   EnvironmentResultRow, so one implementation covers both).
+   ------------------------------------------------------------------ */
+
+.more-vulnerable-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--warning-wash);
+  border: 1px solid var(--warning-wash);
+  color: var(--ink);
+  font-size: var(--text-sm);
+}
+
+.more-vulnerable-warning svg {
+  flex-shrink: 0;
+  margin-top: 0.15em;
+  color: var(--action-red-text);
+}
+
+.more-vulnerable-warning p {
+  margin: 0;
+  color: var(--ink);
 }
 
 .sr-only {

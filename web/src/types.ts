@@ -142,6 +142,7 @@ export interface CveResponse {
 export interface SavedVulnerability {
   id: number;
   label: string;
+  description: string;
   source: "vector" | "nvd";
   cveId: string | null;
   vector: string;

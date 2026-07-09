@@ -242,6 +242,7 @@ curl -X POST http://localhost:8080/api/vulnerabilities \
 {
   "id": 2,
   "label": "Log4Shell",
+  "description": "",
   "source": "nvd",
   "cveId": "CVE-2021-44228",
   "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:C/C:H/I:H/A:H",
@@ -256,6 +257,18 @@ curl -X POST http://localhost:8080/api/vulnerabilities \
 `label` and `cveId` are optional — omit `cveId` for a plain pasted vector (`source` becomes `"vector"` instead of `"nvd"`, and `label` falls back to the normalized vector string if not given). The score and normalized vector are always recomputed server-side from `vector`, not trusted from the request — the point of saving is a durable, re-scoreable record, not whatever a client happened to compute.
 
 Saving is an **upsert**, not an insert: a second save with the same `cveId` (or the same normalized `vector` for a plain pasted-vector save) updates the existing saved entry in place — including reusing an NVD-lookup cache row for that CVE if one already exists — rather than creating a duplicate. The response's `overwritten` field is `true` when an already-*saved* entry was updated, `false` on a first save (`201`) or on a save that only reused a cache row (still `201`); an update to an already-saved entry returns `200`.
+
+A CVE-sourced save also carries over that CVE's cached NVD data automatically — the upsert reuses the lookup-cache row's `nvd_json`, so the detail route's `vectors` array is populated without the client needing to send an `nvdJson` field (`docs/SPEC02.md` §7.3).
+
+### Rename / edit description
+
+```bash
+curl -X PUT http://localhost:8080/api/vulnerabilities/2 \
+  -H 'Content-Type: application/json' \
+  -d '{"label": "Log4Shell (prod-facing)", "description": "Tracked in the Q3 remediation sprint."}'
+```
+
+Only `label` and `description` are editable this way — `vector`, `baseScore`, `cvssVersion`, and `cveId` are fixed at save time and ignored if sent. `description` renders as Markdown wherever it's displayed (`docs/SPEC02.md` §4).
 
 ### List / get / delete
 

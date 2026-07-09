@@ -110,6 +110,16 @@ export function getVulnerability(id: number): Promise<SavedVulnerabilityDetail> 
   return request(`/api/vulnerabilities/${id}`);
 }
 
+export function updateVulnerability(
+  id: number,
+  body: { label?: string; description?: string },
+): Promise<SavedVulnerability> {
+  return request(`/api/vulnerabilities/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(body),
+  });
+}
+
 export function deleteVulnerability(id: number): Promise<void> {
   return request(`/api/vulnerabilities/${id}`, { method: "DELETE" });
 }
