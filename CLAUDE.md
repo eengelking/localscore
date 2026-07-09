@@ -71,7 +71,7 @@ Run from the repo root unless noted.
 - `npm run typecheck` / `npm run lint` — both workspaces.
 - `podman build --format docker -t localscore .` then `podman run ...` — container build per SPEC.md §9. The maintainer uses **Podman, not Docker**; the Dockerfile/compose.yaml are plain OCI and must keep working under Docker too, but write any documentation/examples with `podman`. **`--format docker` is required for a direct `podman build`** — Podman's default OCI build format silently drops the Dockerfile's `HEALTHCHECK` instruction with just a warning, no error.
 - `podman compose up` — builds and runs via `compose.yaml`. Verified this does **not** need `--format docker`: going through the external `docker-compose` provider already produces a Docker-format image with `HEALTHCHECK` intact (confirmed by `podman inspect` reporting `healthy`). So the flag only matters for a bare `podman build`, not for compose.
-- No image is published yet (`ghcr.io/<owner>/localscore` doesn't exist) — only local builds work right now.
+- Published image: `docker.io/eengelking/localscore` (tags `latest`, `0.1.0`) — pushed with `podman push`. SPEC.md §9's example commands reference `ghcr.io/<owner>/localscore`; the maintainer chose Docker Hub instead, so README.md documents `docker.io/eengelking/localscore` as the real, working registry path.
 
 Verified end-to-end (2026-07-08): both `podman build --format docker` + `podman run`, and `podman compose up`, produce a container `podman inspect` reports as `healthy`, with the API/frontend reachable and a full create-environment round trip working.
 
