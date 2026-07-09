@@ -11,6 +11,8 @@ This document is the **active implementation contract** for the next round of wo
 
 Scope of v1.1: a UI/UX consistency overhaul (buttons, icons, tabs, theming), markdown description fields, environment and saved-vulnerability **edit views**, a fix for the saved-vulnerability duplication/overwrite behavior, a "Major CVEs" feed, and closing three carried-over v1 gaps (§10).
 
+**Implementation status (as of 2026-07-09 audit): everything in this document is implemented and merged to `main` except §8.4 (question help modal), which is still open.** Every other section — §2–§7, §9, §10 — has been verified against the running code, not just against intent. See §8.4 for the one remaining gap.
+
 ---
 
 ## 1. Current-state findings (what's wrong today)
@@ -185,6 +187,8 @@ A dedicated edit view for an environment, exposing what `PUT /api/environments/:
 
 ### 8.4 Question help modal
 
+**Status: not yet implemented.** `InterviewPage.tsx` still renders `whyWeAsk` as permanent inline text and `finePrint` as an inline `<details>` — no `?` icon, no modal. The reusable `Modal` component (§2.4, blurred backdrop, focus-trapped, Escape-to-close) and a `question` icon already exist in the codebase and are unused for this; building this section is mechanical wiring, not new infrastructure.
+
 - On the interview questions, each question gets a **circled `?` icon**; clicking it opens a **modal** (component from §2.4) containing the question's additional information — the `whyWeAsk` help text and, where present, the `finePrint` "what this maps to" disclosure.
 - The modal MUST NOT navigate away from the interview, MUST blur the page behind it, and MUST be dismissible (close control + Escape). The inline always-visible help text may be trimmed accordingly, but the fine-print disclosures mandated by v1 §5.2 (Q1, Q4) MUST remain reachable — via this modal is sufficient.
 
@@ -192,13 +196,20 @@ A dedicated edit view for an environment, exposing what `PUT /api/environments/:
 
 ## 9. Data model & API changes (summary)
 
-New migration(s) (`server/src/migrations/0002_*.sql`, sequential per v1 rules):
+Two migrations landed (sequential per v1 rules), matching how the work actually shipped in two separate PRs rather than one combined migration:
 
 ```sql
+-- 0002_vulnerabilities_saved_flag.sql
 ALTER TABLE vulnerabilities ADD COLUMN saved INTEGER NOT NULL DEFAULT 0;   -- §7.1
 UPDATE vulnerabilities SET saved = 1;                                      -- classify pre-existing rows as saved
-ALTER TABLE vulnerabilities ADD COLUMN description TEXT NOT NULL DEFAULT ''; -- §7.2
--- plus whatever storage §6.5's daily major-CVEs cache needs (single-row cache table is fine)
+ALTER TABLE vulnerabilities ADD COLUMN description TEXT NOT NULL DEFAULT ''; -- §7.2 (added here ahead of the route that uses it)
+
+-- 0003_major_cves_cache.sql
+CREATE TABLE major_cves_cache (   -- §6.5's daily major-CVEs cache: single-row table
+  id         INTEGER PRIMARY KEY CHECK (id = 1),
+  payload    TEXT NOT NULL,
+  fetched_at TEXT NOT NULL
+);
 ```
 
 API surface changes:
@@ -250,3 +261,5 @@ UI behavior that Vitest can't reach (tabs order/default, disabled-offline tab + 
 - **Overwrite question** (from the outline): confirmed the current code creates a *new* entry on every save; this spec mandates overwrite-with-clear-messaging (§6.6), not duplicate-creation.
 - **"Updated daily" for Major CVEs** is implemented as a ≤24 h server-side cache with lazy refresh on access (§6.5) — no cron/scheduler in the container.
 - **Severity "None" stays colorless** and the severity palette methodology (dataviz-skill validation) carries over unchanged; new semantic colors (green/red/yellow) MUST go through the same validation in both themes.
+- **§5's nav-vs-`<h1>` distinction is intentional, not an oversight**: a 2026-07-09 implementation audit flagged that the Saved page's on-page `<h1>` still reads "Saved vulnerabilities" while its nav label reads "Saved" (the Scoring page's `<h1>` was shortened to "Scoring" though, since that's what non-technical page-description copy needed anyway). §5 explicitly only mandates the nav labels — this is compliant, not a gap. Noted here because it reads as an inconsistency at a glance.
+- **§7.3 (NVD carry-through) shipped without any client change.** The fix mandated by this section — "the client MUST send the NVD payload (or the server MUST copy `nvd_json` from the cache row)" — turned out to already be satisfied by the §7.1 upsert's `COALESCE(?, nvd_json)`, since a CVE-sourced save matches the same row the lookup already populated. The client genuinely never sends `nvdJson`. Confirmed via a real (non-mocked) NVD lookup, then locked in with a regression test.
