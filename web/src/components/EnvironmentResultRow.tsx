@@ -2,6 +2,7 @@ import { useState } from "react";
 import { formatSignedScore } from "../lib/format.js";
 import type { Catalog, EnvironmentScoreResult } from "../types.js";
 import { AnimatedScore } from "./AnimatedScore.js";
+import { Icon } from "./Icon.js";
 import { ScoreChanges } from "./ScoreChanges.js";
 
 function deltaClass(delta: number): string {
@@ -45,7 +46,7 @@ export function EnvironmentResultRow({
           <AnimatedScore from={baseScore} to={result.score} />
           <span className={deltaClass(result.delta)}>{formatSignedScore(result.delta)}</span>
           <span className={`disclosure ${open ? "is-open" : ""}`} aria-hidden="true">
-            ▾
+            <Icon name="chevron" size={20} />
           </span>
         </span>
       </button>
@@ -53,6 +54,12 @@ export function EnvironmentResultRow({
       {open && (
         <div className="result-row-detail">
           <p className="vector-string">{result.vector}</p>
+          {result.delta > 0 && (
+            <div className="more-vulnerable-warning">
+              <Icon name="warning" size={18} />
+              <p>Higher than the base score — this environment's answers make this vulnerability more severe here.</p>
+            </div>
+          )}
           <ScoreChanges changes={result.changes} notes={result.notes} catalog={catalog} />
         </div>
       )}

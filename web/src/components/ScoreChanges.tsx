@@ -37,6 +37,7 @@ export function ScoreChanges({
   const individualNotes = notes.filter((n) => n.status !== "not-applicable-to-version");
   const skippedVersionCount = notes.length - individualNotes.length;
   const total = Math.round(changes.reduce((sum, c) => sum + c.impact, 0) * 10) / 10;
+  const totalDirection = total > 0 ? "worse" : total < 0 ? "better" : "neutral";
 
   return (
     <div className="why">
@@ -75,7 +76,7 @@ export function ScoreChanges({
             </p>
           )}
 
-          <p className="why-total">Total: {formatSignedScore(total)}</p>
+          <p className={`why-total why-total-${totalDirection}`}>Total: {formatSignedScore(total)}</p>
         </>
       )}
 
