@@ -1,5 +1,5 @@
 // Severity orderings for cap comparisons, most -> least severe.
-// SPEC.md §2.2. Only exploitability metrics ever carry a `cap` effect in the
+// docs/SPEC01.md §2.2. Only exploitability metrics ever carry a `cap` effect in the
 // v1 catalog (MAV, MAC/MAT, MPR, MUI) — CR/IR/AR, impact M-metrics, MS/MSC/MSI/MSA,
 // and supplemental metrics are always `override`.
 
@@ -30,7 +30,7 @@ export function baseCounterpartMetric(metric: string): string | undefined {
 }
 
 // True if `capValue` is strictly less severe than `baseValue` for the given
-// version/metric, per the SPEC.md §2.2 ordering (most severe first — a
+// version/metric, per the docs/SPEC01.md §2.2 ordering (most severe first — a
 // later index is less severe).
 export function isLessSevere(version: "4.0" | "3.1", metric: string, capValue: string, baseValue: string): boolean {
   const ordering = ORDERINGS[version][metric];

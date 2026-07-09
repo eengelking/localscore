@@ -1,6 +1,6 @@
-# localscore — Specification v1.1 ("SPEC1")
+# localscore — Specification v1.1 ("SPEC02")
 
-This document is the **active implementation contract** for the next round of work. It supersedes `SPEC.md` (the v1 contract), which is fully implemented and now historical. Treat every **MUST/MUST NOT** here as a hard requirement and every **SHOULD** as the default unless there is a documented reason to deviate.
+This document is the **active implementation contract** for the next round of work. It supersedes `SPEC01.md` (the v1 contract), which is fully implemented and now historical. Treat every **MUST/MUST NOT** here as a hard requirement and every **SHOULD** as the default unless there is a documented reason to deviate.
 
 **Everything in the v1 contract that this document does not change remains binding** — in particular:
 
@@ -9,7 +9,7 @@ This document is the **active implementation contract** for the next round of wo
 - The mandated tech stack is unchanged: Node 22 + TypeScript strict, Hono, React + Vite, plain CSS custom properties (no UI framework, no component library with a large runtime), better-sqlite3 with sequential SQL migrations, Vitest, single container on port 8080.
 - The app MUST remain fully functional offline. The only permitted outbound network calls are the NVD lookups (§6.5, §6.6 below). **No CDN assets of any kind** — fonts, icons, and any markdown/renderer code MUST be bundled.
 
-Scope of v1.1: a UI/UX consistency overhaul (buttons, icons, tabs, theming), markdown description fields, environment and saved-vulnerability **edit views**, a fix for the saved-vulnerability duplication/overwrite behavior, a "Major CVEs" feed, and closing three carried-over v1 gaps (§8).
+Scope of v1.1: a UI/UX consistency overhaul (buttons, icons, tabs, theming), markdown description fields, environment and saved-vulnerability **edit views**, a fix for the saved-vulnerability duplication/overwrite behavior, a "Major CVEs" feed, and closing three carried-over v1 gaps (§10).
 
 ---
 
@@ -58,7 +58,7 @@ All existing controls MUST be migrated onto this system — e.g. the ScoreResult
 ### 2.4 Confirmation modal (shared component)
 
 - One reusable modal component: centered dialog, backdrop that **blurs** the page behind it (`backdrop-filter: blur(...)` + dim), closable via an explicit Cancel/close control and the Escape key, focus-trapped, `role="dialog"` + `aria-modal`.
-- Used for: every delete confirmation (environments, saved vulnerabilities), the interview question-help modal (§4.4), and any future modal. `window.confirm()` MUST be removed.
+- Used for: every delete confirmation (environments, saved vulnerabilities), the interview question-help modal (§8.4), and any future modal. `window.confirm()` MUST be removed.
 - Delete confirmations state what will be deleted by name and that it can't be undone; the destructive confirm button follows the Delete style (red), the dismiss button follows Cancel (yellow).
 
 ### 2.5 Badges/tags

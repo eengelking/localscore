@@ -19,11 +19,11 @@ A 9.8 "Critical" against a production database might land at 9.8 for your data c
 
 ## Status
 
-The implementation spec is done ([`SPEC.md`](./SPEC.md)), and the app works end-to-end:
+The implementation spec is done ([`docs/SPEC01.md`](./docs/SPEC01.md)), and the app works end-to-end:
 
 - An npm-workspaces monorepo (`server/` = Hono + SQLite API, `web/` = React + Vite frontend), served from one process on one port.
 - The full 12-question interview catalog, and environment CRUD — you can create an environment, save interview answers, and have them derive into stored CVSS environmental metrics.
-- **Scoring works.** `POST /api/score` parses a CVSS v4.0/v3.1/v3.0 vector and returns the base score plus every environment's modified score, backed by `ae-cvss-calculator` validated against FIRST's reference vectors — including the exact worked example from `SPEC.md` §6 (a `9.8` base score landing at `0.0` for a disposable dev environment).
+- **Scoring works.** `POST /api/score` parses a CVSS v4.0/v3.1/v3.0 vector and returns the base score plus every environment's modified score, backed by `ae-cvss-calculator` validated against FIRST's reference vectors — including the exact worked example from `docs/SPEC01.md` §6 (a `9.8` base score landing at `0.0` for a disposable dev environment).
 - **A real frontend** — environments list, interview wizard, and a results screen (paste a vector or look up a CVE) where you see each environment's modified score, with the animated "a 10 might actually be a zero" reveal.
 - **NVD CVE lookup** (`GET /api/cve/:cveId`) — cache-first, throttled, and tolerant of NVD being unreachable — plus a saved-vulnerabilities screen backed by the saved-vulnerability CRUD routes.
 - A container image that builds and runs cleanly under Podman (or Docker), passes its own `HEALTHCHECK`, and comes in under 300 MB.
@@ -63,7 +63,7 @@ Then run it the same way, swapping `docker.io/eengelking/localscore:latest` for 
 
 Any OCI-compatible tool (Docker included) works the same way — the image and `compose.yaml` aren't Podman-specific.
 
-Also see `compose.yaml` for the same setup as a single `podman compose up` (or `docker compose up`). See `SPEC.md` §9 for full container/operations details.
+Also see `compose.yaml` for the same setup as a single `podman compose up` (or `docker compose up`). See `docs/SPEC01.md` §9 for full container/operations details.
 
 ## Developing locally
 
@@ -85,7 +85,7 @@ Every route the UI uses — environments, the interview, scoring, CVE lookup, sa
 
 - It doesn't scan anything or talk to your infrastructure — you tell it about a location by answering questions, and you paste in vectors or CVE IDs.
 - It doesn't guess whether an exploit exists in the wild (CVSS threat/temporal metrics) — those are per-vulnerability, not per-environment, and are shown read-only from whatever you paste in.
-- It doesn't support CVSS v2.0 yet (NVD stopped assigning it in 2022; see `SPEC.md` §11 for the roadmap).
+- It doesn't support CVSS v2.0 yet (NVD stopped assigning it in 2022; see `docs/SPEC01.md` §11 for the roadmap).
 - It doesn't require an internet connection, except for the optional "look up this CVE by ID" convenience.
 
 ## Why this exists

@@ -15,7 +15,7 @@ interface AnswerRow {
   option_id: string;
 }
 
-// POST /api/score — SPEC.md §6 and §8. Scores a pasted vector against the
+// POST /api/score — docs/SPEC01.md §6 and §8. Scores a pasted vector against the
 // base metrics, then against every saved environment's derived metrics.
 export function scoreRoutes(db: Database.Database) {
   const app = new Hono();
@@ -84,7 +84,7 @@ export function scoreRoutes(db: Database.Database) {
         score: baseResult.score,
         severity: baseResult.severity,
         note: base.note,
-        // SPEC.md §2.5: the UI SHOULD warn when the pasted vector already
+        // docs/SPEC01.md §2.5: the UI SHOULD warn when the pasted vector already
         // carried environmental metrics, since environment profiles take
         // precedence over them for any metric the profile defines.
         pastedVectorHasEnvironmentalMetrics: base.instance.isAnyEnvironmentalDefined(),

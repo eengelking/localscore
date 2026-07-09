@@ -69,7 +69,7 @@ describe("POST /api/score", () => {
     expect(body.environments).toEqual([]);
   });
 
-  it("reproduces the SPEC.md §6 worked example end-to-end through the API", async () => {
+  it("reproduces the docs/SPEC01.md §6 worked example end-to-end through the API", async () => {
     await createEnvironment("Disposable Dev Lab", [
       { questionId: "reachability", optionId: "internal_only" },
       { questionId: "confidentiality", optionId: "nothing" },
