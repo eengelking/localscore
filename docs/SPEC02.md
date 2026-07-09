@@ -11,7 +11,7 @@ This document is the **active implementation contract** for the next round of wo
 
 Scope of v1.1: a UI/UX consistency overhaul (buttons, icons, tabs, theming), markdown description fields, environment and saved-vulnerability **edit views**, a fix for the saved-vulnerability duplication/overwrite behavior, a "Major CVEs" feed, and closing three carried-over v1 gaps (§10).
 
-**Implementation status (as of 2026-07-09 audit): everything in this document is implemented and merged to `main` except §8.4 (question help modal), which is still open.** Every other section — §2–§7, §9, §10 — has been verified against the running code, not just against intent. See §8.4 for the one remaining gap.
+**Implementation status: fully implemented and merged to `main`, as of a 2026-07-09 audit verified against the running code (not just against intent).** §8.4 (question help modal) was the last section closed.
 
 ---
 
@@ -186,8 +186,6 @@ A dedicated edit view for an environment, exposing what `PUT /api/environments/:
 - The interview (question wizard) is reached from this view for answering/re-answering.
 
 ### 8.4 Question help modal
-
-**Status: not yet implemented.** `InterviewPage.tsx` still renders `whyWeAsk` as permanent inline text and `finePrint` as an inline `<details>` — no `?` icon, no modal. The reusable `Modal` component (§2.4, blurred backdrop, focus-trapped, Escape-to-close) and a `question` icon already exist in the codebase and are unused for this; building this section is mechanical wiring, not new infrastructure.
 
 - On the interview questions, each question gets a **circled `?` icon**; clicking it opens a **modal** (component from §2.4) containing the question's additional information — the `whyWeAsk` help text and, where present, the `finePrint` "what this maps to" disclosure.
 - The modal MUST NOT navigate away from the interview, MUST blur the page behind it, and MUST be dismissible (close control + Escape). The inline always-visible help text may be trimmed accordingly, but the fine-print disclosures mandated by v1 §5.2 (Q1, Q4) MUST remain reachable — via this modal is sufficient.

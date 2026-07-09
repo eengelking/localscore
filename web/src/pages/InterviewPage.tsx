@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getCatalog, getEnvironment, saveAnswers } from "../api.js";
+import { Icon } from "../components/Icon.js";
+import { QuestionHelpModal } from "../components/QuestionHelpModal.js";
 import type { Answer, Catalog, EnvironmentDetail } from "../types.js";
 
 const SKIP_OPTION_ID = "skip";
@@ -11,6 +13,9 @@ export function InterviewPage({ environmentId, onDone }: { environmentId: number
   const [index, setIndex] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  useEffect(() => setHelpOpen(false), [index]);
 
   useEffect(() => {
     Promise.all([getCatalog(), getEnvironment(environmentId)])
@@ -84,14 +89,17 @@ export function InterviewPage({ environmentId, onDone }: { environmentId: number
       </p>
 
       <div className="card interview-question">
-        <h2>{question.question}</h2>
-        <p className="why-we-ask">{question.whyWeAsk}</p>
-        {question.finePrint && (
-          <details className="fine-print">
-            <summary>What this maps to</summary>
-            <p>{question.finePrint}</p>
-          </details>
-        )}
+        <div className="interview-question-title">
+          <h2>{question.question}</h2>
+          <button
+            type="button"
+            className="icon-button icon-button-quiet"
+            aria-label="Why we ask this question"
+            onClick={() => setHelpOpen(true)}
+          >
+            <Icon name="question" />
+          </button>
+        </div>
 
         <div className="option-list">
           {question.options
@@ -133,6 +141,15 @@ export function InterviewPage({ environmentId, onDone }: { environmentId: number
       </div>
 
       {error && <p className="error-text">{error}</p>}
+
+      {helpOpen && (
+        <QuestionHelpModal
+          question={question.question}
+          whyWeAsk={question.whyWeAsk}
+          finePrint={question.finePrint}
+          onClose={() => setHelpOpen(false)}
+        />
+      )}
     </div>
   );
 }
