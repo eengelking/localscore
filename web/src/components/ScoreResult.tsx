@@ -53,7 +53,7 @@ export function ScoreResult({
         {result.base.note && <p className="base-score-note">{result.base.note}</p>}
         {result.base.pastedVectorHasEnvironmentalMetrics && (
           <p className="base-score-note">
-            This vector already included environmental metrics — any environment profile below takes precedence for
+            This vector already included environmental metrics. Any environment profile below takes precedence for
             the metrics it defines.
           </p>
         )}
@@ -61,7 +61,7 @@ export function ScoreResult({
         {onSave && (
           <div className="save-panel">
             {!saveOpen && !saved && (
-              <button type="button" className="button" onClick={() => setSaveOpen(true)}>
+              <button type="button" className="button button-save" onClick={() => setSaveOpen(true)}>
                 Save
               </button>
             )}
@@ -109,7 +109,7 @@ export function ScoreResult({
 
       {result.environments.length === 0 ? (
         <div className="card empty-state">
-          <p>No environments defined yet — create one to see how this vulnerability applies to a real location.</p>
+          <p>No environments defined yet. Create one to see how this vulnerability applies to a real location.</p>
         </div>
       ) : (
         <ul className="result-list">

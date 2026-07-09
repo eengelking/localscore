@@ -124,7 +124,7 @@ export function EnvironmentEditPage({
           <p>
             {hasStarted
               ? "This environment has a profile. Re-answer to update it."
-              : "No answers yet — start the interview to build this environment's profile."}
+              : "No answers yet. Start the interview to build this environment's profile."}
           </p>
         </div>
         <button type="button" className="button button-primary" onClick={() => onOpenInterview(environmentId)}>

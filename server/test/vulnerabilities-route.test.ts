@@ -321,6 +321,7 @@ describe("saved-vulnerability CRUD", () => {
               {
                 cve: {
                   id: CVE_ID,
+                  descriptions: [{ lang: "en", value: "A saved CVE's description." }],
                   metrics: {
                     cvssMetricV31: [
                       {
@@ -363,8 +364,22 @@ describe("saved-vulnerability CRUD", () => {
       const detailRes = await app.request(`/api/vulnerabilities/${saved.id}`);
       const detail = await detailRes.json();
       expect(detail.vectors).toHaveLength(2);
+      expect(detail.details.description).toBe("A saved CVE's description.");
 
       vi.unstubAllGlobals();
+    });
+
+    it("a pasted-vector save (no nvd_json) returns details: null", async () => {
+      const saveRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR }),
+      });
+      const saved = await saveRes.json();
+
+      const detailRes = await app.request(`/api/vulnerabilities/${saved.id}`);
+      const detail = await detailRes.json();
+      expect(detail.details).toBeNull();
     });
   });
 });

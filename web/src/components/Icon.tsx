@@ -9,6 +9,10 @@ const PATHS: Record<IconName, string> = {
   question: "M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18Zm0-5.5v-.4c0-.85.5-1.3 1.05-1.7.6-.43 1.2-.9 1.2-1.9A2.25 2.25 0 0 0 12 9.25 2.25 2.25 0 0 0 9.75 11.5M12 17.75h.01",
   warning:
     "M12 3.5 2 20.5h20L12 3.5Zm0 6.5v4.5m0 3h.01",
+  "external-link": "M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6M15 3h6v6M10 14 21 3",
+  eye: "M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Zm11 3a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z",
+  "eye-off":
+    "M17.94 17.94A10.94 10.94 0 0 1 12 20c-7 0-11-8-11-8a21.6 21.6 0 0 1 5.06-6.06M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 8 11 8a21.6 21.6 0 0 1-3.22 4.32M14.12 14.12a3 3 0 1 1-4.24-4.24M1 1l22 22",
 };
 
 const VIEW_BOX: Record<IconName, string> = {
@@ -19,18 +23,33 @@ const VIEW_BOX: Record<IconName, string> = {
   chevron: "0 0 24 24",
   question: "0 0 24 24",
   warning: "0 0 24 24",
+  "external-link": "0 0 24 24",
+  eye: "0 0 24 24",
+  "eye-off": "0 0 24 24",
 };
 
-export type IconName = "trash" | "pencil" | "sun" | "moon" | "chevron" | "question" | "warning";
+export type IconName =
+  | "trash"
+  | "pencil"
+  | "sun"
+  | "moon"
+  | "chevron"
+  | "question"
+  | "warning"
+  | "external-link"
+  | "eye"
+  | "eye-off";
 
 export function Icon({
   name,
   size = 16,
   className,
+  "aria-label": ariaLabel,
 }: {
   name: IconName;
   size?: number;
   className?: string;
+  "aria-label"?: string;
 }) {
   return (
     <svg
@@ -43,9 +62,12 @@ export function Icon({
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
-      aria-hidden="true"
+      aria-hidden={ariaLabel ? undefined : "true"}
+      role={ariaLabel ? "img" : undefined}
+      aria-label={ariaLabel}
       focusable="false"
     >
+      {ariaLabel && <title>{ariaLabel}</title>}
       <path d={PATHS[name]} />
     </svg>
   );

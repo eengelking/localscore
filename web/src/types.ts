@@ -18,6 +18,7 @@ export interface Question {
   question: string;
   whyWeAsk: string;
   finePrint?: string;
+  helpDetail?: string[];
   options: Option[];
 }
 
@@ -130,6 +131,20 @@ export interface NvdVectorOption {
   baseSeverity: string;
 }
 
+export interface CveReference {
+  url: string;
+  source?: string;
+  tags?: string[];
+}
+
+export interface CveDetails {
+  description: string | null;
+  published: string | null;
+  lastModified: string | null;
+  references: CveReference[];
+  affectedProducts: { items: string[]; moreCount: number };
+}
+
 export interface CveResponse {
   cveId: string;
   cached: boolean;
@@ -137,6 +152,7 @@ export interface CveResponse {
   primaryVector: string;
   primaryVersion: string;
   vectors: NvdVectorOption[];
+  details: CveDetails | null;
 }
 
 export interface MajorCveEntry {
@@ -169,4 +185,5 @@ export interface SavedVulnerability {
 
 export interface SavedVulnerabilityDetail extends SavedVulnerability {
   vectors: NvdVectorOption[];
+  details: CveDetails | null;
 }

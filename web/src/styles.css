@@ -24,12 +24,26 @@
   --accent-ink: #ffffff;
   --accent-wash: rgba(52, 82, 196, 0.08);
 
+  /* SPEC02 §2.1's primary-button/active-tab rule: a solid high-contrast
+     inversion of the active theme (near-black fill + light text in light
+     mode, the reverse in dark mode). --accent stays reserved for links,
+     focus rings, and washes/outlines (selection, nav active state) — see
+     CLAUDE.md's Frontend section for the rationale. */
+  --button-contrast-bg: #0b0b0b;
+  --button-contrast-ink: #ffffff;
+
   /* Severity — reserved, never reused for anything else. Text sits at
      near-black on every fill (validated: all clear 4:1+). "None" has no
      dedicated hue on purpose — see web design notes in CLAUDE.md. */
   --severity-low: #0ca30c;
-  --severity-medium: #fab219;
-  --severity-high: #ec835a;
+  /* medium/high are deepened relative to their dark-theme counterparts
+     (see the dark-mode token blocks below) — at this fill's real rendered
+     size (0.75rem uppercase mono on --severity-ink text) the brighter hue
+     used everywhere until SPEC03 §3 read as glaring/washed on the light
+     surface even though it technically cleared 4.5:1; light-only override,
+     dark keeps the original brighter hue since dark reads fine as-is. */
+  --severity-medium: #e0a000;
+  --severity-high: #d66b3f;
   --severity-critical: #d03b3b;
   --severity-ink: #0b0b0b;
 
@@ -39,10 +53,13 @@
      fill hues fail WCAG text contrast used raw this way (validated via the
      dataviz skill's validate_palette.js + precise WCAG math — e.g. medium
      measures 1.79:1 against this mode's surface, high 2.57:1); these are
-     the same hue family darkened until each clears 4.5:1. */
-  --severity-low-text: #0a880a;
-  --severity-medium-text: #9c6b03;
-  --severity-high-text: #cb4a17;
+     the same hue family darkened until each clears 4.5:1 against both
+     --surface and --surface-card (SPEC03 §3 re-validation deepened these
+     further — the pre-SPEC03 values cleared 4.5:1 against --surface-card
+     but landed at ~4.4:1, just under, against --surface). */
+  --severity-low-text: #078007;
+  --severity-medium-text: #8f6103;
+  --severity-high-text: #c04012;
   --severity-critical-text: #d03b3b;
 
   /* Semantic action colors (SPEC02 §2.2) — deliberately distinct hues from
@@ -125,6 +142,9 @@
     --accent-ink: #0d0d0d;
     --accent-wash: rgba(124, 147, 240, 0.12);
 
+    --button-contrast-bg: #ffffff;
+    --button-contrast-ink: #0d0d0d;
+
     --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
 
     /* low/medium/high already clear 4.5:1 as raw text against this mode's
@@ -134,8 +154,15 @@
     --severity-high-text: #ec835a;
     --severity-critical-text: #d75858;
 
+    /* Dark theme keeps the original brighter medium/high fills (they read
+       fine here per SPEC03 §3's finding); only the light :root default was
+       deepened. */
+    --severity-medium: #fab219;
+    --severity-high: #ec835a;
+
     --action-red-text: #e0685b;
     --action-yellow-text: #e0b400;
+    --action-green-text: #22a35a;
     --warning-wash: rgba(224, 104, 91, 0.12);
   }
 }
@@ -154,6 +181,9 @@
   --accent-ink: #0d0d0d;
   --accent-wash: rgba(124, 147, 240, 0.12);
 
+  --button-contrast-bg: #ffffff;
+  --button-contrast-ink: #0d0d0d;
+
   --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 1px rgba(0, 0, 0, 0.2);
 
   --severity-low-text: #0ca30c;
@@ -161,8 +191,12 @@
   --severity-high-text: #ec835a;
   --severity-critical-text: #d75858;
 
+  --severity-medium: #fab219;
+  --severity-high: #ec835a;
+
   --action-red-text: #e0685b;
   --action-yellow-text: #e0b400;
+  --action-green-text: #22a35a;
   --warning-wash: rgba(224, 104, 91, 0.12);
 }
 
@@ -180,15 +214,22 @@
   --accent-ink: #ffffff;
   --accent-wash: rgba(52, 82, 196, 0.08);
 
+  --button-contrast-bg: #0b0b0b;
+  --button-contrast-ink: #ffffff;
+
   --shadow-card: 0 1px 2px rgba(11, 11, 11, 0.04), 0 1px 1px rgba(11, 11, 11, 0.03);
 
-  --severity-low-text: #0a880a;
-  --severity-medium-text: #9c6b03;
-  --severity-high-text: #cb4a17;
+  --severity-low-text: #078007;
+  --severity-medium-text: #8f6103;
+  --severity-high-text: #c04012;
   --severity-critical-text: #d03b3b;
+
+  --severity-medium: #e0a000;
+  --severity-high: #d66b3f;
 
   --action-red-text: #c23b2f;
   --action-yellow-text: #8a6300;
+  --action-green-text: #167a41;
   --warning-wash: rgba(194, 59, 47, 0.08);
 }
 
@@ -417,14 +458,14 @@ main {
 }
 
 .button-primary {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--accent-ink);
+  background: var(--button-contrast-bg);
+  border-color: var(--button-contrast-bg);
+  color: var(--button-contrast-ink);
 }
 
 .button-primary:hover {
-  filter: brightness(1.08);
-  background: var(--accent);
+  filter: brightness(1.15);
+  background: var(--button-contrast-bg);
 }
 
 .button-quiet {
@@ -648,25 +689,31 @@ main {
   border-radius: var(--radius-sm);
 }
 
+/* "Ready" badge: the outline tag pattern (transparent fill, colored text
+   + border), same shape as .badge-severity, using the dedicated
+   --action-green-text token rather than reusing a severity hue (the
+   severity palette stays reserved for severity, per SPEC03 §5.2). */
 .badge.is-complete {
-  color: var(--severity-ink);
-  background: color-mix(in srgb, var(--severity-low) 22%, var(--surface-sunken));
-  border-color: color-mix(in srgb, var(--severity-low) 40%, var(--border-strong));
+  color: var(--action-green-text);
+  background: transparent;
+  border-color: var(--action-green-text);
 }
 
 /* Same box model/typography as .badge (so it reads as the same tag
    pattern), but colored by severity — border + text only, no fill, using
    the WCAG-AA-safe --severity-*-text tokens rather than the raw fill
    hues. Used where a severity needs to sit inline with other neutral tags
-   rather than as the app's usual solid pill. */
+   rather than as the app's usual solid pill. Bumped to weight 700 / 1.5px
+   border (SPEC03 §3) so the small uppercase mono text reads clearly
+   rather than thin/washed-out, especially in the light theme. */
 .badge-severity {
   display: inline-flex;
   align-items: center;
   gap: var(--space-1);
   font-size: var(--text-xs);
-  font-weight: 600;
+  font-weight: 700;
   background: transparent;
-  border: 1px solid var(--border-strong);
+  border: 1.5px solid var(--border-strong);
   padding: var(--space-1) var(--space-2);
   border-radius: var(--radius-sm);
 }
@@ -740,12 +787,23 @@ main {
 }
 
 .modal-header h2 {
+  font-family: var(--font-body);
+  font-weight: 700;
   font-size: var(--text-lg);
 }
 
 .modal-body {
   font-size: var(--text-sm);
   color: var(--ink-secondary);
+}
+
+/* SPEC03 §6.1: a fixed min-height so the question-help modal doesn't
+   visibly resize as the user steps between questions of different
+   content length; content beyond it scrolls via .modal's existing
+   max-height. ConfirmModal stays content-sized (a different, terser
+   dialog) and is unaffected since it doesn't carry this class. */
+.modal-fixed-height .modal-body {
+  min-height: 19rem;
 }
 
 .modal-body p + p {
@@ -762,6 +820,12 @@ main {
 /* ---------------------------------------------------------------------
    Environments page
    ------------------------------------------------------------------ */
+
+.new-environment-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
 
 .new-environment-row {
   display: flex;
@@ -1084,6 +1148,13 @@ main {
   width: 100%;
 }
 
+/* SPEC03 §7.3: .score-form's align-items: flex-start shrink-wraps any
+   child that doesn't explicitly opt into full width, which left the CVE
+   lookup result at its content width instead of filling the card. */
+.cve-lookup-result {
+  width: 100%;
+}
+
 .score-figure-hero {
   font-size: var(--text-hero);
 }
@@ -1160,6 +1231,15 @@ main {
   display: flex;
   align-items: center;
   gap: var(--space-4);
+}
+
+/* SPEC03 §7.5: sized to sit as a peer of the score figure (score-figure-lg
+   is --text-2xl = 2.5rem), not a small footnote glyph. */
+.more-vulnerable-icon {
+  width: var(--text-2xl);
+  height: var(--text-2xl);
+  color: var(--action-red-text);
+  flex-shrink: 0;
 }
 
 .animated-score {
@@ -1417,41 +1497,62 @@ main {
   margin-bottom: var(--space-2);
 }
 
-.mode-toggle {
-  display: inline-flex;
-  gap: 2px;
-  padding: 2px;
-  width: fit-content;
-  background: var(--surface-sunken);
-  border-radius: var(--radius-md);
+/* Real tabs (SPEC03 §4.2), replacing the old .mode-toggle segmented-pill
+   treatment on the Scoring page: a horizontal bar visually attached to the
+   panel below it, with the selected tab rendered as a solid theme
+   inversion (same rule as .button-primary, SPEC02 §2.1) so it reads
+   unmistakably distinct from its quieter unselected siblings. */
+.tabs-shell {
+  display: flex;
+  flex-direction: column;
 }
 
-.mode-toggle-option {
+.tabs {
+  display: flex;
+  gap: 2px;
+}
+
+.tab {
   appearance: none;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--border-strong);
+  border-bottom: none;
+  background: var(--surface-sunken);
+  color: var(--ink-secondary);
   font-family: var(--font-body);
   font-weight: 600;
   font-size: var(--text-sm);
-  color: var(--ink-secondary);
-  padding: var(--space-2) var(--space-4);
-  border-radius: calc(var(--radius-md) - 2px);
+  padding: var(--space-3) var(--space-5);
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
   cursor: pointer;
+  position: relative;
 }
 
-.mode-toggle-option:hover {
+.tab:hover:not(:disabled):not(.is-active) {
   color: var(--ink);
 }
 
-.mode-toggle-option.is-active {
-  background: var(--surface-card);
-  color: var(--ink);
-  box-shadow: var(--shadow-card);
+.tab.is-active {
+  background: var(--button-contrast-bg);
+  border-color: var(--button-contrast-bg);
+  color: var(--button-contrast-ink);
+  font-weight: 700;
+  z-index: 1;
 }
 
-.mode-toggle-option:disabled {
+.tab:disabled {
   color: var(--ink-muted);
   cursor: not-allowed;
+}
+
+.tab-panel {
+  border-top-left-radius: 0;
+  margin-top: -1px;
+}
+
+.tab-purpose {
+  color: var(--ink-secondary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-1);
 }
 
 /* ---------------------------------------------------------------------
@@ -1473,27 +1574,39 @@ main {
   gap: var(--space-2);
 }
 
+/* Mono is reserved for the CVE ID and the score figure (SPEC03 §7.1) — the
+   row itself (and the date within it) stays on the body font. */
 .major-cve-row {
-  appearance: none;
   border: 1px solid var(--border);
   background: var(--surface);
   width: 100%;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-  padding: var(--space-3) var(--space-4);
+  gap: var(--space-2);
   border-radius: var(--radius-md);
-  cursor: pointer;
-  text-align: left;
-  font-family: var(--font-display);
 }
 
 .major-cve-row:hover {
   background: var(--surface-sunken);
 }
 
+.major-cve-row-lookup {
+  appearance: none;
+  border: none;
+  background: transparent;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-body);
+}
+
 .major-cve-id {
+  font-family: var(--font-display);
   font-weight: 600;
 }
 
@@ -1510,11 +1623,38 @@ main {
   text-align: right;
 }
 
+/* §7.2: a plain external link to NVD's page for the CVE, independently
+   reachable from the row's own in-app lookup button (not nested inside
+   it — nested interactive elements aren't valid). */
+.major-cve-nvd-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: var(--space-3) var(--space-4) var(--space-3) 0;
+  font-size: var(--text-sm);
+  color: var(--ink-secondary);
+  white-space: nowrap;
+}
+
+.major-cve-nvd-link:hover {
+  color: var(--accent);
+}
+
 @media (max-width: 480px) {
   .major-cve-row {
     flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+  }
+
+  .major-cve-row-lookup {
+    flex-direction: column;
     align-items: flex-start;
     gap: var(--space-2);
+  }
+
+  .major-cve-nvd-link {
+    padding: 0 var(--space-4) var(--space-3);
   }
 }
 
@@ -1524,6 +1664,64 @@ main {
   gap: var(--space-4);
   padding-top: var(--space-2);
   border-top: 1px solid var(--border);
+}
+
+/* CVE detail enrichment (SPEC03 §7.4) — secondary to the score/vector
+   content above it, so it stays a plain stacked block rather than
+   competing visually with the primary lookup/save flow. */
+.cve-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  font-size: var(--text-sm);
+}
+
+.cve-details-description p {
+  color: var(--ink-secondary);
+  line-height: 1.5;
+}
+
+.cve-details-dates {
+  display: flex;
+  gap: var(--space-4);
+  color: var(--ink-muted);
+  font-size: var(--text-xs);
+}
+
+.cve-details-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cve-details-heading {
+  font-weight: 600;
+  color: var(--ink-secondary);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cve-details-references {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.cve-details-references li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.cve-details-reference-tag {
+  font-size: 0.65rem;
 }
 
 .cve-lookup-meta {
@@ -1589,4 +1787,18 @@ main {
   flex-wrap: wrap;
   padding: var(--space-4) var(--space-5);
   cursor: pointer;
+}
+
+/* SPEC03 §8.3: a pasted-vector save with no label defaults its label to
+   the full (150+ char) vector string, which would otherwise overflow the
+   card or shove the action buttons off-layout. */
+.vulnerability-row-header .environment-name {
+  overflow-wrap: anywhere;
+}
+
+/* SPEC03 §8.4: the header/detail layout needs .vulnerability-row's
+   padding: 0, but the edit-mode form still needs the card's standard
+   inset padding around its fields/buttons. */
+.vulnerability-row-edit {
+  padding: var(--space-5);
 }

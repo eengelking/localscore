@@ -2,7 +2,7 @@ import { Hono } from "hono";
 import type Database from "better-sqlite3";
 import { config } from "../env.js";
 import { HttpError } from "../lib/errors.js";
-import { CVE_ID_PATTERN, extractVectorOptions, fetchNvdCve, pickPrimaryVector } from "../lib/nvd.js";
+import { CVE_ID_PATTERN, extractCveDetails, extractVectorOptions, fetchNvdCve, pickPrimaryVector } from "../lib/nvd.js";
 
 interface VulnerabilityRow {
   id: number;
@@ -19,14 +19,15 @@ interface VulnerabilityRow {
 }
 
 function serializeCveResponse(cveId: string, row: VulnerabilityRow, cached: boolean) {
-  const vectors = row.nvd_json ? extractVectorOptions(JSON.parse(row.nvd_json)) : [];
+  const parsedNvdJson = row.nvd_json ? JSON.parse(row.nvd_json) : null;
   return {
     cveId,
     cached,
     fetchedAt: row.fetched_at,
     primaryVector: row.vector,
     primaryVersion: row.cvss_version,
-    vectors,
+    vectors: parsedNvdJson ? extractVectorOptions(parsedNvdJson) : [],
+    details: parsedNvdJson ? extractCveDetails(parsedNvdJson) : null,
   };
 }
 
@@ -41,7 +42,7 @@ export function cveRoutes(db: Database.Database) {
   app.get("/cve/:cveId", async (c) => {
     const cveId = c.req.param("cveId").toUpperCase();
     if (!CVE_ID_PATTERN.test(cveId)) {
-      throw new HttpError(400, `"${cveId}" doesn't look like a CVE ID — expected the form CVE-YYYY-NNNNN.`);
+      throw new HttpError(400, `"${cveId}" doesn't look like a CVE ID. Expected the form CVE-YYYY-NNNNN.`);
     }
 
     const refresh = c.req.query("refresh") === "1";

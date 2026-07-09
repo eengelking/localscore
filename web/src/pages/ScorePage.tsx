@@ -8,6 +8,8 @@ import {
   saveVulnerability,
   scoreVector,
 } from "../api.js";
+import { CveDetailsView } from "../components/CveDetailsView.js";
+import { Icon } from "../components/Icon.js";
 import { MoreExpander } from "../components/MoreExpander.js";
 import { NvdVectorPicker } from "../components/NvdVectorPicker.js";
 import { ScoreResult } from "../components/ScoreResult.js";
@@ -188,20 +190,20 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
           <h1>Scoring</h1>
           <p>
             Paste a CVSS score or vector from a scanner, or look up a CVE by ID, to see how it plays out for every
-            location you've defined — not just the worst case.
+            location you've defined, not just the worst case.
           </p>
           <MoreExpander>
             <p>
               A <strong>CVE</strong> (Common Vulnerabilities and Exposures) is a published, uniquely-numbered
-              vulnerability record — you'll find CVE IDs in scanner output, vendor advisories, and security news. A{" "}
+              vulnerability record. You'll find CVE IDs in scanner output, vendor advisories, and security news. A{" "}
               <strong>CVSS vector</strong> is the short string (like <code>{PLACEHOLDER}</code>) that encodes how
               severe a vulnerability is under the official scoring standard; it's what NVD, MITRE, and most scanners
               (Trivy, Grype, and similar) report alongside a CVE.
             </p>
             <p>
-              localscore takes that vector, applies the environmental profile you built in the interview for each
-              location, and shows you the score that actually applies there — which can be much lower (or higher)
-              than the published worst-case number.
+              <strong>localscore</strong> takes that vector, applies the environmental profile you built in the
+              interview for each location, and shows you the score that actually applies there, which can be much
+              lower (or higher) than the published worst-case number.
             </p>
             <p>
               Look one up directly: <a href="https://nvd.nist.gov/vuln/search" target="_blank" rel="noopener noreferrer">NVD's CVE search</a>{" "}
@@ -211,14 +213,15 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
         </div>
       </div>
 
-      <div className="mode-toggle" role="tablist" aria-label="Scoring input mode">
+      <div className="tabs-shell">
+      <div className="tabs" role="tablist" aria-label="Scoring input mode">
         <button
           type="button"
           role="tab"
           id="tab-cve"
           aria-selected={mode === "cve"}
           aria-controls="panel-cve"
-          className={`mode-toggle-option ${mode === "cve" ? "is-active" : ""}`}
+          className={`tab ${mode === "cve" ? "is-active" : ""}`}
           disabled={cveTabDisabled}
           title={cveTabDisabled ? OFFLINE_TOOLTIP : undefined}
           onClick={() => setMode("cve")}
@@ -231,7 +234,7 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
           id="tab-paste"
           aria-selected={mode === "paste"}
           aria-controls="panel-paste"
-          className={`mode-toggle-option ${mode === "paste" ? "is-active" : ""}`}
+          className={`tab ${mode === "paste" ? "is-active" : ""}`}
           onClick={() => setMode("paste")}
         >
           Paste a Vector
@@ -242,7 +245,7 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
           id="tab-major"
           aria-selected={mode === "major"}
           aria-controls="panel-major"
-          className={`mode-toggle-option ${mode === "major" ? "is-active" : ""}`}
+          className={`tab ${mode === "major" ? "is-active" : ""}`}
           disabled={majorCvesTabDisabled}
           title={majorCvesTabDisabled ? OFFLINE_TOOLTIP : undefined}
           onClick={() => setMode("major")}
@@ -253,12 +256,15 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
 
       {mode === "paste" && (
         <form
-          className="card score-form"
+          className="card tab-panel score-form"
           id="panel-paste"
           role="tabpanel"
           aria-labelledby="tab-paste"
           onSubmit={handleSubmit}
         >
+          <p className="tab-purpose">
+            Paste a CVSS vector from a scanner or advisory to score it against your environments.
+          </p>
           <div className="field">
             <label htmlFor="vector-input">CVSS vector</label>
             <textarea
@@ -279,7 +285,11 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
       )}
 
       {mode === "cve" && (
-        <div className="card score-form" id="panel-cve" role="tabpanel" aria-labelledby="tab-cve">
+        <div className="card tab-panel score-form" id="panel-cve" role="tabpanel" aria-labelledby="tab-cve">
+          <p className="tab-purpose">
+            Enter a CVE ID (like CVE-2026-55200) to fetch its official score and details from NVD and see how it
+            applies to your environments.
+          </p>
           <form className="score-form" onSubmit={handleCveSubmit}>
             <div className="field">
               <label htmlFor="cve-input">CVE ID</label>
@@ -328,13 +338,18 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
               <button type="button" className="button button-primary" onClick={handleScoreCveVector} disabled={scoring}>
                 {scoring ? "Scoring…" : "Score it"}
               </button>
+
+              {cveLookup.details && <CveDetailsView details={cveLookup.details} />}
             </div>
           )}
         </div>
       )}
 
       {mode === "major" && (
-        <div className="card major-cves-panel" id="panel-major" role="tabpanel" aria-labelledby="tab-major">
+        <div className="card tab-panel major-cves-panel" id="panel-major" role="tabpanel" aria-labelledby="tab-major">
+          <p className="tab-purpose">
+            The ten most critical CVEs published in the last 30 days, from NVD. Click one to look it up.
+          </p>
           {majorCvesLoading && !majorCves && <p>Loading…</p>}
           {majorCvesError && !majorCves && <WarningBanner>{majorCvesError}</WarningBanner>}
           {majorCves && (
@@ -348,17 +363,33 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
                 <ul className="major-cves-list">
                   {majorCves.cves.map((cve) => (
                     <li key={cve.cveId}>
-                      <button type="button" className="major-cve-row" onClick={() => handleMajorCveClick(cve.cveId)}>
-                        <span className="major-cve-id">{cve.cveId}</span>
-                        <span className="major-cve-figures">
-                          <SeverityPill
-                            severity={nvdSeverityToAppSeverity(cve.baseSeverity, cve.baseScore)}
-                            variant="outline"
-                          />
-                          <span className="score-figure">{cve.baseScore.toFixed(1)}</span>
-                          <span className="major-cve-date">{formatPublished(cve.published)}</span>
-                        </span>
-                      </button>
+                      <div className="major-cve-row">
+                        <button
+                          type="button"
+                          className="major-cve-row-lookup"
+                          onClick={() => handleMajorCveClick(cve.cveId)}
+                        >
+                          <span className="major-cve-id">{cve.cveId}</span>
+                          <span className="major-cve-figures">
+                            <SeverityPill
+                              severity={nvdSeverityToAppSeverity(cve.baseSeverity, cve.baseScore)}
+                              variant="outline"
+                            />
+                            <span className="score-figure">{cve.baseScore.toFixed(1)}</span>
+                            <span className="major-cve-date">{formatPublished(cve.published)}</span>
+                          </span>
+                        </button>
+                        <a
+                          href={`https://nvd.nist.gov/vuln/detail/${cve.cveId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="major-cve-nvd-link"
+                          onClick={(e) => e.stopPropagation()}
+                          aria-label={`View ${cve.cveId} on NVD`}
+                        >
+                          NVD <Icon name="external-link" size={14} />
+                        </a>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -367,6 +398,7 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
           )}
         </div>
       )}
+      </div>
 
       {error && <p className="error-text">{error}</p>}
 

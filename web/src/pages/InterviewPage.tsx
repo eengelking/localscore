@@ -120,7 +120,7 @@ export function InterviewPage({ environmentId, onDone }: { environmentId: number
             className={`option-card option-card-skip ${answers[question.id] === SKIP_OPTION_ID ? "is-selected" : ""}`}
             onClick={() => choose(SKIP_OPTION_ID)}
           >
-            <span className="option-label">Skip — not sure / doesn't apply</span>
+            <span className="option-label">Skip: not sure / doesn't apply</span>
           </button>
         </div>
       </div>
@@ -146,6 +146,7 @@ export function InterviewPage({ environmentId, onDone }: { environmentId: number
         <QuestionHelpModal
           question={question.question}
           whyWeAsk={question.whyWeAsk}
+          helpDetail={question.helpDetail}
           finePrint={question.finePrint}
           onClose={() => setHelpOpen(false)}
         />

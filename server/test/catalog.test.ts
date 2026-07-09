@@ -117,4 +117,24 @@ describe("interview catalog", () => {
       }
     }
   });
+
+  // docs/SPEC03.md §6.3
+  it("every question has non-empty helpDetail", () => {
+    for (const question of CATALOG) {
+      expect(question.helpDetail?.length, `${question.id} is missing helpDetail`).toBeGreaterThan(0);
+    }
+  });
+
+  // docs/SPEC03.md §2.2: no em-dash in any user-facing catalog string.
+  it("has no em-dashes in any user-facing string", () => {
+    for (const question of CATALOG) {
+      const fields = [question.question, question.whyWeAsk, question.finePrint, ...(question.helpDetail ?? [])];
+      for (const option of question.options) {
+        fields.push(option.label, option.description);
+      }
+      for (const field of fields.filter((f): f is string => Boolean(f))) {
+        expect(field, `${question.id} has an em-dash`).not.toMatch(/—/);
+      }
+    }
+  });
 });

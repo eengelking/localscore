@@ -164,7 +164,7 @@ export function explainUnappliedAnswers(
         optionId,
         optionLabel: option.label,
         status: "not-applicable-to-version",
-        reason: `This question doesn't affect CVSS v${version} scoring — it has no effect on this vector.`,
+        reason: `This question doesn't affect CVSS v${version} scoring. It has no effect on this vector.`,
       });
       continue;
     }
@@ -195,8 +195,8 @@ export function explainUnappliedAnswers(
       optionLabel: option.label,
       status: "capped-by-base",
       reason: baseValueName
-        ? `The pasted vector's ${metricName} is already ${baseValueName}, which is at least as severe — this answer had nothing to loosen.`
-        : `The pasted vector's ${metricName} was already at least as severe — this answer had nothing to loosen.`,
+        ? `The pasted vector's ${metricName} is already ${baseValueName}, which is at least as severe. This answer had nothing to loosen.`
+        : `The pasted vector's ${metricName} was already at least as severe. This answer had nothing to loosen.`,
     });
   }
 
