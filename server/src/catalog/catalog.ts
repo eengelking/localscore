@@ -28,6 +28,8 @@ const questions: Question[] = [
     question: "How could an outsider reach the systems at this location?",
     whyWeAsk:
       'A vulnerability that\'s exploitable "from the internet" only matters that way if the internet can actually reach you.',
+    finePrint:
+      '"Only from inside our network" is scored as Adjacent (MAV:A) — a documented approximation. CVSS actually defines Adjacent as a shared physical/logical network (e.g. Bluetooth, same broadcast domain), not "requires a foothold on our network first," which is the intent here.',
     options: withSkip([
       {
         id: "internet",
@@ -103,6 +105,8 @@ const questions: Question[] = [
     order: 4,
     question: "Do people actively work on these systems — opening links, files, or email on them?",
     whyWeAsk: "Many attacks need a human to click something. Headless servers don't click.",
+    finePrint:
+      "CVSS has no value for \"user interaction impossible\" — this caps interaction-dependent exploits at the hardest interaction level the spec allows (Active/Required), it cannot zero them out entirely.",
     options: withSkip([
       {
         id: "interactive",

@@ -86,6 +86,12 @@ export function InterviewPage({ environmentId, onDone }: { environmentId: number
       <div className="card interview-question">
         <h2>{question.question}</h2>
         <p className="why-we-ask">{question.whyWeAsk}</p>
+        {question.finePrint && (
+          <details className="fine-print">
+            <summary>What this maps to</summary>
+            <p>{question.finePrint}</p>
+          </details>
+        )}
 
         <div className="option-list">
           {question.options
