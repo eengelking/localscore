@@ -27,27 +27,16 @@ The implementation spec is done ([`SPEC.md`](./SPEC.md)), and the app works end-
 - **A real frontend** — environments list, interview wizard, and a results screen (paste a vector or look up a CVE) where you see each environment's modified score, with the animated "a 10 might actually be a zero" reveal.
 - **NVD CVE lookup** (`GET /api/cve/:cveId`) — cache-first, throttled, and tolerant of NVD being unreachable — plus a saved-vulnerabilities screen backed by the saved-vulnerability CRUD routes.
 - A container image that builds and runs cleanly under Podman (or Docker), passes its own `HEALTHCHECK`, and comes in under 300 MB.
-
-What's not built yet:
-
-- No published image — `ghcr.io/<owner>/localscore` doesn't exist yet, so the commands below only work against a local build for now.
+- **A published image** — `docker.io/eengelking/localscore` (tags `latest` and `0.1.0`), so you can run it without building locally.
 
 ## Running it
 
-There's no published image yet, so build locally first:
-
-```bash
-podman build --format docker -t localscore .
-```
-
-(The `--format docker` flag matters: Podman defaults to the OCI image format, which silently drops the Dockerfile's `HEALTHCHECK` instruction. Without it, `podman ps` and `podman inspect` won't show a health status.)
-
-Then run it:
+Pull and run the published image:
 
 ```bash
 podman run -d --name localscore -p 8080:8080 \
   -v localscore-data:/data \
-  localscore
+  docker.io/eengelking/localscore:latest
 ```
 
 or with a bind mount so the database lands on disk somewhere you control:
@@ -55,10 +44,20 @@ or with a bind mount so the database lands on disk somewhere you control:
 ```bash
 podman run -d --name localscore -p 8080:8080 \
   -v "$PWD/data:/data" \
-  localscore
+  docker.io/eengelking/localscore:latest
 ```
 
-Then open `http://localhost:8080`. Once a version is published, the plan is to run it straight from `ghcr.io/<owner>/localscore:latest` — same commands, just swap the image name.
+Then open `http://localhost:8080`.
+
+To build locally instead (e.g. to test an unreleased change):
+
+```bash
+podman build --format docker -t localscore .
+```
+
+(The `--format docker` flag matters: Podman defaults to the OCI image format, which silently drops the Dockerfile's `HEALTHCHECK` instruction. Without it, `podman ps` and `podman inspect` won't show a health status.)
+
+Then run it the same way, swapping `docker.io/eengelking/localscore:latest` for the locally built `localscore` tag.
 
 `PORT` and `DATA_DIR` are configurable (see `.env.example`); there's also an optional `NVD_API_KEY` that raises NVD's CVE-lookup rate limit above the default ~5 requests/30s — pass it through with `-e NVD_API_KEY=...` if you hit that limit.
 
