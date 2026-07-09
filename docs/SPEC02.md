@@ -1,6 +1,8 @@
 # localscore — Specification v1.1 ("SPEC02")
 
-This document is the **active implementation contract** for the next round of work. It supersedes `SPEC01.md` (the v1 contract), which is fully implemented and now historical. Treat every **MUST/MUST NOT** here as a hard requirement and every **SHOULD** as the default unless there is a documented reason to deviate.
+> **Status (2026-07-09): fully implemented and historical.** This document has been superseded by `SPEC03.md`, which is now the active implementation contract. It is retained as the rationale for v1.1 behavior; do not drive new work from it.
+
+This document was the implementation contract for the v1.1 round of work. It superseded `SPEC01.md` (the v1 contract), which is fully implemented and historical. Treat every **MUST/MUST NOT** here as a hard requirement and every **SHOULD** as the default unless there is a documented reason to deviate.
 
 **Everything in the v1 contract that this document does not change remains binding** — in particular:
 
