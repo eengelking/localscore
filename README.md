@@ -19,7 +19,7 @@ A 9.8 "Critical" against a production database might land at 9.8 for your data c
 
 ## Status
 
-The implementation spec is done ([`docs/SPEC01.md`](./docs/SPEC01.md)), and the app works end-to-end:
+The v1 ([`docs/SPEC01.md`](./docs/SPEC01.md)) and v1.1 ([`docs/SPEC02.md`](./docs/SPEC02.md)) specs are fully implemented, and the app works end-to-end ([`docs/SPEC03.md`](./docs/SPEC03.md) is the next round of work — UI polish and CVE detail enrichment — not yet built):
 
 - An npm-workspaces monorepo (`server/` = Hono + SQLite API, `web/` = React + Vite frontend), served from one process on one port.
 - The full 12-question interview catalog, and environment CRUD — you can create an environment, save interview answers, and have them derive into stored CVSS environmental metrics.
