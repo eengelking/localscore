@@ -29,7 +29,7 @@ The v1 ([`docs/SPEC01.md`](./docs/SPEC01.md)), v1.1 ([`docs/SPEC02.md`](./docs/S
 - **A Major CVEs feed** (`GET /api/major-cves`) — the top 10 most critical CVEs published in the last 30 days, refreshed daily, one click away from scoring against your environments.
 - A design system with light/dark theming, markdown-rendered descriptions, and offline-aware UI — the CVE-lookup and Major CVEs tabs disable themselves with an explanatory tooltip when there's no network, rather than hanging or erroring.
 - A container image that builds and runs cleanly under Podman (or Docker), passes its own `HEALTHCHECK`, and comes in under 300 MB.
-- **A published image** — `docker.io/eengelking/localscore` (tags `latest` and `0.1.0`), so you can run it without building locally.
+- **A published image** — `docker.io/eengelking/localscore` (tags `latest` and `0.2.0`), so you can run it without building locally.
 
 ## Running it
 
