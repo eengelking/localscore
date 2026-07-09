@@ -3,6 +3,7 @@ import { createEnvironment, deleteEnvironment, listEnvironments } from "../api.j
 import type { Environment } from "../types.js";
 import { ConfirmModal } from "../components/Modal.js";
 import { Icon } from "../components/Icon.js";
+import { MarkdownContent } from "../components/MarkdownContent.js";
 
 export function EnvironmentsPage({ onOpenInterview }: { onOpenInterview: (environmentId: number) => void }) {
   const [environments, setEnvironments] = useState<Environment[] | null>(null);
@@ -92,7 +93,7 @@ export function EnvironmentsPage({ onOpenInterview }: { onOpenInterview: (enviro
             <li key={env.id} className="card environment-row">
               <div className="environment-row-main">
                 <h3 className="environment-name">{env.name}</h3>
-                {env.description && <p>{env.description}</p>}
+                {env.description && <MarkdownContent source={env.description} className="environment-description" />}
                 <div className="badge-row">
                   <span className={`badge ${env.interviewCompletion["3.1"] ? "is-complete" : ""}`}>
                     v3.1 {env.interviewCompletion["3.1"] ? "ready" : "no profile yet"}
