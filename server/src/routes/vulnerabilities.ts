@@ -15,6 +15,7 @@ interface VulnerabilityRow {
   nvd_json: string | null;
   fetched_at: string | null;
   created_at: string;
+  saved: number;
 }
 
 function serializeVulnerability(row: VulnerabilityRow) {
@@ -40,11 +41,19 @@ function getVulnerabilityOr404(db: Database.Database, id: number): Vulnerability
 // Saved-vulnerability CRUD per docs/SPEC01.md §8. A save happens from a scored
 // result (§6.4) — the vector is always re-parsed/re-scored server-side
 // rather than trusting a client-supplied score.
+//
+// The `vulnerabilities` table doubles as the NVD lookup cache (saved = 0
+// rows written by cve.ts) and the saved list (saved = 1). Per docs/SPEC02.md
+// §7.1 the list route only returns saved = 1 rows, and saving upserts onto
+// any existing row for the same identity (cve_id, or vector for pasted-vector
+// saves) instead of inserting a duplicate.
 export function vulnerabilityRoutes(db: Database.Database) {
   const app = new Hono();
 
   app.get("/vulnerabilities", (c) => {
-    const rows = db.prepare("SELECT * FROM vulnerabilities ORDER BY created_at DESC").all() as VulnerabilityRow[];
+    const rows = db
+      .prepare("SELECT * FROM vulnerabilities WHERE saved = 1 ORDER BY created_at DESC")
+      .all() as VulnerabilityRow[];
     return c.json(rows.map(serializeVulnerability));
   });
 
@@ -59,19 +68,40 @@ export function vulnerabilityRoutes(db: Database.Database) {
 
     const parsed = parseBaseVector(body.vector);
     const { score, vector } = computeScore(parsed.instance);
-    const label = body.label?.trim() || body.cveId || vector;
-    const source = body.cveId ? "nvd" : "vector";
+    const cveId = body.cveId?.trim().toUpperCase() || null;
+    const label = body.label?.trim() || cveId || vector;
+    const source = cveId ? "nvd" : "vector";
     const now = new Date().toISOString();
     const nvdJsonText = body.nvdJson ? JSON.stringify(body.nvdJson) : null;
 
-    const info = db
-      .prepare(
-        "INSERT INTO vulnerabilities (label, source, cve_id, vector, cvss_version, base_score, nvd_json, fetched_at, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-      )
-      .run(label, source, body.cveId ?? null, vector, parsed.version, score, nvdJsonText, nvdJsonText ? now : null, now);
+    // Identity for upsert: same CVE ID for NVD-sourced saves (this also
+    // reuses a saved = 0 cache row left by a prior lookup), same normalized
+    // vector for pasted-vector saves.
+    const existing = cveId
+      ? (db.prepare("SELECT * FROM vulnerabilities WHERE cve_id = ?").get(cveId) as VulnerabilityRow | undefined)
+      : (db
+          .prepare("SELECT * FROM vulnerabilities WHERE cve_id IS NULL AND vector = ?")
+          .get(vector) as VulnerabilityRow | undefined);
 
-    const row = getVulnerabilityOr404(db, Number(info.lastInsertRowid));
-    return c.json(serializeVulnerability(row), 201);
+    const overwritten = existing?.saved === 1;
+
+    let id: number;
+    if (existing) {
+      db.prepare(
+        "UPDATE vulnerabilities SET label = ?, source = ?, cve_id = ?, vector = ?, cvss_version = ?, base_score = ?, nvd_json = COALESCE(?, nvd_json), fetched_at = COALESCE(?, fetched_at), saved = 1 WHERE id = ?",
+      ).run(label, source, cveId, vector, parsed.version, score, nvdJsonText, nvdJsonText ? now : null, existing.id);
+      id = existing.id;
+    } else {
+      const info = db
+        .prepare(
+          "INSERT INTO vulnerabilities (label, source, cve_id, vector, cvss_version, base_score, nvd_json, fetched_at, created_at, saved) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
+        )
+        .run(label, source, cveId, vector, parsed.version, score, nvdJsonText, nvdJsonText ? now : null, now);
+      id = Number(info.lastInsertRowid);
+    }
+
+    const row = getVulnerabilityOr404(db, id);
+    return c.json({ ...serializeVulnerability(row), overwritten }, overwritten ? 200 : 201);
   });
 
   app.get("/vulnerabilities/:id", (c) => {

@@ -228,7 +228,7 @@ NVD's unauthenticated rate limit is low (~5 requests/30s); set `NVD_API_KEY` (se
 
 ## Saved vulnerabilities
 
-**Not yet wired into the frontend either** — API only for now.
+The `vulnerabilities` table doubles as the NVD lookup cache (`GET /api/cve/:cveId`) and this saved list, distinguished by a `saved` flag (`docs/SPEC02.md` §7.1) — `GET /api/vulnerabilities` only ever returns rows the user explicitly saved.
 
 ### Save
 
@@ -248,11 +248,14 @@ curl -X POST http://localhost:8080/api/vulnerabilities \
   "cvssVersion": "3.1",
   "baseScore": 10,
   "fetchedAt": null,
-  "createdAt": "2026-07-08T21:39:49.315Z"
+  "createdAt": "2026-07-08T21:39:49.315Z",
+  "overwritten": false
 }
 ```
 
 `label` and `cveId` are optional — omit `cveId` for a plain pasted vector (`source` becomes `"vector"` instead of `"nvd"`, and `label` falls back to the normalized vector string if not given). The score and normalized vector are always recomputed server-side from `vector`, not trusted from the request — the point of saving is a durable, re-scoreable record, not whatever a client happened to compute.
+
+Saving is an **upsert**, not an insert: a second save with the same `cveId` (or the same normalized `vector` for a plain pasted-vector save) updates the existing saved entry in place — including reusing an NVD-lookup cache row for that CVE if one already exists — rather than creating a duplicate. The response's `overwritten` field is `true` when an already-*saved* entry was updated, `false` on a first save (`201`) or on a save that only reused a cache row (still `201`); an update to an already-saved entry returns `200`.
 
 ### List / get / delete
 
