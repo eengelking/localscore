@@ -17,6 +17,7 @@ export interface Question {
   order: number;
   question: string;
   whyWeAsk: string;
+  finePrint?: string;
   options: Option[];
 }
 

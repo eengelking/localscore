@@ -20,5 +20,6 @@ export interface Question {
   order: number;
   question: string;
   whyWeAsk: string;
+  finePrint?: string; // optional "what this maps to" disclosure for curious/expert users, per SPEC.md §5.2
   options: Option[]; // includes the implicit "Skip" option, see withSkip()
 }
