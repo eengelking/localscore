@@ -662,7 +662,7 @@ main {
 
 .base-score-figures {
   display: flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-4);
 }
 
@@ -718,7 +718,7 @@ main {
 
 .animated-score {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: var(--space-2);
 }
 
