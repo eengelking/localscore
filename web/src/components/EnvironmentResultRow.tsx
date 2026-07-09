@@ -31,7 +31,7 @@ export function EnvironmentResultRow({
         <span className="no-profile-note">
           No profile yet.{" "}
           <button type="button" className="link-button" onClick={() => onOpenInterview(result.id)}>
-            complete the interview
+            Complete the Interview
           </button>
         </span>
       </li>

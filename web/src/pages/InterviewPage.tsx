@@ -64,7 +64,7 @@ export function InterviewPage({ environmentId, onDone }: { environmentId: number
       <div className="page-header">
         <div>
           <button type="button" className="link-button" onClick={onDone}>
-            ← Back to environment
+            ← Back to Environment
           </button>
           <h1>{environment.name}</h1>
           <p>{question.whyWeAsk ? "Answer a few plain-English questions about this location." : ""}</p>

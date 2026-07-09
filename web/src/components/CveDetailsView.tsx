@@ -29,7 +29,7 @@ export function CveDetailsView({ details }: { details: CveDetails }) {
           <p>{shownDescription}</p>
           {isLong && (
             <button type="button" className="link-button" onClick={() => setExpanded((v) => !v)}>
-              {expanded ? "Show less" : "Show more"}
+              {expanded ? "Show Less" : "Show More"}
             </button>
           )}
         </div>

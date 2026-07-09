@@ -58,17 +58,22 @@ export function AnimatedScore({ from, to, size = "lg" }: { from: number; to: num
   );
 }
 
+// SPEC04 §2.4: uses the --severity-*-text tokens (validated for text-on-
+// surface use) rather than the raw pill-fill tokens. The fills were
+// deepened for white pill text and read poorly as foreground text
+// themselves at --surface (medium lands at 4.39:1, just under 4.5:1); the
+// -text tokens clear contrast in both themes without any of that risk.
 function colorFor(severity: ReturnType<typeof severityFromScore>): string {
   switch (severity) {
     case "None":
       return "var(--ink-muted)";
     case "Low":
-      return "var(--severity-low)";
+      return "var(--severity-low-text)";
     case "Medium":
-      return "var(--severity-medium)";
+      return "var(--severity-medium-text)";
     case "High":
-      return "var(--severity-high)";
+      return "var(--severity-high-text)";
     case "Critical":
-      return "var(--severity-critical)";
+      return "var(--severity-critical-text)";
   }
 }
