@@ -5,6 +5,7 @@ import { deriveMetrics } from "../catalog/derive.js";
 import { computeRaisesScores, computeRaisingAnswers } from "../scoring/raising.js";
 import { computeRedFlags } from "../scoring/redflags.js";
 import { HttpError } from "../lib/errors.js";
+import { stripWrappingQuotes } from "../lib/strings.js";
 
 interface EnvironmentRow {
   id: number;
@@ -90,15 +91,17 @@ export function environmentRoutes(db: Database.Database) {
 
   app.post("/environments", async (c) => {
     const body = await c.req.json<{ name?: string; description?: string; location?: string }>();
-    if (!body.name || !body.name.trim()) {
+    const name = stripWrappingQuotes(body.name ?? "");
+    if (!name) {
       throw new HttpError(400, "name is required");
     }
+    const location = stripWrappingQuotes(body.location ?? "");
     const now = new Date().toISOString();
     const info = db
       .prepare(
         "INSERT INTO environments (name, description, location, catalog_version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
       )
-      .run(body.name.trim(), body.description ?? "", (body.location ?? "").trim(), CATALOG_VERSION, now, now);
+      .run(name, body.description ?? "", location, CATALOG_VERSION, now, now);
     const env = getEnvironmentOr404(db, Number(info.lastInsertRowid));
     return c.json(serializeEnvironment(env, [], []), 201);
   });
@@ -130,10 +133,12 @@ export function environmentRoutes(db: Database.Database) {
     const body = await c.req.json<{ name?: string; description?: string; location?: string }>();
     const now = new Date().toISOString();
     const current = getEnvironmentOr404(db, id);
+    const strippedName = body.name !== undefined ? stripWrappingQuotes(body.name) : "";
+    const strippedLocation = body.location !== undefined ? stripWrappingQuotes(body.location) : undefined;
     db.prepare("UPDATE environments SET name = ?, description = ?, location = ?, updated_at = ? WHERE id = ?").run(
-      body.name?.trim() || current.name,
+      strippedName || current.name,
       body.description ?? current.description,
-      body.location !== undefined ? body.location.trim() : current.location,
+      strippedLocation !== undefined ? strippedLocation : current.location,
       now,
       id,
     );
