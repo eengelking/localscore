@@ -19,7 +19,7 @@ A 9.8 "Critical" against a production database might land at 9.8 for your data c
 
 ## Status
 
-The v1 ([`docs/SPEC01.md`](./docs/SPEC01.md)), v1.1 ([`docs/SPEC02.md`](./docs/SPEC02.md)), and v1.2 ([`docs/SPEC03.md`](./docs/SPEC03.md)) specs are all fully implemented, and the app works end-to-end. The next round of work (a color-system refresh, per-environment risk warnings, and other UI improvements) is specified in [`docs/SPEC04.md`](./docs/SPEC04.md) (v1.3, not yet implemented).
+The v1 ([`docs/SPEC01.md`](./docs/SPEC01.md)) through v1.4 ([`docs/SPEC05.md`](./docs/SPEC05.md)) specs are all fully implemented, and the app works end-to-end. The next round of work (input hygiene, a more readable risk callout, Scoring-page fixes, and Saved-page filtering/search) is specified in [`docs/SPEC06.md`](./docs/SPEC06.md) (v1.5, not yet implemented).
 
 What works today:
 

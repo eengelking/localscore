@@ -227,7 +227,9 @@ When you `podman run` a container to manually verify something (health check, a 
 
 ## Source of truth
 
-**`docs/SPEC05.md` (v1.4) is fully implemented**, the same as `docs/SPEC01.md` (v1), `docs/SPEC02.md` (v1.1), `docs/SPEC03.md` (v1.2), and `docs/SPEC04.md` (v1.3) — "docs/SPEC0N.md §N" citations throughout this file and the code are historical rationale for existing behavior, not a to-do list. Note SPEC05 amended three SPEC04-era rules (the solid-yellow Edit control, the score-raising trigger set, and the accent-badge treatment next to links). Future spec rounds continue the numbering in `docs/` (SPEC06.md, …); when one lands, update this section to point at it as the active contract.
+**`docs/SPEC06.md` (v1.5) is the active implementation contract — not yet implemented.** It covers input hygiene (quote-stripping environment names/locations), a readability rework of the environment risk callout, Scoring-page fixes (save-time description, stale-result reset, full-width lookup errors, an unclamped CVE description, a relocated NVD link), and a Saved-page round (bottom-right action cluster, type/severity filters, full-content search). Note SPEC06 amends two SPEC05-era placements (the Saved-row action cluster's top-right pinning, the NVD link's top-of-details position) and removes the CVE description's Show More clamp.
+
+`docs/SPEC01.md` (v1) through `docs/SPEC05.md` (v1.4) are all fully implemented and historical — "docs/SPEC0N.md §N" citations throughout this file and the code are rationale for existing behavior, not a to-do list. Future spec rounds continue the numbering in `docs/` (SPEC07.md, …); when one lands, update this section to point at it as the active contract.
 
 ## What this project is
 
