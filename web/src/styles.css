@@ -2087,16 +2087,12 @@ main {
   gap: var(--space-2);
 }
 
+/* Forces the search field onto its own row (flex-basis: 100% breaks the
+   flex-wrap line) so its .input can span the same full width as the
+   vulnerability rows below, rather than shrink-wrapping to a narrow box
+   pinned top-right of the chip filters. */
 .filter-search-group {
-  margin-left: auto;
-  min-width: 14rem;
-}
-
-@media (max-width: 640px) {
-  .filter-search-group {
-    margin-left: 0;
-    width: 100%;
-  }
+  flex-basis: 100%;
 }
 
 .filter-chip {
