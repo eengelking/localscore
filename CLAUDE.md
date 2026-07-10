@@ -205,7 +205,7 @@ Run from the repo root unless noted.
 - `npm run typecheck` / `npm run lint` — both workspaces. CI runs all four (`lint`, `typecheck`, `test`, `build`) on every PR and push to `main`.
 - `podman build --format docker -t localscore .` then `podman run ...` — container build. The maintainer uses **Podman, not Docker**; the Dockerfile/compose.yaml are plain OCI and must keep working under Docker too, but write any documentation/examples with `podman`. **`--format docker` is required for a direct `podman build`** — Podman's default OCI build format silently drops the Dockerfile's `HEALTHCHECK` instruction with just a warning, no error.
 - `podman compose up` — builds and runs via `compose.yaml`. Verified this does **not** need `--format docker`: going through the external `docker-compose` provider already produces a Docker-format image with `HEALTHCHECK` intact (confirmed by `podman inspect` reporting `healthy`). So the flag only matters for a bare `podman build`, not for compose.
-- Published image: `docker.io/eengelking/localscore` (tags `latest`, `1.0.2`) — pushed with `podman push`. See "Publishing a release image" below for the required tag/push/verify procedure — never push an untagged or `latest`-only build.
+- Published image: `docker.io/eengelking/localscore` (tags `latest`, `1.0.3`) — pushed with `podman push`. See "Publishing a release image" below for the required tag/push/verify procedure — never push an untagged or `latest`-only build.
 
 Verified end-to-end: both `podman build --format docker` + `podman run`, and `podman compose up`, produce a container `podman inspect` reports as `healthy`, with the API/frontend reachable and a full create-environment round trip working.
 
