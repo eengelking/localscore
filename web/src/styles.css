@@ -2031,7 +2031,18 @@ main {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
-  max-width: 24rem;
+}
+
+.save-panel-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.save-panel-row-main {
+  display: flex;
+  align-items: center;
 }
 
 .save-form-actions {

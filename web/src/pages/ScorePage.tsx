@@ -435,10 +435,22 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
           catalog={catalog}
           onOpenInterview={onOpenInterview}
           defaultSaveLabel={lookupSource?.cveId}
+          // Only a CVE-sourced result has an NVD description to prefill; a
+          // pasted-vector result has no cveLookup behind it and stays empty.
+          // Known asymmetry (see issue): if the user clears this prefill and
+          // saves, the server's own "prefill only when empty" rule will
+          // re-add the NVD description to the stored row on a fresh save.
+          // That's the existing server contract, kept as-is here.
+          defaultDescription={lookupSource ? (cveLookup?.details?.description ?? undefined) : undefined}
           overwriteLabel={overwriteTarget ? (overwriteTarget.cveId ?? overwriteTarget.label) : undefined}
           onSave={async (label, description) => {
             await saveVulnerability({ vector: result.base.vector, label, description, cveId: lookupSource?.cveId });
             refreshSavedVulnerabilities();
+          }}
+          onClear={() => {
+            setResult(null);
+            setLookupSource(null);
+            setError(null);
           }}
         />
       )}

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Catalog, ScoreResponse } from "../types.js";
 import { EnvironmentResultRow } from "./EnvironmentResultRow.js";
+import { Icon } from "./Icon.js";
 import { SeverityPill } from "./SeverityPill.js";
 
 export function ScoreResult({
@@ -8,19 +9,23 @@ export function ScoreResult({
   catalog,
   onOpenInterview,
   onSave,
+  onClear,
   defaultSaveLabel,
+  defaultDescription,
   overwriteLabel,
 }: {
   result: ScoreResponse;
   catalog: Catalog | null;
   onOpenInterview: (environmentId: number) => void;
   onSave?: (label: string | undefined, description: string | undefined) => Promise<void>;
+  onClear?: () => void;
   defaultSaveLabel?: string;
+  defaultDescription?: string;
   overwriteLabel?: string;
 }) {
   const [saveOpen, setSaveOpen] = useState(false);
   const [label, setLabel] = useState(defaultSaveLabel ?? "");
-  const [description, setDescription] = useState("");
+  const [description, setDescription] = useState(defaultDescription ?? "");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -59,14 +64,30 @@ export function ScoreResult({
           </p>
         )}
 
-        {onSave && (
+        {(onSave || onClear) && (
           <div className="save-panel">
-            {!saveOpen && !saved && (
-              <button type="button" className="button button-save" onClick={() => setSaveOpen(true)}>
-                Save
-              </button>
+            {!saveOpen && (
+              <div className="save-panel-row">
+                <div className="save-panel-row-main">
+                  {onSave && !saved && (
+                    <button type="button" className="button button-save" onClick={() => setSaveOpen(true)}>
+                      Save
+                    </button>
+                  )}
+                  {saved && <span className="save-confirmation">Saved</span>}
+                </div>
+                {onClear && (
+                  <button
+                    type="button"
+                    className="icon-button icon-button-delete"
+                    onClick={onClear}
+                    aria-label="Clear this result"
+                  >
+                    <Icon name="trash" />
+                  </button>
+                )}
+              </div>
             )}
-            {saved && !saveOpen && <span className="save-confirmation">Saved</span>}
             {saveOpen && (
               <div className="save-form">
                 {overwriteLabel && (
