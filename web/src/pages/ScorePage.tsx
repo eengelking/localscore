@@ -38,6 +38,7 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
   const [isOnline, setIsOnline] = useOnlineStatus();
   const [mode, setMode] = useState<Mode>(() => (typeof navigator === "undefined" || navigator.onLine ? "cve" : "paste"));
   const vectorInputRef = useRef<HTMLTextAreaElement>(null);
+  const cveInputRef = useRef<HTMLInputElement>(null);
 
   const [vector, setVector] = useState("");
   const [result, setResult] = useState<ScoreResponse | null>(null);
@@ -92,7 +93,11 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
       .finally(() => setMajorCvesLoading(false));
   }, []);
 
+  // docs/SPEC05.md §4.1: whichever tab with an input is active takes focus,
+  // symmetrically — including on initial mount, since "Look up a CVE" is the
+  // default tab. The Major CVEs tab has no input and focuses nothing.
   useEffect(() => {
+    if (mode === "cve") cveInputRef.current?.focus();
     if (mode === "paste") vectorInputRef.current?.focus();
   }, [mode]);
 
@@ -295,6 +300,7 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
               <label htmlFor="cve-input">CVE ID</label>
               <input
                 id="cve-input"
+                ref={cveInputRef}
                 type="text"
                 className="input"
                 placeholder="CVE-2026-55200"
