@@ -214,8 +214,8 @@ describe("environment CRUD, answers, and re-derivation", () => {
     expect(body.metrics).toEqual([]);
   });
 
-  // docs/SPEC04.md §4.1/§7.1 — the score-raising flag.
-  describe("raisesScores (docs/SPEC04.md §4)", () => {
+  // docs/SPEC05.md §3.2.1 (narrows docs/SPEC04.md §4.1) — the score-raising flag.
+  describe("raisesScores (docs/SPEC05.md §3.2.1)", () => {
     async function createAndAnswer(name: string, answers: { questionId: string; optionId: string }[]) {
       const createRes = await app.request("/api/environments", {
         method: "POST",
@@ -260,14 +260,16 @@ describe("environment CRUD, answers, and re-derivation", () => {
       expect(body.raisingAnswers).toEqual([{ questionId: "safety", optionId: "yes" }]);
     });
 
-    it("flags both versions for a Catastrophic (Q5/Q6/Q7) profile", async () => {
+    it("does NOT flag a Catastrophic-only (Q5/Q6/Q7) profile (SPEC05 §3.2.1 narrowing, the IL6 case)", async () => {
       const id = await createAndAnswer("Crown Jewels", [
         { questionId: "confidentiality", optionId: "catastrophic" },
+        { questionId: "integrity", optionId: "catastrophic" },
+        { questionId: "availability", optionId: "immediate" },
       ]);
       const getRes = await app.request(`/api/environments/${id}`);
       const body = await getRes.json();
-      expect(body.raisesScores).toEqual({ "4.0": true, "3.1": true });
-      expect(body.raisingAnswers).toEqual([{ questionId: "confidentiality", optionId: "catastrophic" }]);
+      expect(body.raisesScores).toEqual({ "4.0": false, "3.1": false });
+      expect(body.raisingAnswers).toEqual([]);
     });
 
     it("does not flag an all-lowering profile (the worked-example Disposable Dev Lab answers)", async () => {
@@ -302,6 +304,140 @@ describe("environment CRUD, answers, and re-derivation", () => {
       const body = await getRes.json();
       expect(body.raisesScores).toEqual({ "4.0": false, "3.1": false });
       expect(body.raisingAnswers).toEqual([]);
+      expect(body.redFlags).toEqual([]);
+    });
+  });
+
+  // docs/SPEC05.md §3.2.2 — configuration red flags.
+  describe("redFlags (docs/SPEC05.md §3.2.2)", () => {
+    async function createAndAnswer(name: string, answers: { questionId: string; optionId: string }[]) {
+      const createRes = await app.request("/api/environments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const created = await createRes.json();
+      if (answers.length > 0) {
+        await app.request(`/api/environments/${created.id}/answers`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answers }),
+        });
+      }
+      return created.id as number;
+    }
+
+    it("triggers uncertain_recovery on high stakes + uncertain recovery", async () => {
+      const id = await createAndAnswer("Catastrophic But Improvised", [
+        { questionId: "confidentiality", optionId: "catastrophic" },
+        { questionId: "recovery", optionId: "uncertain" },
+      ]);
+      const listRes = await app.request("/api/environments");
+      const list = await listRes.json();
+      const listed = list.find((e: { id: number }) => e.id === id);
+      expect(listed.redFlags).toEqual(["uncertain_recovery"]);
+
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.redFlags).toHaveLength(1);
+      expect(body.redFlags[0].id).toBe("uncertain_recovery");
+      expect(body.redFlags[0].answers).toEqual(
+        expect.arrayContaining([
+          { questionId: "confidentiality", optionId: "catastrophic" },
+          { questionId: "recovery", optionId: "uncertain" },
+        ]),
+      );
+    });
+
+    it("Q9 safety=yes also satisfies high stakes for uncertain_recovery", async () => {
+      const id = await createAndAnswer("Life Safety Improvised", [
+        { questionId: "safety", optionId: "yes" },
+        { questionId: "recovery", optionId: "uncertain" },
+      ]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.redFlags.map((f: { id: string }) => f.id)).toEqual(["uncertain_recovery"]);
+    });
+
+    it("does not trigger uncertain_recovery on stakes alone", async () => {
+      const id = await createAndAnswer("Catastrophic Only", [
+        { questionId: "confidentiality", optionId: "catastrophic" },
+      ]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.redFlags).toEqual([]);
+    });
+
+    it("does not trigger uncertain_recovery on uncertain recovery alone", async () => {
+      const id = await createAndAnswer("Just Uncertain", [{ questionId: "recovery", optionId: "uncertain" }]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.redFlags).toEqual([]);
+    });
+
+    it("triggers concentrated_availability on immediate availability + concentrated value density", async () => {
+      const id = await createAndAnswer("Critical Hypervisor", [
+        { questionId: "availability", optionId: "immediate" },
+        { questionId: "value_density", optionId: "concentrated" },
+      ]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.redFlags.map((f: { id: string }) => f.id)).toEqual(["concentrated_availability"]);
+    });
+
+    it("triggers hard_to_patch on high stakes + hard patch effort", async () => {
+      const id = await createAndAnswer("Regulated And Slow", [
+        { questionId: "integrity", optionId: "catastrophic" },
+        { questionId: "patch_effort", optionId: "hard" },
+      ]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.redFlags.map((f: { id: string }) => f.id)).toEqual(["hard_to_patch"]);
+    });
+
+    it("skipped questions never satisfy a condition", async () => {
+      const id = await createAndAnswer("All Skipped", [
+        { questionId: "confidentiality", optionId: "skip" },
+        { questionId: "recovery", optionId: "skip" },
+      ]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.redFlags).toEqual([]);
+    });
+
+    it("yields [] for an empty environment", async () => {
+      const id = await createAndAnswer("Blank", []);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.redFlags).toEqual([]);
+    });
+
+    it("can trigger multiple flags at once", async () => {
+      const id = await createAndAnswer("Everything Wrong", [
+        { questionId: "confidentiality", optionId: "catastrophic" },
+        { questionId: "availability", optionId: "immediate" },
+        { questionId: "recovery", optionId: "uncertain" },
+        { questionId: "value_density", optionId: "concentrated" },
+        { questionId: "patch_effort", optionId: "hard" },
+      ]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.redFlags.map((f: { id: string }) => f.id).sort()).toEqual(
+        ["concentrated_availability", "hard_to_patch", "uncertain_recovery"].sort(),
+      );
+    });
+  });
+
+  describe("catalog integrity for red flags (docs/SPEC05.md §3.2.2)", () => {
+    it("every questionId/optionId referenced by the red-flags rule set exists in the shipped catalog", async () => {
+      const { REFERENCED_ANSWERS } = await import("../src/scoring/redflags.js");
+      const { CATALOG } = await import("../src/catalog/catalog.js");
+      for (const { questionId, optionId } of REFERENCED_ANSWERS) {
+        const question = CATALOG.find((q) => q.id === questionId);
+        expect(question, `question ${questionId} should exist`).toBeDefined();
+        const option = question?.options.find((o) => o.id === optionId);
+        expect(option, `option ${questionId}/${optionId} should exist`).toBeDefined();
+      }
     });
   });
 });

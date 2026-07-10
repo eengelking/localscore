@@ -50,7 +50,7 @@ The full interview question set, versioned by `catalogVersion`. See `docs/SPEC01
 ```bash
 curl -X POST http://localhost:8080/api/environments \
   -H 'Content-Type: application/json' \
-  -d '{"name": "Disposable Dev Lab", "description": "Rebuilt nightly from a pipeline"}'
+  -d '{"name": "Disposable Dev Lab", "description": "Rebuilt nightly from a pipeline", "location": "us-east-1"}'
 ```
 
 ```json
@@ -58,17 +58,23 @@ curl -X POST http://localhost:8080/api/environments \
   "id": 1,
   "name": "Disposable Dev Lab",
   "description": "Rebuilt nightly from a pipeline",
+  "location": "us-east-1",
   "catalogVersion": "1.0",
   "createdAt": "2026-07-08T21:39:30.621Z",
   "updatedAt": "2026-07-08T21:39:30.621Z",
   "interviewCompletion": { "4.0": false, "3.1": false },
-  "raisesScores": { "4.0": false, "3.1": false }
+  "raisesScores": { "4.0": false, "3.1": false },
+  "redFlags": []
 }
 ```
 
 `interviewCompletion` reports whether enough answers exist to score against each CVSS version — an environment with zero answers scores identically to the base vector (docs/SPEC01.md §2.3), so this is what the frontend uses to show "no profile yet" instead of a fake score.
 
-`raisesScores` (docs/SPEC04.md §4) reports, per CVSS version, whether this environment's answers contain any override that can push a modified score *above* the base score (e.g. the "stepping stone" blast-radius answer, "yes" to physical safety, or a "Catastrophic" confidentiality/integrity/availability answer). It's re-derived from `environment_answers` at request time, the same as `metrics` below, not read from a stored column. An environment with zero answers reports `false`/`false`.
+`location` (docs/SPEC05.md §3.1, migration `0004`) is an optional, single-line, plain-text place label ("us-east-1", "Building 4, rack 12") — not markdown, not involved in scoring or the interview. Defaults to `""` and is trimmed server-side.
+
+`raisesScores` (docs/SPEC04.md §4, narrowed by docs/SPEC05.md §3.2.1) reports, per CVSS version, whether this environment's answers contain any override that can push a modified score *above* the base score. As of SPEC05, this is limited to the structural blast-radius/safety overrides (the "stepping stone" blast-radius answer, "yes" to physical safety) — a "Catastrophic" confidentiality/integrity/availability answer alone no longer sets this flag (that over-triggered: an environment that legitimately has a lot to lose, e.g. a government IL6 system, was flagged permanently). It's re-derived from `environment_answers` at request time, the same as `metrics` below, not read from a stored column. An environment with zero answers reports `false`/`false`.
+
+`redFlags` (docs/SPEC05.md §3.2.2, new) is an array of triggered configuration red-flag ids — a second, independent tier that correlates stakes answers (Q5/Q6/Q7 "Catastrophic" or Q9 safety "yes") with operational-readiness answers (Q10–Q12) to catch a mismatch between what a location claims to protect and how ready it is: `uncertain_recovery` (high stakes + "Uncertain" recovery), `concentrated_availability` (immediate availability impact + concentrated value density), `hard_to_patch` (high stakes + "Hard" patch effort). Stakes alone never trigger a flag — every rule requires a readiness gap too. Empty array when none trigger. The list route returns just the ids; the detail route (below) also returns each flag's answer provenance.
 
 ### List
 
@@ -91,6 +97,15 @@ curl http://localhost:8080/api/environments/1
   "...": "...",
   "raisesScores": { "4.0": false, "3.1": false },
   "raisingAnswers": [],
+  "redFlags": [
+    {
+      "id": "uncertain_recovery",
+      "answers": [
+        { "questionId": "confidentiality", "optionId": "catastrophic" },
+        { "questionId": "recovery", "optionId": "uncertain" }
+      ]
+    }
+  ],
   "answers": [
     { "questionId": "reachability", "optionId": "internal_only" }
   ],
@@ -105,13 +120,17 @@ curl http://localhost:8080/api/environments/1
 
 `raisingAnswers` (docs/SPEC04.md §4, detail route only — the list route omits it) is the deduplicated `{ questionId, optionId }` provenance of every answer contributing to a `true` value in `raisesScores`, so the edit view can name the responsible questions/answers in plain English via the catalog it already fetches.
 
-### Rename / edit description
+On the detail route, `redFlags` is an array of `{ id, answers }` (the list route above returns just the ids) — `answers` is the deduplicated provenance of every answer that satisfied that flag's condition, same shape/purpose as `raisingAnswers`.
+
+### Rename / edit description / edit location
 
 ```bash
 curl -X PUT http://localhost:8080/api/environments/1 \
   -H 'Content-Type: application/json' \
-  -d '{"name": "Disposable Dev Lab (renamed)"}'
+  -d '{"name": "Disposable Dev Lab (renamed)", "location": "us-east-1"}'
 ```
+
+`location` follows the same COALESCE-on-missing-field pattern as `description`: omit it to leave the current value untouched.
 
 ### Save interview answers (resumable, partial OK)
 

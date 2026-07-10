@@ -1461,6 +1461,42 @@ main {
   margin: var(--space-3) 0;
 }
 
+/* docs/SPEC05.md §3.2.3: the risk-warning callout can now hold two
+   independently-triggered portions (score-raising, configuration red
+   flags) stacked in one card. A hairline divider + top padding separates a
+   second portion from the first; a single portion has neither. */
+.callout-section + .callout-section {
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+}
+
+.callout-section-title {
+  font-weight: 700;
+  margin: 0 0 var(--space-1);
+}
+
+.callout-section p {
+  margin: 0;
+}
+
+.callout-section p + p {
+  margin-top: var(--space-2);
+}
+
+.red-flag-block + .red-flag-block {
+  margin-top: var(--space-3);
+}
+
+/* Location: a short, muted, single-line place label under the environment
+   name — visually secondary to the name and distinct from the markdown
+   description that follows it. Empty locations render nothing. */
+.environment-location {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-muted);
+}
+
 .sr-only {
   position: absolute;
   width: 1px;

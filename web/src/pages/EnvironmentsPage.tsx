@@ -17,6 +17,7 @@ export function EnvironmentsPage({
   const [error, setError] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [newDescription, setNewDescription] = useState("");
+  const [newLocation, setNewLocation] = useState("");
   const [creating, setCreating] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<{ id: number; name: string } | null>(null);
 
@@ -34,9 +35,10 @@ export function EnvironmentsPage({
     setCreating(true);
     setError(null);
     try {
-      const env = await createEnvironment(newName.trim(), newDescription.trim());
+      const env = await createEnvironment(newName.trim(), newDescription.trim(), newLocation.trim());
       setNewName("");
       setNewDescription("");
+      setNewLocation("");
       refresh();
       onOpenInterview(env.id);
     } catch (err) {
@@ -98,6 +100,16 @@ export function EnvironmentsPage({
           </div>
         </div>
         <div className="field">
+          <label htmlFor="new-environment-location">Location (optional)</label>
+          <input
+            id="new-environment-location"
+            className="input"
+            placeholder='e.g. "us-east-1", "Building 4, rack 12"'
+            value={newLocation}
+            onChange={(e) => setNewLocation(e.target.value)}
+          />
+        </div>
+        <div className="field">
           <label htmlFor="new-environment-description">Description (optional)</label>
           <textarea
             id="new-environment-description"
@@ -126,6 +138,7 @@ export function EnvironmentsPage({
             <li key={env.id} className="card environment-row">
               <div className="environment-row-main">
                 <h3 className="environment-name">{env.name}</h3>
+                {env.location && <p className="environment-location">{env.location}</p>}
                 {env.description && <MarkdownContent source={env.description} className="environment-description" />}
                 <div className="badge-row">
                   <span className={`badge ${env.interviewCompletion["3.1"] ? "is-complete" : ""}`}>
@@ -134,11 +147,11 @@ export function EnvironmentsPage({
                   <span className={`badge ${env.interviewCompletion["4.0"] ? "is-complete" : ""}`}>
                     v4.0 {env.interviewCompletion["4.0"] ? "ready" : "no profile yet"}
                   </span>
-                  {(env.raisesScores["4.0"] || env.raisesScores["3.1"]) && (
+                  {(env.raisesScores["4.0"] || env.raisesScores["3.1"] || env.redFlags.length > 0) && (
                     <Icon
                       name="warning"
                       className="raises-scores-icon"
-                      aria-label="This environment's answers can raise scores above the base score"
+                      aria-label="This environment's configuration needs review"
                     />
                   )}
                 </div>
