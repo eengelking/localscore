@@ -1,5 +1,7 @@
 # localscore — Specification v1.0
 
+> **Status (2026-07-09): fully implemented and historical.** This document has been superseded by `SPEC02.md`, `SPEC03.md`, and `SPEC04.md` (all historical); `SPEC05.md` is the active implementation contract. It is retained as the rationale for v1 behavior (domain rules, catalog effects, data model); do not drive new work from it.
+
 A self-hosted, containerized web tool that turns CVSS base scores into **environmentally adjusted scores** for the user's actual locations. Users describe each location ("My Data Center", "Retail Kiosks", "Dev Lab") through a plain-language interview; the tool converts the answers into CVSS environmental metric profiles. Pasting a CVSS vector (or looking up a CVE ID) then shows the **modified score per location, side by side** — the real risk, not the worst-case base score.
 
 This document is the implementation contract. Agents building the tool should treat every **MUST/MUST NOT** as a hard requirement and every **SHOULD** as the default unless there is a documented reason to deviate.

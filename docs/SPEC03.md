@@ -1,6 +1,6 @@
 # localscore — Specification v1.2 ("SPEC03")
 
-> **Status (2026-07-09): fully implemented and historical.** This document has been superseded by `SPEC04.md`, which is now the active implementation contract. It is retained as the rationale for v1.2 behavior; do not drive new work from it.
+> **Status (2026-07-09): fully implemented and historical.** This document has been superseded by `SPEC04.md` (itself now historical; `SPEC05.md` is the active implementation contract). It is retained as the rationale for v1.2 behavior; do not drive new work from it.
 
 This document was the implementation contract for the v1.2 round of work. It superseded `SPEC02.md` (the v1.1 contract), which is fully implemented and historical, the same way SPEC02 superseded `SPEC01.md`. Treat every **MUST/MUST NOT** here as a hard requirement and every **SHOULD** as the default unless there is a documented reason to deviate.
 

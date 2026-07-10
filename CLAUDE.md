@@ -20,6 +20,8 @@ The product works end-to-end: an npm-workspaces monorepo (`server/` = Hono + bet
 
 **docs/SPEC04.md (v1.3) is fully implemented** — §2 (color-system refresh), §3 (Title Case button labels), §4 (environment risk warning), §5.1 (NVD-description prefill), and §5.2 (collapsed-by-default CVE details) are all done — see "SPEC04 color refresh and Title Case", "SPEC04 environment risk warning", and "SPEC04 NVD-description prefill and collapsed CVE details" under Frontend below.
 
+**docs/SPEC05.md (v1.4) is the active contract, not yet implemented** — theme-toggle switch, Edit-control redesign, layout-stable scrollbar, environments `location` field (migration 0004), two-tier risk warning (narrowed raising flag + new answer-combination red flags), Scoring-page input focus + Major-CVE-ID typography, and Saved-page fixes (header-action wrapping, CVE-details disclosure grammar, de-blued detail chips, NVD link).
+
 ### NVD lookup & saved vulnerabilities
 
 - `server/src/lib/nvd.ts` — fetches `services.nvd.nist.gov`, throttled module-wide (~1 req/6s unauthenticated, faster with `NVD_API_KEY`) since NVD's unauthenticated rate limit is shared across all callers in the process, not per-request. `extractVectorOptions()` parses every `cvssMetricV40`/`V31`/`V30` entry NVD returns (deliberately skips `cvssMetricV2` — v2 isn't a supported score) so the UI can show all disagreeing sources per docs/SPEC01.md §7; `pickPrimaryVector()` picks the highest-version/Primary-sourced one as the default.
@@ -198,7 +200,7 @@ When you `podman run` a container to manually verify something (health check, a 
 
 ## Source of truth
 
-`docs/SPEC01.md` (v1), `docs/SPEC02.md` (v1.1), `docs/SPEC03.md` (v1.2), and `docs/SPEC04.md` (v1.3) are fully implemented and historical — "docs/SPEC0N.md §N" citations throughout this file and the code are historical rationale for existing behavior, not a to-do list. Future spec rounds continue the numbering in `docs/` (SPEC05.md, …); when one lands, update this section to point at it as the active contract.
+**`docs/SPEC05.md` (v1.4) is the active implementation contract** — the current to-do list for the next round of work (global chrome fixes, environments location field, two-tier risk-warning redesign, Scoring focus/typography fixes, Saved-page cleanup). `docs/SPEC01.md` (v1), `docs/SPEC02.md` (v1.1), `docs/SPEC03.md` (v1.2), and `docs/SPEC04.md` (v1.3) are fully implemented and historical — "docs/SPEC0N.md §N" citations throughout this file and the code are historical rationale for existing behavior, not a to-do list. Note SPEC05 amends three SPEC04-era rules (the solid-yellow Edit control, the score-raising trigger set, and the accent-badge treatment next to links). Future spec rounds continue the numbering in `docs/` (SPEC06.md, …); when one lands, update this section to point at it as the active contract.
 
 ## What this project is
 

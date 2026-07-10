@@ -1,6 +1,8 @@
 # localscore — Specification v1.3 ("SPEC04")
 
-This document is the **active implementation contract** for the next round of work. It supersedes `SPEC03.md` (the v1.2 contract), which is fully implemented and now historical, the same way SPEC03 superseded `SPEC02.md`. Treat every **MUST/MUST NOT** here as a hard requirement and every **SHOULD** as the default unless there is a documented reason to deviate.
+> **Status (2026-07-09): fully implemented and historical.** This document has been superseded by `SPEC05.md`, which is now the active implementation contract. It is retained as the rationale for v1.3 behavior; do not drive new work from it. Note that SPEC05 amends three of this spec's rules: the §2.3 solid-yellow Edit control (SPEC05 §2.2), the §4.1 score-raising trigger set (SPEC05 §3.2.1 narrows it per this spec's own §8 fallback), and the §2.1 accent-badge treatment inside dense reference contexts (SPEC05 §5.3).
+
+This document was the implementation contract for the v1.3 round of work. It superseded `SPEC03.md` (the v1.2 contract), which is fully implemented and historical, the same way SPEC03 superseded `SPEC02.md`. Treat every **MUST/MUST NOT** here as a hard requirement and every **SHOULD** as the default unless there is a documented reason to deviate.
 
 **Everything in the v1/v1.1/v1.2 contracts that this document does not change remains binding** — in particular:
 
@@ -13,7 +15,7 @@ This document is the **active implementation contract** for the next round of wo
 
 Scope of v1.3: a **color-system refresh** (accent-colored neutral buttons/badges and tabs replacing the gray/monotone treatments, a legible Edit control in light theme, white-family pill text in light theme), **Title Case button labels**, a new **environment risk warning** (surfacing on the Environments pages when a profile's answers can push scores *above* base — the same condition the Scoring/Saved screens already flag per-result), **NVD-description prefill** for saved CVEs, and a **collapsed-by-default CVE details** disclosure.
 
-**Implementation status: not yet implemented.** This is the to-do list.
+**Implementation status: fully implemented.** See `CLAUDE.md`'s SPEC04 sections for the finding-by-finding map to what changed.
 
 ---
 
