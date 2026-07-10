@@ -1552,8 +1552,8 @@ main {
    flags) stacked in one card. A hairline divider + top padding separates a
    second portion from the first; a single portion has neither. */
 .callout-section + .callout-section {
-  margin-top: var(--space-3);
-  padding-top: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
   border-top: 1px solid var(--border);
 }
 
@@ -1579,7 +1579,7 @@ main {
 }
 
 .red-flag-block + .red-flag-block {
-  margin-top: var(--space-3);
+  margin-top: var(--space-5);
 }
 
 /* Location: a short, muted, single-line place label under the environment
