@@ -1570,6 +1570,14 @@ main {
   margin-top: var(--space-2);
 }
 
+/* The Q/A pair inside one .raises-scores-list item are two <p>s, so the
+   general .callout-section p + p rule above would otherwise put a gap
+   between them too — override back to none. The gap belongs only between
+   different pairs (the list's own `gap: var(--space-3)`), not within one. */
+.raises-scores-list li p + p {
+  margin-top: 0;
+}
+
 .red-flag-block + .red-flag-block {
   margin-top: var(--space-3);
 }
