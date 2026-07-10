@@ -213,4 +213,95 @@ describe("environment CRUD, answers, and re-derivation", () => {
     const body = await getRes.json();
     expect(body.metrics).toEqual([]);
   });
+
+  // docs/SPEC04.md §4.1/§7.1 — the score-raising flag.
+  describe("raisesScores (docs/SPEC04.md §4)", () => {
+    async function createAndAnswer(name: string, answers: { questionId: string; optionId: string }[]) {
+      const createRes = await app.request("/api/environments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const created = await createRes.json();
+      if (answers.length > 0) {
+        await app.request(`/api/environments/${created.id}/answers`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ answers }),
+        });
+      }
+      return created.id as number;
+    }
+
+    it("flags both versions for a stepping-stone (Q8) profile", async () => {
+      const id = await createAndAnswer("Stepping Stone", [
+        { questionId: "blast_radius", optionId: "stepping_stone" },
+      ]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.raisesScores).toEqual({ "4.0": true, "3.1": true });
+      expect(body.raisingAnswers).toEqual(
+        expect.arrayContaining([{ questionId: "blast_radius", optionId: "stepping_stone" }]),
+      );
+      expect(body.raisingAnswers).toHaveLength(1);
+
+      const listRes = await app.request("/api/environments");
+      const list = await listRes.json();
+      const listed = list.find((e: { id: number }) => e.id === id);
+      expect(listed.raisesScores).toEqual({ "4.0": true, "3.1": true });
+      expect(listed.raisingAnswers).toBeUndefined();
+    });
+
+    it("flags only 4.0 for a safety=yes (Q9) profile", async () => {
+      const id = await createAndAnswer("Life Safety", [{ questionId: "safety", optionId: "yes" }]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.raisesScores).toEqual({ "4.0": true, "3.1": false });
+      expect(body.raisingAnswers).toEqual([{ questionId: "safety", optionId: "yes" }]);
+    });
+
+    it("flags both versions for a Catastrophic (Q5/Q6/Q7) profile", async () => {
+      const id = await createAndAnswer("Crown Jewels", [
+        { questionId: "confidentiality", optionId: "catastrophic" },
+      ]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.raisesScores).toEqual({ "4.0": true, "3.1": true });
+      expect(body.raisingAnswers).toEqual([{ questionId: "confidentiality", optionId: "catastrophic" }]);
+    });
+
+    it("does not flag an all-lowering profile (the worked-example Disposable Dev Lab answers)", async () => {
+      const id = await createAndAnswer("Disposable Dev Lab", [
+        { questionId: "reachability", optionId: "internal_only" },
+        { questionId: "confidentiality", optionId: "nothing" },
+        { questionId: "integrity", optionId: "nothing" },
+        { questionId: "availability", optionId: "nobody" },
+        { questionId: "blast_radius", optionId: "dead_end" },
+      ]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.raisesScores).toEqual({ "4.0": false, "3.1": false });
+      expect(body.raisingAnswers).toEqual([]);
+    });
+
+    it("does not flag an empty environment", async () => {
+      const id = await createAndAnswer("Blank", []);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.raisesScores).toEqual({ "4.0": false, "3.1": false });
+      expect(body.raisingAnswers).toEqual([]);
+    });
+
+    it("does not flag supplemental-only answers (Q10-Q12)", async () => {
+      const id = await createAndAnswer("Supplemental Only", [
+        { questionId: "recovery", optionId: "automatic" },
+        { questionId: "value_density", optionId: "concentrated" },
+        { questionId: "patch_effort", optionId: "hard" },
+      ]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.raisesScores).toEqual({ "4.0": false, "3.1": false });
+      expect(body.raisingAnswers).toEqual([]);
+    });
+  });
 });

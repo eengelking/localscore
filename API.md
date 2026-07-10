@@ -61,11 +61,14 @@ curl -X POST http://localhost:8080/api/environments \
   "catalogVersion": "1.0",
   "createdAt": "2026-07-08T21:39:30.621Z",
   "updatedAt": "2026-07-08T21:39:30.621Z",
-  "interviewCompletion": { "4.0": false, "3.1": false }
+  "interviewCompletion": { "4.0": false, "3.1": false },
+  "raisesScores": { "4.0": false, "3.1": false }
 }
 ```
 
 `interviewCompletion` reports whether enough answers exist to score against each CVSS version — an environment with zero answers scores identically to the base vector (docs/SPEC01.md §2.3), so this is what the frontend uses to show "no profile yet" instead of a fake score.
+
+`raisesScores` (docs/SPEC04.md §4) reports, per CVSS version, whether this environment's answers contain any override that can push a modified score *above* the base score (e.g. the "stepping stone" blast-radius answer, "yes" to physical safety, or a "Catastrophic" confidentiality/integrity/availability answer). It's re-derived from `environment_answers` at request time, the same as `metrics` below, not read from a stored column. An environment with zero answers reports `false`/`false`.
 
 ### List
 
@@ -86,6 +89,8 @@ curl http://localhost:8080/api/environments/1
   "id": 1,
   "name": "Disposable Dev Lab",
   "...": "...",
+  "raisesScores": { "4.0": false, "3.1": false },
+  "raisingAnswers": [],
   "answers": [
     { "questionId": "reachability", "optionId": "internal_only" }
   ],
@@ -97,6 +102,8 @@ curl http://localhost:8080/api/environments/1
 ```
 
 `metrics` is the materialized cache re-derived from `answers` on every save (docs/SPEC01.md's architecture note: `environment_answers` is the source of truth, `environment_metrics` is never hand-edited).
+
+`raisingAnswers` (docs/SPEC04.md §4, detail route only — the list route omits it) is the deduplicated `{ questionId, optionId }` provenance of every answer contributing to a `true` value in `raisesScores`, so the edit view can name the responsible questions/answers in plain English via the catalog it already fetches.
 
 ### Rename / edit description
 

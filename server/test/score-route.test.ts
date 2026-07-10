@@ -163,4 +163,27 @@ describe("POST /api/score", () => {
     const names = body.environments.map((e: { name: string }) => e.name);
     expect(names).toEqual(["High Risk", "Low Risk"]);
   });
+
+  // docs/SPEC04.md §7.2 — ties the environments-route raisesScores flag
+  // (server/test/environments-route.test.ts) to real scoring behavior:
+  // a flagged profile must actually produce delta > 0, not just match the
+  // lookup table in isolation.
+  it("a raisesScores-flagged profile (Q8 stepping stone) actually scores above base", async () => {
+    const envId = await createEnvironment("Stepping Stone", [
+      { questionId: "blast_radius", optionId: "stepping_stone" },
+    ]);
+
+    const envRes = await app.request(`/api/environments/${envId}`);
+    const envBody = await envRes.json();
+    expect(envBody.raisesScores).toEqual({ "4.0": true, "3.1": true });
+
+    const res = await app.request("/api/score", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:L/I:L/A:L" }),
+    });
+    const body = await res.json();
+    expect(body.environments[0]).toMatchObject({ name: "Stepping Stone" });
+    expect(body.environments[0].delta).toBeGreaterThan(0);
+  });
 });

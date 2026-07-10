@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { deleteEnvironment, getEnvironment, updateEnvironment } from "../api.js";
-import type { Environment } from "../types.js";
+import { deleteEnvironment, getCatalog, getEnvironment, updateEnvironment } from "../api.js";
+import type { Catalog, EnvironmentDetail } from "../types.js";
 import { ConfirmModal } from "../components/Modal.js";
 import { Icon } from "../components/Icon.js";
 
@@ -13,7 +13,8 @@ export function EnvironmentEditPage({
   onDone: () => void;
   onOpenInterview: (environmentId: number) => void;
 }) {
-  const [environment, setEnvironment] = useState<Environment | null>(null);
+  const [environment, setEnvironment] = useState<EnvironmentDetail | null>(null);
+  const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
@@ -29,6 +30,12 @@ export function EnvironmentEditPage({
       })
       .catch((err: Error) => setError(err.message));
   }, [environmentId]);
+
+  useEffect(() => {
+    getCatalog()
+      .then(setCatalog)
+      .catch(() => undefined);
+  }, []);
 
   async function handleSave(e: React.FormEvent) {
     e.preventDefault();
@@ -63,6 +70,15 @@ export function EnvironmentEditPage({
   }
 
   const hasStarted = environment.interviewCompletion["3.1"];
+  const raisesScores = environment.raisesScores["4.0"] || environment.raisesScores["3.1"];
+  const raisingAnswerLabels = environment.raisingAnswers
+    .map(({ questionId, optionId }) => {
+      const question = catalog?.questions.find((q) => q.id === questionId);
+      const option = question?.options.find((o) => o.id === optionId);
+      if (!question || !option) return null;
+      return { question: question.question, option: option.label };
+    })
+    .filter((v): v is { question: string; option: string } => v !== null);
 
   return (
     <div className="stack">
@@ -72,6 +88,29 @@ export function EnvironmentEditPage({
           <p>Rename this location, update its description, or manage the interview.</p>
         </div>
       </div>
+
+      {raisesScores && (
+        <div className="callout-warning">
+          <Icon name="warning" size={18} />
+          <div>
+            <p>
+              Because of how this environment is configured, vulnerabilities can score <strong>higher</strong> here
+              than their published base score. These answers state the location has a lot to lose, which is worth
+              reviewing, not necessarily a misconfiguration. <strong>localscore</strong> recommends having this
+              configuration reviewed by a security professional.
+            </p>
+            {raisingAnswerLabels.length > 0 && (
+              <ul className="raises-scores-list">
+                {raisingAnswerLabels.map(({ question, option }, i) => (
+                  <li key={i}>
+                    <strong>{question}</strong> {option}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      )}
 
       <form className="card environment-edit-form" onSubmit={handleSave}>
         <div className="field">

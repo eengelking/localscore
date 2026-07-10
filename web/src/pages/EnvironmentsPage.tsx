@@ -134,6 +134,13 @@ export function EnvironmentsPage({
                   <span className={`badge ${env.interviewCompletion["4.0"] ? "is-complete" : ""}`}>
                     v4.0 {env.interviewCompletion["4.0"] ? "ready" : "no profile yet"}
                   </span>
+                  {(env.raisesScores["4.0"] || env.raisesScores["3.1"]) && (
+                    <Icon
+                      name="warning"
+                      className="raises-scores-icon"
+                      aria-label="This environment's answers can raise scores above the base score"
+                    />
+                  )}
                 </div>
               </div>
               <div className="environment-row-actions">

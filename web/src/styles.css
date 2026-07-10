@@ -905,6 +905,15 @@ main {
   flex-wrap: wrap;
 }
 
+/* docs/SPEC04.md §4.3: same glyph/color grammar as EnvironmentResultRow's
+   per-result more-vulnerable icon, but sized to sit inline with the badge
+   row's text rather than as a peer of a score figure. Not a button — the
+   user reaches this environment's Edit control to see why. */
+.raises-scores-icon {
+  color: var(--action-red-text);
+  flex-shrink: 0;
+}
+
 .environment-row-actions {
   display: flex;
   gap: var(--space-2);
@@ -1430,6 +1439,18 @@ main {
 .callout-warning p {
   margin: 0;
   color: var(--ink);
+}
+
+/* docs/SPEC04.md §4.4: names each answer responsible for the risk-warning
+   callout, question text + chosen answer text (plain English, no metric
+   codes). */
+.raises-scores-list {
+  margin: var(--space-3) 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
 }
 
 /* Shown inside EnvironmentResultRow's expanded detail whenever an

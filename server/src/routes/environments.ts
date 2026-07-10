@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import type Database from "better-sqlite3";
 import { CATALOG_VERSION } from "../catalog/index.js";
 import { deriveMetrics } from "../catalog/derive.js";
+import { computeRaisesScores, computeRaisingAnswers } from "../scoring/raising.js";
 import { HttpError } from "../lib/errors.js";
 
 interface EnvironmentRow {
@@ -43,8 +44,13 @@ function completionStatus(metrics: MetricRow[], answers: AnswerRow[]) {
 }
 
 // Every environment response (list, detail, create, rename) shares this
-// camelCase shape so the frontend has one consistent contract.
+// camelCase shape so the frontend has one consistent contract. `raisesScores`
+// is re-derived from `environment_answers` via deriveMetrics() at request
+// time (docs/SPEC04.md §4.1) rather than read from the persisted
+// `environment_metrics` cache, because DerivedMetric carries the
+// questionId/optionId provenance the edit view needs and the cache doesn't.
 function serializeEnvironment(env: EnvironmentRow, answers: AnswerRow[], metrics: MetricRow[]) {
+  const derived = deriveMetrics(answers.map((a) => ({ questionId: a.question_id, optionId: a.option_id })));
   return {
     id: env.id,
     name: env.name,
@@ -53,6 +59,7 @@ function serializeEnvironment(env: EnvironmentRow, answers: AnswerRow[], metrics
     createdAt: env.created_at,
     updatedAt: env.updated_at,
     interviewCompletion: completionStatus(metrics, answers),
+    raisesScores: computeRaisesScores(derived),
   };
 }
 
@@ -93,8 +100,10 @@ export function environmentRoutes(db: Database.Database) {
     const env = getEnvironmentOr404(db, id);
     const answers = db.prepare("SELECT * FROM environment_answers WHERE environment_id = ?").all(id) as AnswerRow[];
     const metrics = db.prepare("SELECT * FROM environment_metrics WHERE environment_id = ?").all(id) as MetricRow[];
+    const derived = deriveMetrics(answers.map((a) => ({ questionId: a.question_id, optionId: a.option_id })));
     return c.json({
       ...serializeEnvironment(env, answers, metrics),
+      raisingAnswers: computeRaisingAnswers(derived),
       answers: answers.map((a) => ({ questionId: a.question_id, optionId: a.option_id })),
       metrics: metrics.map((m) => ({
         cvssVersion: m.cvss_version,
