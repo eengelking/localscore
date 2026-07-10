@@ -496,4 +496,106 @@ describe("saved-vulnerability CRUD", () => {
       expect(saved.description).toBe("");
     });
   });
+
+  describe("save-time description (docs/SPEC06.md §3.1)", () => {
+    it("stores a client-supplied description on the insert path", async () => {
+      const res = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR, description: "Notes from the save form." }),
+      });
+      const saved = await res.json();
+      expect(saved.description).toBe("Notes from the save form.");
+    });
+
+    it("overwrites an existing saved row's description on the update path", async () => {
+      const firstRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR, description: "Original notes." }),
+      });
+      const first = await firstRes.json();
+
+      const secondRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR, description: "Updated notes." }),
+      });
+      const second = await secondRes.json();
+      expect(second.id).toBe(first.id);
+      expect(second.description).toBe("Updated notes.");
+    });
+
+    it("a client-supplied description beats the NVD prefill", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            vulnerabilities: [
+              {
+                cve: {
+                  id: "CVE-2026-55201",
+                  descriptions: [{ lang: "en", value: "The NVD description." }],
+                  metrics: {
+                    cvssMetricV31: [
+                      {
+                        source: "nvd@nist.gov",
+                        type: "Primary",
+                        cvssData: {
+                          version: "3.1",
+                          vectorString: VECTOR,
+                          baseScore: 9.8,
+                          baseSeverity: "CRITICAL",
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      try {
+        await app.request("/api/cve/CVE-2026-55201");
+
+        const res = await app.request("/api/vulnerabilities", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ vector: VECTOR, cveId: "CVE-2026-55201", description: "My own summary." }),
+        });
+        const saved = await res.json();
+        expect(saved.description).toBe("My own summary.");
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it("an absent description keeps every existing behavior (update preserves, pasted-vector stays empty)", async () => {
+      const firstRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR, description: "Kept as-is." }),
+      });
+      const first = await firstRes.json();
+
+      const secondRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR }),
+      });
+      const second = await secondRes.json();
+      expect(second.id).toBe(first.id);
+      expect(second.description).toBe("Kept as-is.");
+
+      const freshRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H" }),
+      });
+      const fresh = await freshRes.json();
+      expect(fresh.description).toBe("");
+    });
+  });
 });

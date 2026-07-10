@@ -61,8 +61,10 @@ export function vulnerabilityRoutes(db: Database.Database) {
 
   app.post("/vulnerabilities", async (c) => {
     const body = await c.req
-      .json<{ vector?: string; label?: string; cveId?: string; nvdJson?: unknown }>()
-      .catch(() => ({}) as { vector?: string; label?: string; cveId?: string; nvdJson?: unknown });
+      .json<{ vector?: string; label?: string; description?: string; cveId?: string; nvdJson?: unknown }>()
+      .catch(
+        () => ({}) as { vector?: string; label?: string; description?: string; cveId?: string; nvdJson?: unknown },
+      );
 
     if (!body.vector || !body.vector.trim()) {
       throw new HttpError(400, "vector is required");
@@ -75,6 +77,11 @@ export function vulnerabilityRoutes(db: Database.Database) {
     const source = cveId ? "nvd" : "vector";
     const now = new Date().toISOString();
     const nvdJsonText = body.nvdJson ? JSON.stringify(body.nvdJson) : null;
+    // docs/SPEC06.md §3.1: a non-empty client-supplied description wins over
+    // whatever the matched row had (and over the NVD prefill below, since
+    // that only fires when the description is still empty afterward). Empty
+    // or absent changes nothing about today's behavior.
+    const clientDescription = body.description && body.description.trim() ? body.description : undefined;
 
     // Identity for upsert: same CVE ID for NVD-sourced saves (this also
     // reuses a saved = 0 cache row left by a prior lookup), same normalized
@@ -90,15 +97,37 @@ export function vulnerabilityRoutes(db: Database.Database) {
     let id: number;
     if (existing) {
       db.prepare(
-        "UPDATE vulnerabilities SET label = ?, source = ?, cve_id = ?, vector = ?, cvss_version = ?, base_score = ?, nvd_json = COALESCE(?, nvd_json), fetched_at = COALESCE(?, fetched_at), saved = 1 WHERE id = ?",
-      ).run(label, source, cveId, vector, parsed.version, score, nvdJsonText, nvdJsonText ? now : null, existing.id);
+        "UPDATE vulnerabilities SET label = ?, description = COALESCE(?, description), source = ?, cve_id = ?, vector = ?, cvss_version = ?, base_score = ?, nvd_json = COALESCE(?, nvd_json), fetched_at = COALESCE(?, fetched_at), saved = 1 WHERE id = ?",
+      ).run(
+        label,
+        clientDescription ?? null,
+        source,
+        cveId,
+        vector,
+        parsed.version,
+        score,
+        nvdJsonText,
+        nvdJsonText ? now : null,
+        existing.id,
+      );
       id = existing.id;
     } else {
       const info = db
         .prepare(
-          "INSERT INTO vulnerabilities (label, source, cve_id, vector, cvss_version, base_score, nvd_json, fetched_at, created_at, saved) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
+          "INSERT INTO vulnerabilities (label, description, source, cve_id, vector, cvss_version, base_score, nvd_json, fetched_at, created_at, saved) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1)",
         )
-        .run(label, source, cveId, vector, parsed.version, score, nvdJsonText, nvdJsonText ? now : null, now);
+        .run(
+          label,
+          clientDescription ?? "",
+          source,
+          cveId,
+          vector,
+          parsed.version,
+          score,
+          nvdJsonText,
+          nvdJsonText ? now : null,
+          now,
+        );
       id = Number(info.lastInsertRowid);
     }
 

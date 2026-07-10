@@ -14,12 +14,13 @@ export function ScoreResult({
   result: ScoreResponse;
   catalog: Catalog | null;
   onOpenInterview: (environmentId: number) => void;
-  onSave?: (label: string | undefined) => Promise<void>;
+  onSave?: (label: string | undefined, description: string | undefined) => Promise<void>;
   defaultSaveLabel?: string;
   overwriteLabel?: string;
 }) {
   const [saveOpen, setSaveOpen] = useState(false);
   const [label, setLabel] = useState(defaultSaveLabel ?? "");
+  const [description, setDescription] = useState("");
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
@@ -29,7 +30,7 @@ export function ScoreResult({
     setSaving(true);
     setSaveError(null);
     try {
-      await onSave(label.trim() || undefined);
+      await onSave(label.trim() || undefined, description.trim() || undefined);
       setSaved(true);
       setSaveOpen(false);
     } catch (err) {
@@ -78,6 +79,14 @@ export function ScoreResult({
                   value={label}
                   onChange={(e) => setLabel(e.target.value)}
                   aria-label="Label for this saved vulnerability"
+                />
+                <textarea
+                  className="textarea"
+                  rows={3}
+                  placeholder="Notes about this vulnerability. Markdown supported."
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  aria-label="Description for this saved vulnerability"
                 />
                 <div className="save-form-actions">
                   <button

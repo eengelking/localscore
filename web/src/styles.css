@@ -1256,6 +1256,15 @@ main {
   width: 100%;
 }
 
+/* docs/SPEC06.md §3.3: same root cause as the .cve-lookup-result fix above —
+   the lookup-error and Major-CVEs-error WarningBanners were shrink-wrapping
+   to their text width instead of spanning the panel. Scoped to .tab-panel so
+   it covers both in-panel WarningBanner uses uniformly rather than
+   special-casing the CVE tab. */
+.tab-panel .callout-warning {
+  width: 100%;
+}
+
 .score-figure-hero {
   font-size: var(--text-hero);
 }
@@ -1897,14 +1906,15 @@ main {
   color: var(--ink-muted);
 }
 
-/* docs/SPEC05.md §5.4: a direct link to the CVE's NVD page, same grammar as
-   the Major-CVE rows' NVD link (SPEC03 §7.2). Placed at the top of the
-   expanded body rather than the summary row, since the summary is itself a
-   <button> and nesting an <a> inside it isn't valid HTML/ARIA — this also
-   means it never needs stopPropagation. */
+/* docs/SPEC05.md §5.4 (amended by docs/SPEC06.md §3.5): a direct link to the
+   CVE's NVD page, same grammar as the Major-CVE rows' NVD link (SPEC03
+   §7.2). Rendered inside the expanded body rather than the summary row,
+   since the summary is itself a <button> and nesting an <a> inside it isn't
+   valid HTML/ARIA — this also means it never needs stopPropagation. Lives in
+   its own .cve-details-footer row, right-aligned, as the body's last line
+   rather than a lonely row at the top. */
 .cve-details-nvd-link {
   display: inline-flex;
-  align-self: flex-start;
   align-items: center;
   gap: 4px;
   font-size: var(--text-sm);
@@ -1913,6 +1923,11 @@ main {
 
 .cve-details-nvd-link:hover {
   color: var(--accent);
+}
+
+.cve-details-footer {
+  display: flex;
+  justify-content: flex-end;
 }
 
 .cve-details-body {
