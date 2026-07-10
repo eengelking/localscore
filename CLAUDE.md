@@ -7,9 +7,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Never commit directly to `main`. Before starting any work, create a new branch off `main` (branch off the latest `main`, not an existing feature branch).
 - Before committing, always update documentation affected by the change — `CLAUDE.md` (Status, and whichever topical section covers what changed), `README.md`, and `docs/API.md` if the change alters mandated behavior. Check each for now-stale claims (a feature described as "not built yet" that this change built, a route/shape that changed, a screen that didn't exist before) and fix them in the same commit as the code, not a follow-up. Do this as a deliberate last step prior to committing, not opportunistically while coding.
 - When the work is done, commit the changes and push the branch to the remote.
+- Use the `gh` CLI for all GitHub operations (issues, PR status/checks, viewing existing issues to avoid duplicates, etc.) rather than asking the user to do it manually or guessing at web URLs.
 - After pushing, generate a Markdown summary of the changes so the user can open the PR on GitHub manually — do not open the PR yourself. (This is manual for now; may be automated later.)
 - CI (`.github/workflows/ci.yml`) runs lint/typecheck/test/build on every PR and push to `main` — treat a red check the same as a local test failure, don't push past it.
+- **Since 1.0.0, every PR merged into `main` gets its own release**: bump semver, build/tag/push the container, and tag the release in git, per "Publishing a release image" under Releasing below. This is now a default part of finishing a change, not a separate step the user needs to request — proceed with the release once you've confirmed the PR is merged (still never merge the PR yourself). The only judgment call left to make per release is the *size* of the bump (patch/minor default, major only on explicit instruction — see below).
 - **Any non-dev container build (i.e. a build meant to be published, not a local `localscore:local` verification build) MUST be tagged, pushed, and verified per "Publishing a release image" below** — never `podman push` an ad-hoc/untagged image or push only `latest`.
+
+## Issue intake and triage
+
+When the user hands over a batch of issues (bug reports, feature requests, feedback) rather than a single task, don't start coding immediately. Work in two passes:
+
+1. **Assess and group.** Read the full list before filing anything. Issues that share a root cause, code path, or feature area become **one** GitHub issue (body enumerates each original report as a sub-bullet so nothing gets silently dropped); issues that are genuinely unrelated stay separate. Check `gh issue list` first so a resubmitted or overlapping report doesn't create a duplicate.
+2. **File via `gh issue create`** (title + body, labels where it helps) for each resulting issue — grouped or standalone. Present the user the final list of filed issues (with numbers/links) and stop there.
+
+Filing an issue is not authorization to work on it — wait for the user to say which filed issue(s) to pick up next, same as any other task.
 
 ## What this project is
 
@@ -192,7 +203,7 @@ Run from the repo root unless noted.
 - `npm run typecheck` / `npm run lint` — both workspaces. CI runs all four (`lint`, `typecheck`, `test`, `build`) on every PR and push to `main`.
 - `podman build --format docker -t localscore .` then `podman run ...` — container build. The maintainer uses **Podman, not Docker**; the Dockerfile/compose.yaml are plain OCI and must keep working under Docker too, but write any documentation/examples with `podman`. **`--format docker` is required for a direct `podman build`** — Podman's default OCI build format silently drops the Dockerfile's `HEALTHCHECK` instruction with just a warning, no error.
 - `podman compose up` — builds and runs via `compose.yaml`. Verified this does **not** need `--format docker`: going through the external `docker-compose` provider already produces a Docker-format image with `HEALTHCHECK` intact (confirmed by `podman inspect` reporting `healthy`). So the flag only matters for a bare `podman build`, not for compose.
-- Published image: `docker.io/eengelking/localscore` (tags `latest`, `1.0.0`) — pushed with `podman push`. See "Publishing a release image" below for the required tag/push/verify procedure — never push an untagged or `latest`-only build.
+- Published image: `docker.io/eengelking/localscore` (tags `latest`, `1.0.1`) — pushed with `podman push`. See "Publishing a release image" below for the required tag/push/verify procedure — never push an untagged or `latest`-only build.
 
 Verified end-to-end: both `podman build --format docker` + `podman run`, and `podman compose up`, produce a container `podman inspect` reports as `healthy`, with the API/frontend reachable and a full create-environment round trip working.
 
@@ -211,7 +222,9 @@ Two distinct testing procedures — don't conflate them:
 
 This is separate from Test 1 (which only builds `localscore:local` for local verification and is never pushed). A release build is any container image meant to be published to `docker.io/eengelking/localscore`.
 
-1. **Decide the version bump.** Current version lives in the root `package.json` (`server/package.json` and `web/package.json` are kept in sync with it — bump all three together). Default to a **patch or minor bump** from the prior published tag (e.g. `1.0.0` → `1.0.1` or `1.1.0`) for normal releases. Only bump the **major** version when the user has explicitly said this is a major/breaking release — never infer "major" on your own from the diff size. If it's ambiguous which bump applies, ask the user rather than guessing.
+Since 1.0.0, this procedure runs **after every PR merge to `main`**, by default — not just when the user explicitly asks for a release. Once you've confirmed a PR is merged, treat cutting the release as the next step of finishing that work.
+
+1. **Decide the version bump.** Current version lives in the root `package.json` (`server/package.json` and `web/package.json` are kept in sync with it — bump all three together). Default to a **patch bump** for fixes/small changes and a **minor bump** for new features, from the prior published tag (e.g. `1.0.0` → `1.0.1` or `1.1.0`). Only bump the **major** version when the user has explicitly said this is a major/breaking release — never infer "major" on your own from the diff size. If it's ambiguous whether a change is patch- or minor-sized, ask the user rather than guessing.
 2. **Update the version** in `package.json`, `server/package.json`, `web/package.json` to the new version number, and update any docs that literally quote the current published tag (README.md's image line, CLAUDE.md's "Published image" line above) so they don't go stale.
 3. **Build fresh** — don't reuse a stale local image: `podman build --format docker -t localscore:<new-version> .` (`--format docker` is required for the `HEALTHCHECK` to survive, per the gotcha above).
 4. **Tag** the built image for the registry with both the new version and `latest`:
