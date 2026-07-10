@@ -2056,17 +2056,19 @@ main {
 
 /* docs/SPEC05.md §5.1: was flex-wrap: wrap, which let the actions column
    (eye/edit/delete) wrap below the text column once a description made
-   .environment-row-main tall/wide enough. The action cluster must stay
-   pinned to the header's top-right regardless of content, so this is a
-   non-wrapping two-column layout instead — the text column keeps
-   min-width: 0 (already set on .environment-row-main) plus the
-   overflow-wrap: anywhere protection below, and the actions column
-   (.environment-row-actions) keeps flex-shrink: 0 (already set). A
-   deliberate stacked layout below 480px is fine; accidental mid-header
-   wrapping is what this fixes. */
+   .environment-row-main tall/wide enough. This is a non-wrapping
+   two-column layout instead — the text column keeps min-width: 0
+   (already set on .environment-row-main) plus the overflow-wrap: anywhere
+   protection below, and the actions column (.environment-row-actions)
+   keeps flex-shrink: 0 (already set). A deliberate stacked layout below
+   480px is fine; accidental mid-header wrapping is what this fixes.
+   docs/SPEC06.md §4.1 amends the cross-axis alignment: the action cluster
+   now anchors to the header's bottom-right (flex-end) rather than
+   SPEC05's top-right (flex-start), tracking the bottom edge of whatever
+   height the text column ends up. */
 .vulnerability-row-header {
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: space-between;
   gap: var(--space-5);
   flex-wrap: nowrap;
