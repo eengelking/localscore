@@ -24,24 +24,23 @@
   --accent-ink: #ffffff;
   --accent-wash: rgba(52, 82, 196, 0.08);
 
-  /* SPEC02 §2.1's primary-button/active-tab rule: a solid high-contrast
-     inversion of the active theme (near-black fill + light text in light
-     mode, the reverse in dark mode). --accent stays reserved for links,
-     focus rings, and washes/outlines (selection, nav active state) — see
-     CLAUDE.md's Frontend section for the rationale. */
+  /* The primary-button/active-tab theme-inversion rule: a solid
+     high-contrast inversion of the active theme (near-black fill + light
+     text in light mode, the reverse in dark mode). --accent stays reserved
+     for links, focus rings, and washes/outlines (selection, nav active
+     state) — see CLAUDE.md's Frontend section for the rationale. */
   --button-contrast-bg: #0b0b0b;
   --button-contrast-ink: #ffffff;
 
   /* Severity — reserved, never reused for anything else. "None" has no
      dedicated hue on purpose — see web design notes in CLAUDE.md.
-     SPEC04 §2.4: light-theme pill text moves to white-family ink (dark
-     theme keeps near-black, which the user confirmed reads fine as-is —
-     --severity-ink is now theme-scoped, see the dark-mode blocks below).
-     White text fails contrast on the brighter fills used until SPEC04, so
-     all four light-theme fills below are deepened (hue preserved) until
-     each clears >=4.5:1 against white at the pill's real rendered size,
-     per the dataviz contrast() procedure: low 4.74:1, medium 4.62:1,
-     high 4.68:1, critical 4.94:1. */
+     Light-theme pill text uses white-family ink (dark theme keeps
+     near-black, which reads fine as-is — --severity-ink is theme-scoped,
+     see the dark-mode blocks below). White text fails contrast on a
+     brighter fill, so all four light-theme fills below are deepened (hue
+     preserved) until each clears >=4.5:1 against white at the pill's real
+     rendered size, per the dataviz contrast() procedure: low 4.74:1,
+     medium 4.62:1, high 4.68:1, critical 4.94:1. */
   --severity-low: #0a860a;
   --severity-medium: #996d00;
   --severity-high: #be5429;
@@ -55,33 +54,32 @@
      dataviz skill's validate_palette.js + precise WCAG math — e.g. medium
      measures 1.79:1 against this mode's surface, high 2.57:1); these are
      the same hue family darkened until each clears 4.5:1 against both
-     --surface and --surface-card (SPEC03 §3 re-validation deepened these
-     further — the pre-SPEC03 values cleared 4.5:1 against --surface-card
-     but landed at ~4.4:1, just under, against --surface). */
+     --surface and --surface-card. */
   --severity-low-text: #078007;
   --severity-medium-text: #8f6103;
   --severity-high-text: #c04012;
   --severity-critical-text: #d03b3b;
 
-  /* Semantic action colors (SPEC02 §2.2) — deliberately distinct hues from
-     the severity palette above, which is reserved and never reused. Solid
-     fills (--action-green/--action-yellow) pair with near-black text, same
-     pattern as the severity pills; validated 4.5:1+ via the dataviz skill's
-     validate_palette.js contrast() against both light/dark fills. Edit now
-     shares this solid-yellow pairing too (SPEC04 §2.3), so --action-yellow-
-     text (the old icon-outline treatment's color) has no remaining users
-     and was removed. --action-red-text remains: Delete stays outline. */
+  /* Semantic action colors — deliberately distinct hues from the severity
+     palette above, which is reserved and never reused. Solid fills
+     (--action-green/--action-yellow) pair with near-black text, same
+     pattern as the severity pills; validated 4.5:1+ via the dataviz
+     skill's validate_palette.js contrast() against both light/dark fills.
+     --action-yellow backs the solid .button-cancel; --action-red-text
+     backs Delete's outline treatment (see .icon-button-edit further down
+     for why Edit ended up on the accent family instead of yellow). */
   --action-green: #1a8f4c;
   --action-yellow: #e3ae0c;
   --action-ink: #0b0b0b;
   --action-red-text: #c23b2f;
 
-  /* Subtle red-tinted background for warning callouts (§7.4's "more
-     vulnerable" note) — a translucent wash of --action-red-text, same
-     pattern as --accent-wash. Body text on top stays --ink (already
-     high-contrast against --surface-card, and this wash is too faint to
-     meaningfully change that), so no separate contrast validation is
-     needed beyond what --action-red-text's icon usage already has. */
+  /* Subtle red-tinted background for warning callouts (the "more
+     vulnerable" note and CVE-lookup-error banners) — a translucent wash of
+     --action-red-text, same pattern as --accent-wash. Body text on top
+     stays --ink (already high-contrast against --surface-card, and this
+     wash is too faint to meaningfully change that), so no separate
+     contrast validation is needed beyond what --action-red-text's icon
+     usage already has. */
   --warning-wash: rgba(194, 59, 47, 0.08);
 
   --font-display: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
@@ -123,7 +121,7 @@
    query (for the pre-JS/no-stored-preference default, so the page never
    flashes the wrong theme before React mounts) and once behind
    :root[data-theme="dark"] (higher specificity than a bare :root, so the
-   in-app toggle always wins regardless of system preference — SPEC02 §3).
+   in-app toggle always wins regardless of system preference).
    :root[data-theme="light"] mirrors the base :root light values so an
    explicit light choice also overrides a system dark preference. Keep the
    three blocks in sync when editing dark-mode tokens. */
@@ -154,11 +152,9 @@
     --severity-high-text: #ec835a;
     --severity-critical-text: #d75858;
 
-    /* Dark theme keeps the original brighter fills (they read fine here per
-       SPEC03 §3's finding and the user's explicit confirmation for SPEC04
-       §2.4); only the light :root default was deepened. --severity-ink also
-       stays theme-scoped near-black here (SPEC04 §2.4 — dark MUST NOT
-       regress). */
+    /* Dark theme keeps the original brighter fills (they read fine here);
+       only the light :root default was deepened. --severity-ink also
+       stays theme-scoped near-black here — dark must not regress. */
     --severity-low: #0ca30c;
     --severity-medium: #fab219;
     --severity-high: #ec835a;
@@ -249,9 +245,9 @@
   box-sizing: border-box;
 }
 
-/* docs/SPEC05.md §2.3: reserve scrollbar space on every page so navigating
-   from a short page (no scrollbar) to a long one (scrollbar) never shifts
-   centered content horizontally. */
+/* Reserve scrollbar space on every page so navigating from a short page
+   (no scrollbar) to a long one (scrollbar) never shifts centered content
+   horizontally. */
 html {
   color-scheme: light dark;
   overflow-y: scroll;
@@ -442,8 +438,8 @@ main {
   padding: var(--space-5);
 }
 
-/* SPEC04 §2.1: neutral buttons are recolored from gray-border-on-surface to
-   an accent outline (--accent already clears 4.5:1+ as border/text on both
+/* Neutral buttons use an accent outline rather than a gray border on
+   surface (--accent already clears 4.5:1+ as border/text on both
    --surface and --surface-card in both themes: 6.32/6.49 light,
    6.75/6.05 dark, per the dataviz contrast() procedure, so no separate
    text-safe token is needed here unlike the severity/action palettes). */
@@ -496,7 +492,7 @@ main {
   color: var(--ink);
 }
 
-/* Semantic action buttons (SPEC02 §2.2). Save/Cancel share .button's
+/* Semantic action buttons. Save/Cancel share .button's
    size/padding/radius and only override fill + text color; Delete/Edit are
    icon-only and use .icon-button below instead. */
 .button-save {
@@ -560,19 +556,18 @@ main {
   color: var(--action-red-text);
 }
 
-/* docs/SPEC05.md §2.2 (amends SPEC02 §2.2 / SPEC04 §2.3): two prior
-   attempts each failed differently — SPEC02's --action-yellow-text outline
-   read as muddy brown in light theme (#8a6300 at icon size); SPEC04's solid
-   --action-yellow fill read as a glaring bright-yellow square that
-   dominated every row it sat in. This drops the yellow-family requirement
-   for Edit specifically (Cancel keeps solid yellow) and reuses Delete's
-   outline box model in the accent family instead: quiet until you look for
-   it, but reads clearly as a distinct affordance next to Delete's red
-   outline and the neutral eye toggle. --accent is already contrast-validated
-   as border/text against both --surface and --surface-card in both themes
-   (SPEC04 §2.1: 6.32-6.75:1 range) — no new token needed, and no --action-*
-   token is left with zero users by this change (--action-yellow still
-   backs .button-cancel). */
+/* Two earlier treatments for Edit each failed differently — a yellow
+   outline read as muddy brown in light theme (#8a6300 at icon size); a
+   solid yellow fill read as a glaring bright-yellow square that dominated
+   every row it sat in. This drops the yellow-family pairing for Edit
+   specifically (Cancel keeps solid yellow) and reuses Delete's outline box
+   model in the accent family instead: quiet until you look for it, but
+   reads clearly as a distinct affordance next to Delete's red outline and
+   the neutral eye toggle. --accent is already contrast-validated as
+   border/text against both --surface and --surface-card in both themes
+   (6.32-6.75:1 range) — no new token needed, and no --action-* token is
+   left with zero users by this change (--action-yellow still backs
+   .button-cancel). */
 .icon-button-edit {
   border-color: var(--accent);
   color: var(--accent);
@@ -587,7 +582,7 @@ main {
   border-color: transparent;
 }
 
-/* docs/SPEC05.md §2.1: theme toggle as a real on/off switch (mobile
+/* Theme toggle as a real on/off switch (mobile
    convention) instead of a quiet icon button — light = off (thumb left,
    neutral track), dark = on (thumb right, accent-filled track). The active
    icon rides inside the sliding thumb at 18px (up from the old button's
@@ -696,9 +691,9 @@ main {
   outline-offset: -1px;
 }
 
-/* Severity pill: solid fill, --severity-ink text (theme-scoped per SPEC04
-   §2.4 — white-family in light theme, near-black in dark; validated
-   contrast in both). */
+/* Severity pill: solid fill, --severity-ink text (theme-scoped — white-
+   family in light theme, near-black in dark; validated contrast in
+   both). */
 .pill {
   display: inline-flex;
   align-items: center;
@@ -763,9 +758,9 @@ main {
   word-break: break-all;
 }
 
-/* SPEC04 §2.1: the neutral tag moves onto the app's outline tag pattern
-   (transparent fill, colored text + border) in the accent hue, so the app's
-   tags are now uniformly outline-pattern: accent for neutral/informational,
+/* The neutral tag uses the app's outline tag pattern (transparent fill,
+   colored text + border) in the accent hue, so the app's tags are
+   uniformly outline-pattern: accent for neutral/informational,
    --action-green-text for "ready", --severity-*-text for severity. Contrast
    already validated above for .button's identical accent-on-surface pairing. */
 .badge {
@@ -784,7 +779,7 @@ main {
 /* "Ready" badge: the outline tag pattern (transparent fill, colored text
    + border), same shape as .badge-severity, using the dedicated
    --action-green-text token rather than reusing a severity hue (the
-   severity palette stays reserved for severity, per SPEC03 §5.2). */
+   severity palette stays reserved for severity). */
 .badge.is-complete {
   color: var(--action-green-text);
   background: transparent;
@@ -796,8 +791,8 @@ main {
    the WCAG-AA-safe --severity-*-text tokens rather than the raw fill
    hues. Used where a severity needs to sit inline with other neutral tags
    rather than as the app's usual solid pill. Bumped to weight 700 / 1.5px
-   border (SPEC03 §3) so the small uppercase mono text reads clearly
-   rather than thin/washed-out, especially in the light theme. */
+   border so the small uppercase mono text reads clearly rather than
+   thin/washed-out, especially in the light theme. */
 .badge-severity {
   display: inline-flex;
   align-items: center;
@@ -841,8 +836,8 @@ main {
 }
 
 /* ---------------------------------------------------------------------
-   Modal (SPEC02 §2.4) — shared by delete confirmations and the interview
-   question-help modal.
+   Modal — shared by delete confirmations and the interview question-help
+   modal.
    ------------------------------------------------------------------ */
 
 .modal-backdrop {
@@ -889,8 +884,8 @@ main {
   color: var(--ink-secondary);
 }
 
-/* SPEC03 §6.1: a fixed min-height so the question-help modal doesn't
-   visibly resize as the user steps between questions of different
+/* A fixed min-height so the question-help modal doesn't visibly resize
+   as the user steps between questions of different
    content length; content beyond it scrolls via .modal's existing
    max-height. ConfirmModal stays content-sized (a different, terser
    dialog) and is unaffected since it doesn't carry this class. */
@@ -970,10 +965,10 @@ main {
   flex-wrap: wrap;
 }
 
-/* docs/SPEC04.md §4.3: same glyph/color grammar as EnvironmentResultRow's
-   per-result more-vulnerable icon, but sized to sit inline with the badge
-   row's text rather than as a peer of a score figure. Not a button — the
-   user reaches this environment's Edit control to see why. */
+/* Same glyph/color grammar as EnvironmentResultRow's per-result
+   more-vulnerable icon, but sized to sit inline with the badge row's text
+   rather than as a peer of a score figure. Not a button — the user
+   reaches this environment's Edit control to see why. */
 .raises-scores-icon {
   color: var(--action-red-text);
   flex-shrink: 0;
@@ -986,9 +981,9 @@ main {
 }
 
 /* ---------------------------------------------------------------------
-   "More" expander (SPEC02 §6.1 / §8.1) — a page-level collapsible/
-   re-collapsible disclosure, distinct from the interview's
-   question-help-modal treatment (§8.4) for the same kind of content.
+   "More" expander — a page-level collapsible/re-collapsible disclosure,
+   distinct from the interview's question-help-modal treatment for the
+   same kind of content.
    ------------------------------------------------------------------ */
 
 .more-expander {
@@ -1028,7 +1023,7 @@ main {
 }
 
 /* ---------------------------------------------------------------------
-   Environment edit view (SPEC02 §8.3)
+   Environment edit view
    ------------------------------------------------------------------ */
 
 .environment-edit-form {
@@ -1155,9 +1150,9 @@ main {
   letter-spacing: -0.01em;
 }
 
-/* Question help modal (SPEC02 §8.4) — the "?" icon opens QuestionHelpModal
-   with the same content that used to render permanently inline as
-   .why-we-ask / .fine-print. */
+/* Question help modal — the "?" icon opens QuestionHelpModal with the
+   same content that used to render permanently inline as .why-we-ask /
+   .fine-print. */
 .question-help-fine-print {
   margin-top: var(--space-4);
   padding-top: var(--space-4);
@@ -1249,18 +1244,18 @@ main {
   width: 100%;
 }
 
-/* SPEC03 §7.3: .score-form's align-items: flex-start shrink-wraps any
-   child that doesn't explicitly opt into full width, which left the CVE
-   lookup result at its content width instead of filling the card. */
+/* .score-form's align-items: flex-start shrink-wraps any child that
+   doesn't explicitly opt into full width, which left the CVE lookup
+   result at its content width instead of filling the card. */
 .cve-lookup-result {
   width: 100%;
 }
 
-/* docs/SPEC06.md §3.3: same root cause as the .cve-lookup-result fix above —
-   the lookup-error and Major-CVEs-error WarningBanners were shrink-wrapping
-   to their text width instead of spanning the panel. Scoped to .tab-panel so
-   it covers both in-panel WarningBanner uses uniformly rather than
-   special-casing the CVE tab. */
+/* Same root cause as the .cve-lookup-result fix above — the lookup-error
+   and Major-CVEs-error WarningBanners were shrink-wrapping to their text
+   width instead of spanning the panel. Scoped to .tab-panel so it covers
+   both in-panel WarningBanner uses uniformly rather than special-casing
+   the CVE tab. */
 .tab-panel .callout-warning {
   width: 100%;
 }
@@ -1343,8 +1338,8 @@ main {
   gap: var(--space-4);
 }
 
-/* SPEC03 §7.5: sized to sit as a peer of the score figure (score-figure-lg
-   is --text-2xl = 2.5rem), not a small footnote glyph. */
+/* Sized to sit as a peer of the score figure (score-figure-lg is
+   --text-2xl = 2.5rem), not a small footnote glyph. */
 .more-vulnerable-icon {
   width: var(--text-2xl);
   height: var(--text-2xl);
@@ -1358,8 +1353,8 @@ main {
   gap: var(--space-2);
 }
 
-/* Delta figures (SPEC02 §7.4) — significantly more prominent than the
-   surrounding UI, using the text-safe severity variants (not the raw fill
+/* Delta figures — significantly more prominent than the surrounding UI,
+   using the text-safe severity variants (not the raw fill
    hues, which fail contrast used as foreground text — see the --severity-*-
    text tokens' validation note above). */
 .delta {
@@ -1472,7 +1467,7 @@ main {
   font-size: var(--text-sm);
 }
 
-/* Total-line coloring (SPEC02 §7.4) — bold red when the environment made
+/* Total-line coloring — bold red when the environment made
    things worse (score increased), bold green when it made things safer
    (score decreased). Zero stays neutral/unstyled. */
 .why-total-worse {
@@ -1488,8 +1483,8 @@ main {
 /* ---------------------------------------------------------------------
    Warning callout — a red-accented card + icon, used anywhere the design
    system needs to say something went wrong or is worth flagging without
-   resorting to bare red text (SPEC02 §6.3's CVE-lookup-error banner and
-   §7.4's more-vulnerable warning both use this same base).
+   resorting to bare red text (the CVE-lookup-error banner and the
+   more-vulnerable warning both use this same base).
    ------------------------------------------------------------------ */
 
 .callout-warning {
@@ -1515,11 +1510,11 @@ main {
   color: var(--ink);
 }
 
-/* docs/SPEC04.md §4.4: names each answer responsible for the risk-warning
-   callout, question text + chosen answer text (plain English, no metric
-   codes). docs/SPEC06.md §2.2: indented under its .callout-section-intro so
-   the structure reads as "statement, then supporting evidence," with a
-   wider gap between pairs so multi-answer provenance doesn't blur together. */
+/* Names each answer responsible for the risk-warning callout, question
+   text + chosen answer text (plain English, no metric codes). Indented
+   under its .callout-section-intro so the structure reads as "statement,
+   then supporting evidence," with a wider gap between pairs so
+   multi-answer provenance doesn't blur together. */
 .raises-scores-list {
   margin: var(--space-3) 0 0;
   padding-left: var(--space-4);
@@ -1549,17 +1544,17 @@ main {
 }
 
 /* Shown inside EnvironmentResultRow's expanded detail whenever an
-   environment's modified score exceeds the base score (§7.4) — both the
-   Scoring results and the saved-vulnerability detail view render through
-   that component, so one implementation covers both. */
+   environment's modified score exceeds the base score — both the Scoring
+   results and the saved-vulnerability detail view render through that
+   component, so one implementation covers both. */
 .more-vulnerable-warning {
   margin: var(--space-3) 0;
 }
 
-/* docs/SPEC05.md §3.2.3: the risk-warning callout can now hold two
-   independently-triggered portions (score-raising, configuration red
-   flags) stacked in one card. A hairline divider + top padding separates a
-   second portion from the first; a single portion has neither. */
+/* The risk-warning callout can hold two independently-triggered portions
+   (score-raising, configuration red flags) stacked in one card. A hairline
+   divider + top padding separates a second portion from the first; a
+   single portion has neither. */
 .callout-section + .callout-section {
   margin-top: var(--space-5);
   padding-top: var(--space-5);
@@ -1684,11 +1679,11 @@ main {
   margin-bottom: var(--space-2);
 }
 
-/* Real tabs (SPEC03 §4.2), replacing the old .mode-toggle segmented-pill
-   treatment on the Scoring page: a horizontal bar visually attached to the
-   panel below it, with the selected tab rendered as a solid theme
-   inversion (same rule as .button-primary, SPEC02 §2.1) so it reads
-   unmistakably distinct from its quieter unselected siblings. */
+/* Real tabs, replacing an earlier .mode-toggle segmented-pill treatment
+   on the Scoring page: a horizontal bar visually attached to the panel
+   below it, with the selected tab rendered as a solid fill (see
+   .tab.is-active below for the exact color rule) so it reads unmistakably
+   distinct from its quieter unselected siblings. */
 .tabs-shell {
   display: flex;
   flex-direction: column;
@@ -1718,11 +1713,12 @@ main {
   color: var(--ink);
 }
 
-/* SPEC04 §2.2 amends SPEC02 §2.1/SPEC03 §4.2's theme-inversion active-tab
-   rule to a solid --accent fill (direct user feedback that the monotone
-   black/white/gray tab bar was harsh). .button-primary is unchanged and
-   keeps the inversion treatment. --accent-ink on --accent clears 6.67:1
-   (light) / 6.75:1 (dark) per the dataviz contrast() procedure. */
+/* The active tab uses a solid --accent fill rather than the theme-inversion
+   treatment .button-primary uses elsewhere — an earlier version shared
+   that inversion rule, but a monotone black/white/gray tab bar read as
+   harsh, so tabs specifically get this exception. --accent-ink on --accent
+   clears 6.67:1 (light) / 6.75:1 (dark) per the dataviz contrast()
+   procedure. */
 .tab.is-active {
   background: var(--accent);
   border-color: var(--accent);
@@ -1748,7 +1744,7 @@ main {
 }
 
 /* ---------------------------------------------------------------------
-   Major CVEs tab (SPEC02 §6.5)
+   Major CVEs tab
    ------------------------------------------------------------------ */
 
 .major-cves-meta {
@@ -1766,8 +1762,8 @@ main {
   gap: var(--space-2);
 }
 
-/* Mono is reserved for the CVE ID and the score figure (SPEC03 §7.1) — the
-   row itself (and the date within it) stays on the body font. */
+/* Mono is reserved for the CVE ID and the score figure — the row itself
+   (and the date within it) stays on the body font. */
 .major-cve-row {
   border: 1px solid var(--border);
   background: var(--surface);
@@ -1797,9 +1793,9 @@ main {
   font-family: var(--font-body);
 }
 
-/* docs/SPEC05.md §4.2: bumped from an unset (inherited body-size) font-size
-   so the row's primary identifier reads as such next to the score figure,
-   rather than feeling smaller than it should in the site's type scale. */
+/* Bumped from an unset (inherited body-size) font-size so the row's
+   primary identifier reads as such next to the score figure, rather than
+   feeling smaller than it should in the site's type scale. */
 .major-cve-id {
   font-family: var(--font-display);
   font-weight: 600;
@@ -1862,14 +1858,13 @@ main {
   border-top: 1px solid var(--border);
 }
 
-/* CVE detail enrichment (SPEC03 §7.4) — secondary to the score/vector
-   content above it, so it stays a plain stacked block rather than
-   competing visually with the primary lookup/save flow. docs/SPEC04.md
-   §5.2: collapsed behind a disclosure by default. docs/SPEC05.md §5.2:
-   this block doesn't own a dedicated card the way .result-row does (it's a
+/* CVE detail enrichment — secondary to the score/vector content above it,
+   so it stays a plain stacked block rather than competing visually with
+   the primary lookup/save flow. Collapsed behind a disclosure by default.
+   This block doesn't own a dedicated card the way .result-row does (it's a
    header inside someone else's padding, either the Scoring page's
    lookup-result card or the Saved page's expanded-row panel), so rather
-   than the old border-top-divider treatment, .cve-details-summary gets its
+   than a plain border-top-divider treatment, .cve-details-summary gets its
    own bounded row (border + radius + surface-sunken background) to read as
    clearly clickable without restructuring into a nested card. */
 .cve-details {
@@ -1906,13 +1901,14 @@ main {
   color: var(--ink-muted);
 }
 
-/* docs/SPEC05.md §5.4 (amended by docs/SPEC06.md §3.5): a direct link to the
-   CVE's NVD page, same grammar as the Major-CVE rows' NVD link (SPEC03
-   §7.2). Rendered inside the expanded body rather than the summary row,
-   since the summary is itself a <button> and nesting an <a> inside it isn't
-   valid HTML/ARIA — this also means it never needs stopPropagation. Lives in
-   its own .cve-details-footer row, right-aligned, as the body's last line
-   rather than a lonely row at the top. */
+/* A direct link to the CVE's NVD page, same grammar as the Major-CVE
+   rows' NVD link. Rendered inside the expanded body rather than the
+   summary row, since the summary is itself a <button> and nesting an <a>
+   inside it isn't valid HTML/ARIA — this also means it never needs
+   stopPropagation. Lives in its own .cve-details-footer row, right-aligned,
+   as the body's last line rather than a lonely row at the top (an earlier
+   placement did put it at the top, which read as stranded above the
+   description). */
 .cve-details-nvd-link {
   display: inline-flex;
   align-items: center;
@@ -1983,10 +1979,10 @@ main {
   font-size: 0.65rem;
 }
 
-/* docs/SPEC05.md §5.3 (narrow amendment to SPEC04 §2.1's "all neutral
-   badges go accent" rule, scoped to contexts where badges sit adjacent to
-   accent links): inside the expanded CVE details, the affected-product
-   chips and reference tags were rendering in the same --accent as the
+/* A narrow exception to the "all neutral badges go accent" rule above,
+   scoped to contexts where badges sit adjacent to accent links: inside the
+   expanded CVE details, the affected-product chips and reference tags were
+   rendering in the same --accent as the
    reference links right beside them, making links/tags/chips all one
    undifferentiated blue. Moved to --ink-secondary (not --ink-muted, which
    only clears 3.41:1/3.50:1 against --surface/--surface-card in light
@@ -2049,7 +2045,7 @@ main {
   font-style: italic;
 }
 
-/* docs/SPEC06.md §4.2: the Saved page's filter/search control bar. Type and
+/* The Saved page's filter/search control bar. Type and
    "All" severity reuse the app's existing accent-outline -> solid-accent-fill
    selected pattern (same convention as .tab.is-active / .badge.is-complete),
    just as a pill shape rather than .tabs' rectangular tab or .badge's tag
@@ -2162,7 +2158,7 @@ main {
   overflow: hidden;
 }
 
-/* docs/SPEC05.md §5.1: was flex-wrap: wrap, which let the actions column
+/* An earlier version used flex-wrap: wrap, which let the actions column
    (eye/edit/delete) wrap below the text column once a description made
    .environment-row-main tall/wide enough. This is a non-wrapping
    two-column layout instead — the text column keeps min-width: 0
@@ -2170,10 +2166,9 @@ main {
    protection below, and the actions column (.environment-row-actions)
    keeps flex-shrink: 0 (already set). A deliberate stacked layout below
    480px is fine; accidental mid-header wrapping is what this fixes.
-   docs/SPEC06.md §4.1 amends the cross-axis alignment: the action cluster
-   now anchors to the header's bottom-right (flex-end) rather than
-   SPEC05's top-right (flex-start), tracking the bottom edge of whatever
-   height the text column ends up. */
+   The cross-axis alignment is flex-end so the action cluster anchors to
+   the header's bottom-right (an earlier version anchored it top-right),
+   tracking the bottom edge of whatever height the text column ends up. */
 .vulnerability-row-header {
   display: flex;
   align-items: flex-end;
@@ -2190,16 +2185,16 @@ main {
   }
 }
 
-/* SPEC03 §8.3: a pasted-vector save with no label defaults its label to
-   the full (150+ char) vector string, which would otherwise overflow the
-   card or shove the action buttons off-layout. */
+/* A pasted-vector save with no label defaults its label to the full
+   (150+ char) vector string, which would otherwise overflow the card or
+   shove the action buttons off-layout. */
 .vulnerability-row-header .environment-name {
   overflow-wrap: anywhere;
 }
 
-/* SPEC03 §8.4: the header/detail layout needs .vulnerability-row's
-   padding: 0, but the edit-mode form still needs the card's standard
-   inset padding around its fields/buttons. */
+/* The header/detail layout needs .vulnerability-row's padding: 0, but the
+   edit-mode form still needs the card's standard inset padding around its
+   fields/buttons. */
 .vulnerability-row-edit {
   padding: var(--space-5);
 }

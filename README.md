@@ -17,21 +17,16 @@ localscore fixes that by asking plain-English questions about a location instead
 
 A 9.8 "Critical" against a production database might land at 9.8 for your data center and 0.0 for a disposable dev environment that gets rebuilt from a pipeline every morning. Same vulnerability, two very different stories — and now you can see both.
 
-## Status
+## Features
 
-The v1 ([`docs/SPEC01.md`](./docs/SPEC01.md)) through v1.4 ([`docs/SPEC05.md`](./docs/SPEC05.md)) specs are all fully implemented, and the app works end-to-end. The next round of work (input hygiene, a more readable risk callout, Scoring-page fixes, and Saved-page filtering/search) is specified in [`docs/SPEC06.md`](./docs/SPEC06.md) (v1.5, not yet implemented).
-
-What works today:
-
-- An npm-workspaces monorepo (`server/` = Hono + SQLite API, `web/` = React + Vite frontend), served from one process on one port.
-- The full 12-question interview catalog, and environment CRUD — you can create an environment, save interview answers, and have them derive into stored CVSS environmental metrics.
-- **Scoring works.** `POST /api/score` parses a CVSS v4.0/v3.1/v3.0 vector and returns the base score plus every environment's modified score, backed by `ae-cvss-calculator` validated against FIRST's reference vectors — including the exact worked example from `docs/SPEC01.md` §6 (a `9.8` base score landing at `0.0` for a disposable dev environment).
-- **A real frontend** — environments list, interview wizard, and a results screen (paste a vector or look up a CVE) where you see each environment's modified score, with the animated "a 10 might actually be a zero" reveal.
-- **NVD CVE lookup** (`GET /api/cve/:cveId`) — cache-first, throttled, and tolerant of NVD being unreachable — with a description, references, and affected products pulled from the same cached NVD response, plus a saved-vulnerabilities screen backed by the saved-vulnerability CRUD routes.
-- **A Major CVEs feed** (`GET /api/major-cves`) — the top 10 most critical CVEs published in the last 30 days, refreshed daily, one click away from scoring against your environments.
-- A design system with light/dark theming, markdown-rendered descriptions, and offline-aware UI — the CVE-lookup and Major CVEs tabs disable themselves with an explanatory tooltip when there's no network, rather than hanging or erroring.
-- A container image that builds and runs cleanly under Podman (or Docker), passes its own `HEALTHCHECK`, and comes in under 300 MB.
-- **A published image** — `docker.io/eengelking/localscore` (tags `latest` and `0.2.0`), so you can run it without building locally.
+- **The interview & environment profiles.** ~12 plain-English questions per location, saved as an editable profile — revisit and re-answer at any time, with prior answers pre-selected.
+- **Scoring.** Paste any CVSS v4.0, v3.1, or v3.0 vector (v3.0 is scored with v3.1's equations, disclosed in the UI), or look one up by CVE ID. Every defined environment gets its own modified score, animated from base to modified on load, with a plain-English "why" breakdown of exactly which answers moved the number and by how much.
+- **Risk warnings.** Environments are flagged two independent ways: when an answer can legitimately *raise* a score above base (e.g. "compromising this is a stepping stone to something bigger"), and when a combination of high stakes plus a readiness gap (uncertain recovery, concentrated availability, hard-to-patch systems) suggests the profile itself deserves a second look.
+- **NVD CVE lookup** — cache-first, throttled, and tolerant of NVD being unreachable, with description, references, and affected products pulled from the same cached response. Supports an optional `NVD_API_KEY` to raise the lookup rate limit.
+- **A Major CVEs feed** — the 10 most critical CVEs published in the last 30 days, refreshed daily, one click away from scoring against your environments.
+- **Saved vulnerabilities** with full-content search (label, CVE ID, vector, description, and the cached NVD payload), type/severity filters, inline editing, and markdown-rendered descriptions.
+- **A design system with light/dark theming** and offline-aware UI — CVE lookup and the Major CVEs tab disable themselves with an explanatory tooltip when there's no network, rather than hanging or erroring.
+- **A container image under 300 MB** that builds and runs cleanly under Podman or Docker, with its own `HEALTHCHECK`, and a **published image** on Docker Hub so you can run it without building locally.
 
 ## Running it
 
@@ -65,9 +60,7 @@ Then run it the same way, swapping `docker.io/eengelking/localscore:latest` for 
 
 `PORT` and `DATA_DIR` are configurable (see `.env.example`); there's also an optional `NVD_API_KEY` that raises NVD's CVE-lookup rate limit above the default ~5 requests/30s — pass it through with `-e NVD_API_KEY=...` if you hit that limit.
 
-Any OCI-compatible tool (Docker included) works the same way — the image and `compose.yaml` aren't Podman-specific.
-
-Also see `compose.yaml` for the same setup as a single `podman compose up` (or `docker compose up`). See `docs/SPEC01.md` §9 for full container/operations details.
+Any OCI-compatible tool (Docker included) works the same way — the image and `compose.yaml` aren't Podman-specific. Also see `compose.yaml` for the same setup as a single `podman compose up` (or `docker compose up`).
 
 ## Developing locally
 
@@ -79,18 +72,22 @@ npm run dev:server   # API on :8080, reloads on change
 npm run dev:web      # Vite dev server, proxies /api to :8080
 ```
 
-`npm test`, `npm run typecheck`, and `npm run lint` all run against both workspaces. See [`CLAUDE.md`](./CLAUDE.md) for the full command reference and architecture notes.
+`npm test`, `npm run typecheck`, and `npm run lint` all run against both workspaces — the same checks a GitHub Actions CI run enforces on every pull request. See [`CLAUDE.md`](./CLAUDE.md) for the full command reference and architecture notes, and [`CONTRIBUTING.md`](./CONTRIBUTING.md) for how to propose and submit changes.
 
 ## Using the API directly
 
-Every route the UI uses — environments, the interview, scoring, CVE lookup, saved vulnerabilities — is also usable directly. See [`API.md`](./API.md) for curl examples and response shapes for every route.
+Every route the UI uses — environments, the interview, scoring, CVE lookup, saved vulnerabilities — is also usable directly. See [`docs/API.md`](./docs/API.md) for curl examples and response shapes for every route.
 
 ## What it does *not* do
 
 - It doesn't scan anything or talk to your infrastructure — you tell it about a location by answering questions, and you paste in vectors or CVE IDs.
 - It doesn't guess whether an exploit exists in the wild (CVSS threat/temporal metrics) — those are per-vulnerability, not per-environment, and are shown read-only from whatever you paste in.
-- It doesn't support CVSS v2.0 yet (NVD stopped assigning it in 2022; see `docs/SPEC01.md` §11 for the roadmap).
+- It doesn't support CVSS v2.0 (NVD stopped assigning it in 2022).
 - It doesn't require an internet connection, except for the optional "look up this CVE by ID" convenience.
+
+## Contributing
+
+Bug reports, feature ideas, and pull requests are welcome — see [`CONTRIBUTING.md`](./CONTRIBUTING.md) for dev setup, test/lint commands, branch conventions, and PR expectations.
 
 ## Why this exists
 

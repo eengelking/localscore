@@ -4,7 +4,7 @@ import { deriveMetrics } from "../src/catalog/derive.js";
 import { applyEnvironment, computeScore, parseBaseVector, scoreForEnvironment } from "../src/scoring/index.js";
 import { severityFromScore } from "../src/scoring/severity.js";
 
-// docs/SPEC01.md §10.1: reference score parity against FIRST's calculators.
+// Reference score parity against FIRST's calculators.
 describe("reference score parity", () => {
   const v31BaseVectors: [string, number][] = [
     ["CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", 9.8], // Critical
@@ -31,7 +31,7 @@ describe("reference score parity", () => {
     expect(computeScore(parsed.instance).score).toBe(expected);
   });
 
-  it("severity bands match docs/SPEC01.md §2.4 for both versions", () => {
+  it("severity bands match for both versions", () => {
     expect(severityFromScore(0.0)).toBe("None");
     expect(severityFromScore(0.1)).toBe("Low");
     expect(severityFromScore(3.9)).toBe("Low");
@@ -43,7 +43,7 @@ describe("reference score parity", () => {
     expect(severityFromScore(10.0)).toBe("Critical");
   });
 
-  // The worked example from docs/SPEC01.md §6, required to match exactly.
+  // The worked example, required to match exactly.
   it("worked example: 9.8 base -> 0.0 for the Disposable Dev Lab profile", () => {
     const parsed = parseBaseVector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
     expect(computeScore(parsed.instance).score).toBe(9.8);
@@ -101,8 +101,8 @@ describe("reference score parity", () => {
   });
 });
 
-// docs/SPEC01.md §10.2: an environment with zero answers reproduces the base score
-// bit-for-bit, for both versions.
+// An environment with zero answers reproduces the base score bit-for-bit,
+// for both versions.
 describe("empty-profile identity", () => {
   it("v3.1: no derived metrics leaves the base score unchanged", () => {
     const { result } = scoreForEnvironment("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", []);
@@ -118,8 +118,8 @@ describe("empty-profile identity", () => {
   });
 });
 
-// docs/SPEC01.md §10.3 and §2.2: cap only applies if it's strictly less severe than
-// the base value; override always wins; Q9 safety beats Q8 blast-radius.
+// Cap only applies if it's strictly less severe than the base value;
+// override always wins; Q9 safety beats Q8 blast-radius.
 describe("cap/override behavior", () => {
   it("cap applies: AV:N base + internal-only (MAV:A cap) downgrades effective AV", () => {
     const metrics: DerivedMetric[] = [
@@ -132,7 +132,7 @@ describe("cap/override behavior", () => {
     expect(result.vector).toContain("MAV:A");
   });
 
-  it("cap does not apply: AV:L base MUST NOT be raised by a MAV:A cap (docs/SPEC01.md §2.2 worked example)", () => {
+  it("cap does not apply: AV:L base MUST NOT be raised by a MAV:A cap", () => {
     const metrics: DerivedMetric[] = [
       { cvssVersion: "3.1", metric: "MAV", value: "A", effect: "cap", questionId: "reachability", optionId: "internal_only" },
     ];
@@ -159,7 +159,7 @@ describe("cap/override behavior", () => {
     expect(result.vector).toContain("CR:H");
   });
 
-  it("Q9 safety override wins over Q8 blast-radius for MSI/MSA (conflict rule, docs/SPEC01.md §5.3)", () => {
+  it("Q9 safety override wins over Q8 blast-radius for MSI/MSA (later-question-wins conflict rule)", () => {
     const metrics = deriveMetrics([
       { questionId: "blast_radius", optionId: "stepping_stone" },
       { questionId: "safety", optionId: "yes" },
@@ -172,7 +172,7 @@ describe("cap/override behavior", () => {
     expect(result.vector).toContain("MSA:S");
   });
 
-  it("blast-radius can legitimately raise a score above base (docs/SPEC01.md §2.2 exception)", () => {
+  it("blast-radius can legitimately raise a score above base (the deliberate override exception)", () => {
     const base = parseBaseVector("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:L/VI:L/VA:L/SC:N/SI:N/SA:N");
     const baseScore = computeScore(base.instance).score;
 
@@ -242,7 +242,6 @@ describe("per-line score impact", () => {
   });
 });
 
-// docs/SPEC01.md §10.5: parsing.
 describe("vector parsing", () => {
   it("parses a valid v4.0 vector", () => {
     const parsed = parseBaseVector("CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:H/VI:H/VA:H/SC:N/SI:N/SA:N");
@@ -254,7 +253,7 @@ describe("vector parsing", () => {
     expect(parsed.version).toBe("3.1");
   });
 
-  it("scores v3.0 vectors using v3.1 equations, with a disclosed note (docs/SPEC01.md §2.5)", () => {
+  it("scores v3.0 vectors using v3.1 equations, with a disclosed note", () => {
     const parsed = parseBaseVector("CVSS:3.0/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");
     expect(parsed.version).toBe("3.1");
     expect(parsed.note).toMatch(/v3\.1 equations/i);
@@ -307,7 +306,7 @@ describe("vector parsing", () => {
   });
 });
 
-// docs/SPEC01.md §10.6 (API shape, exercised more fully in score-route.test.ts).
+// API shape, exercised more fully in score-route.test.ts.
 describe("applyEnvironment change reporting", () => {
   it("reports applied changes with human-readable names and provenance", () => {
     const base = parseBaseVector("CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H");

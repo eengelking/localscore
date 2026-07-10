@@ -7,12 +7,11 @@ function formatDate(iso: string | null): string | null {
   return new Date(iso).toLocaleDateString();
 }
 
-// Shared by the CVE lookup flow and the saved-vulnerability detail view
-// (docs/SPEC03.md §7.4) — same component either way, so a saved CVE shows
-// identical context to a fresh lookup. docs/SPEC04.md §5.2: collapsed by
-// default in both places (score/vector content is the page's job; these
-// details are reference material) — always starts collapsed on a fresh
-// render, no open-state persistence.
+// Shared by the CVE lookup flow and the saved-vulnerability detail view —
+// same component either way, so a saved CVE shows identical context to a
+// fresh lookup. Collapsed by default in both places (score/vector content
+// is the page's job; these details are reference material) — always
+// starts collapsed on a fresh render, no open-state persistence.
 export function CveDetailsView({ details, cveId }: { details: CveDetails; cveId?: string | null }) {
   const [open, setOpen] = useState(false);
   const description = details.description ?? "";

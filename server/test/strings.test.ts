@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { stripWrappingQuotes } from "../src/lib/strings.js";
 
-describe("stripWrappingQuotes (docs/SPEC06.md §2.1)", () => {
+describe("stripWrappingQuotes", () => {
   it("strips straight double quotes", () => {
     expect(stripWrappingQuotes('"My Data Center"')).toBe("My Data Center");
   });

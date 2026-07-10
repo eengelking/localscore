@@ -2,11 +2,11 @@ import { useState } from "react";
 import { Icon } from "./Icon.js";
 import { applyTheme, getPreferredTheme, storeTheme, type Theme } from "../lib/theme.js";
 
-// docs/SPEC05.md §2.1: an on/off switch (mobile convention) rather than a
-// quiet icon button — light = off (thumb left), dark = on (thumb right,
-// accent-filled track). The active icon rides inside the sliding thumb
-// (the spec's other allowed convention was both icons static in the track
-// with the thumb covering one; this reads cleaner at this control's size).
+// An on/off switch (mobile convention) rather than a quiet icon button —
+// light = off (thumb left), dark = on (thumb right, accent-filled track).
+// The active icon rides inside the sliding thumb (both icons static in the
+// track with the thumb covering one was considered and passed over as
+// cluttered at this control's size).
 export function ThemeToggle() {
   const [theme, setTheme] = useState<Theme>(() => getPreferredTheme());
   const isDark = theme === "dark";

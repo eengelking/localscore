@@ -1,7 +1,9 @@
-// The v1 interview question catalog. Source of truth: docs/SPEC01.md §5.2.
+// The interview question catalog — the source of truth for the interview.
 //
-// Wording here may be polished, but the metric effects MUST NOT change
-// without updating docs/SPEC01.md first — this is the implementation contract.
+// Wording here may be polished freely, but the metric effects are the
+// scoring contract: changing which MetricEffects an answer emits changes
+// what score every environment using that answer produces, so treat those
+// changes with the same care as a scoring-engine change, not a copy edit.
 
 import type { MetricEffect, Option, Question } from "./types.js";
 

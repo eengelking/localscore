@@ -1,7 +1,7 @@
-// docs/SPEC05.md §3.2.2 — configuration "red flags": correlate stakes
-// answers (Q5/Q6/Q7/Q9) with operational-readiness answers (Q10-Q12) to
-// call out environments whose configuration doesn't match what they claim
-// to protect. Unlike raising.ts (deliberately metric-level, so catalog
+// Configuration "red flags": correlate stakes answers (Q5/Q6/Q7/Q9) with
+// operational-readiness answers (Q10-Q12) to call out environments whose
+// configuration doesn't match what they claim to protect. Unlike
+// raising.ts (deliberately metric-level, so catalog
 // evolution keeps working automatically), this module is catalog-coupled by
 // design: these are human configuration judgments that only exist at the
 // answer level, defended instead by a catalog-integrity test

@@ -4,8 +4,8 @@ import type { Catalog, EnvironmentDetail } from "../types.js";
 import { ConfirmModal } from "../components/Modal.js";
 import { Icon } from "../components/Icon.js";
 
-// docs/SPEC05.md §3.2.2 — plain-English register for each red flag, kept
-// alongside the rule set it explains (server/src/scoring/redflags.ts).
+// Plain-English register for each red flag, kept alongside the rule set
+// it explains (server/src/scoring/redflags.ts).
 const RED_FLAG_COPY: Record<string, string> = {
   uncertain_recovery:
     "This location says a compromise would be catastrophic, but recovery would be improvised.",

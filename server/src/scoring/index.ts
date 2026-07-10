@@ -1,6 +1,6 @@
-// Scoring engine. Wraps `ae-cvss-calculator` (evaluated against docs/SPEC01.md §10
+// Scoring engine. Wraps `ae-cvss-calculator` (evaluated against FIRST's
 // reference vectors before adoption — see server/test/scoring.test.ts) to
-// implement the environmental-scoring rules in docs/SPEC01.md §2 and §6.
+// implement the environmental-scoring (override/cap) rules.
 
 import { CATALOG } from "../catalog/catalog.js";
 import type { Answer, DerivedMetric } from "../catalog/derive.js";
@@ -73,9 +73,9 @@ function buildChange(instance: CvssInstance, m: DerivedMetric, fromValue: string
 }
 
 // Mutates `parsed.instance` in place, applying the environment's derived
-// metrics per docs/SPEC01.md §2.2/§6.2: `override` always wins; `cap` only applies
-// if it's less severe than the base vector's corresponding metric. Returns
-// the list of changes that were actually applied (skipped caps are omitted).
+// metrics: `override` always wins; `cap` only applies if it's less severe
+// than the base vector's corresponding metric. Returns the list of changes
+// that were actually applied (skipped caps are omitted).
 //
 // Each change's `impact` is the score movement caused by applying it on top
 // of every change already applied before it — a running difference across

@@ -1,6 +1,6 @@
 # API usage
 
-All routes are JSON, under `/api`, served from the same process/port as the frontend (default `8080`). No authentication in v1. Errors are always `{ "error": "message" }` with an appropriate status code — never a stack trace. See `docs/SPEC01.md` §8 for the contract this implements.
+All routes are JSON, under `/api`, served from the same process/port as the frontend (default `8080`). No authentication. Errors are always `{ "error": "message" }` with an appropriate status code — never a stack trace.
 
 Examples below assume the server is running at `http://localhost:8080` — swap the port if you're running the dev server (`npm run dev:server`, default `8080` too) or a custom `PORT`.
 
@@ -41,7 +41,7 @@ curl http://localhost:8080/api/catalog
 }
 ```
 
-The full interview question set, versioned by `catalogVersion`. See `docs/SPEC01.md` §5.1 for the `Question`/`Option`/`MetricEffect` shape. `helpDetail` (`docs/SPEC03.md` §6.3) is optional, richer plain-English elaboration shown in the interview's question-help modal, on top of the shorter `whyWeAsk`; every shipped question has one.
+The full interview question set, versioned by `catalogVersion`. See `server/src/catalog/types.ts` for the `Question`/`Option`/`MetricEffect` shape. `helpDetail` is optional, richer plain-English elaboration shown in the interview's question-help modal, on top of the shorter `whyWeAsk`; every shipped question has one.
 
 ## Environments
 
@@ -68,15 +68,15 @@ curl -X POST http://localhost:8080/api/environments \
 }
 ```
 
-`interviewCompletion` reports whether enough answers exist to score against each CVSS version — an environment with zero answers scores identically to the base vector (docs/SPEC01.md §2.3), so this is what the frontend uses to show "no profile yet" instead of a fake score.
+`interviewCompletion` reports whether enough answers exist to score against each CVSS version — an environment with zero answers scores identically to the base vector, so this is what the frontend uses to show "no profile yet" instead of a fake score.
 
-`location` (docs/SPEC05.md §3.1, migration `0004`) is an optional, single-line, plain-text place label ("us-east-1", "Building 4, rack 12") — not markdown, not involved in scoring or the interview. Defaults to `""` and is trimmed server-side.
+`location` (migration `0004`) is an optional, single-line, plain-text place label ("us-east-1", "Building 4, rack 12") — not markdown, not involved in scoring or the interview. Defaults to `""` and is trimmed server-side.
 
-`name` and `location` (docs/SPEC06.md §2.1) are also stripped of one matched pair of wrapping quotes (straight or curly, double or single) after trimming, repeated until no wrapping pair remains — so `"My Lab"`, `'My Lab'`, and `"'My Lab'"` all store as `My Lab`. Interior/unmatched quotes (`Bob's Lab`, `say "hi"`) are untouched. `description` is never quote-stripped.
+`name` and `location` are also stripped of one matched pair of wrapping quotes (straight or curly, double or single) after trimming, repeated until no wrapping pair remains — so `"My Lab"`, `'My Lab'`, and `"'My Lab'"` all store as `My Lab`. Interior/unmatched quotes (`Bob's Lab`, `say "hi"`) are untouched. `description` is never quote-stripped.
 
-`raisesScores` (docs/SPEC04.md §4, narrowed by docs/SPEC05.md §3.2.1) reports, per CVSS version, whether this environment's answers contain any override that can push a modified score *above* the base score. As of SPEC05, this is limited to the structural blast-radius/safety overrides (the "stepping stone" blast-radius answer, "yes" to physical safety) — a "Catastrophic" confidentiality/integrity/availability answer alone no longer sets this flag (that over-triggered: an environment that legitimately has a lot to lose, e.g. a government IL6 system, was flagged permanently). It's re-derived from `environment_answers` at request time, the same as `metrics` below, not read from a stored column. An environment with zero answers reports `false`/`false`.
+`raisesScores` reports, per CVSS version, whether this environment's answers contain any override that can push a modified score *above* the base score. This is limited to the structural blast-radius/safety overrides (the "stepping stone" blast-radius answer, "yes" to physical safety) — a "Catastrophic" confidentiality/integrity/availability answer alone does not set this flag (an earlier, broader version of this rule over-triggered: an environment that legitimately has a lot to lose, e.g. a government IL6 system, was flagged permanently). It's re-derived from `environment_answers` at request time, the same as `metrics` below, not read from a stored column. An environment with zero answers reports `false`/`false`.
 
-`redFlags` (docs/SPEC05.md §3.2.2, new) is an array of triggered configuration red-flag ids — a second, independent tier that correlates stakes answers (Q5/Q6/Q7 "Catastrophic" or Q9 safety "yes") with operational-readiness answers (Q10–Q12) to catch a mismatch between what a location claims to protect and how ready it is: `uncertain_recovery` (high stakes + "Uncertain" recovery), `concentrated_availability` (immediate availability impact + concentrated value density), `hard_to_patch` (high stakes + "Hard" patch effort). Stakes alone never trigger a flag — every rule requires a readiness gap too. Empty array when none trigger. The list route returns just the ids; the detail route (below) also returns each flag's answer provenance.
+`redFlags` is an array of triggered configuration red-flag ids — a second, independent tier that correlates stakes answers (Q5/Q6/Q7 "Catastrophic" or Q9 safety "yes") with operational-readiness answers (Q10–Q12) to catch a mismatch between what a location claims to protect and how ready it is: `uncertain_recovery` (high stakes + "Uncertain" recovery), `concentrated_availability` (immediate availability impact + concentrated value density), `hard_to_patch` (high stakes + "Hard" patch effort). Stakes alone never trigger a flag — every rule requires a readiness gap too. Empty array when none trigger. The list route returns just the ids; the detail route (below) also returns each flag's answer provenance.
 
 ### List
 
@@ -118,9 +118,9 @@ curl http://localhost:8080/api/environments/1
 }
 ```
 
-`metrics` is the materialized cache re-derived from `answers` on every save (docs/SPEC01.md's architecture note: `environment_answers` is the source of truth, `environment_metrics` is never hand-edited).
+`metrics` is the materialized cache re-derived from `answers` on every save (`environment_answers` is the source of truth, `environment_metrics` is never hand-edited — see CLAUDE.md's Architecture section).
 
-`raisingAnswers` (docs/SPEC04.md §4, detail route only — the list route omits it) is the deduplicated `{ questionId, optionId }` provenance of every answer contributing to a `true` value in `raisesScores`, so the edit view can name the responsible questions/answers in plain English via the catalog it already fetches.
+`raisingAnswers` (detail route only — the list route omits it) is the deduplicated `{ questionId, optionId }` provenance of every answer contributing to a `true` value in `raisesScores`, so the edit view can name the responsible questions/answers in plain English via the catalog it already fetches.
 
 On the detail route, `redFlags` is an array of `{ id, answers }` (the list route above returns just the ids) — `answers` is the deduplicated provenance of every answer that satisfied that flag's condition, same shape/purpose as `raisingAnswers`.
 
@@ -205,7 +205,7 @@ curl -X POST http://localhost:8080/api/score \
 }
 ```
 
-This is the worked example from `docs/SPEC01.md` §6 — a `9.8 Critical` base score landing at `0.0 None` for a "disposable dev lab" profile. Every environment with a completed interview for the vector's CVSS version gets scored; ones without a profile for that version come back as `{ "id", "name", "hasProfile": false }` (no fake score) instead. `changes` is the plain-English "why" data (question/answer provenance, not just raw metric codes) that powers the frontend's expandable panel. `notes` explains answered questions that produced *no* visible change (e.g. capped by an already-less-severe base value) — see `server/test/score-route.test.ts` for the full set of `status` values.
+This is the worked example — a `9.8 Critical` base score landing at `0.0 None` for a "disposable dev lab" profile. Every environment with a completed interview for the vector's CVSS version gets scored; ones without a profile for that version come back as `{ "id", "name", "hasProfile": false }` (no fake score) instead. `changes` is the plain-English "why" data (question/answer provenance, not just raw metric codes) that powers the frontend's expandable panel. `notes` explains answered questions that produced *no* visible change (e.g. capped by an already-less-severe base value) — see `server/test/score-route.test.ts` for the full set of `status` values.
 
 A malformed vector 400s with a specific, non-generic message:
 
@@ -246,9 +246,9 @@ curl http://localhost:8080/api/cve/CVE-2021-44228
 }
 ```
 
-`vectors` lists every CVSS entry NVD published for the CVE (NVD's own score, a CNA's, etc.) — per `docs/SPEC01.md` §7, when sources disagree, present all of them and let the caller pick. `primaryVector`/`primaryVersion` is just a sensible default (highest CVSS version, "Primary" source preferred).
+`vectors` lists every CVSS entry NVD published for the CVE (NVD's own score, a CNA's, etc.) — when sources disagree, present all of them and let the caller pick. `primaryVector`/`primaryVersion` is just a sensible default (highest CVSS version, "Primary" source preferred).
 
-`details` (`docs/SPEC03.md` §7.4) is derived at read time from the same cached NVD payload `vectors` comes from — no extra network call, no extra stored column. `description` prefers the English (`lang: "en"`) NVD entry; `references` preserve NVD's tags (`Patch`, `Vendor Advisory`, `Exploit`, …), capped at 20, with `Patch`/`Vendor Advisory`-tagged entries first; `affectedProducts` is a best-effort, deduped `vendor product` list parsed from the CVE's CPE configurations (capped at 15, with `moreCount` for the remainder) — orientation, not a version-accurate applicability check. `details` is `null` when there's no cached NVD payload to derive it from (never the case for this route, since a successful lookup always caches one).
+`details` is derived at read time from the same cached NVD payload `vectors` comes from — no extra network call, no extra stored column. `description` prefers the English (`lang: "en"`) NVD entry; `references` preserve NVD's tags (`Patch`, `Vendor Advisory`, `Exploit`, …), capped at 20, with `Patch`/`Vendor Advisory`-tagged entries first; `affectedProducts` is a best-effort, deduped `vendor product` list parsed from the CVE's CPE configurations (capped at 15, with `moreCount` for the remainder) — orientation, not a version-accurate applicability check. `details` is `null` when there's no cached NVD payload to derive it from (never the case for this route, since a successful lookup always caches one).
 
 Cache-first: a CVE already looked up is served from the `vulnerabilities` table with no network call and `"cached": true`. Force a re-fetch with `?refresh=1`:
 
@@ -266,7 +266,7 @@ NVD's unauthenticated rate limit is low (~5 requests/30s); set `NVD_API_KEY` (se
 
 ## Major CVEs
 
-Top 10 most critical CVEs published in the last 30 days, sourced from NVD (`docs/SPEC02.md` §6.5). A distinct endpoint from the per-CVE lookup above — it is not a way to look up a specific CVE.
+Top 10 most critical CVEs published in the last 30 days, sourced from NVD. A distinct endpoint from the per-CVE lookup above — it is not a way to look up a specific CVE.
 
 ```bash
 curl http://localhost:8080/api/major-cves
@@ -286,7 +286,7 @@ Server-cached for 24 hours (single-row cache table, `fetched_at` disclosed in th
 
 ## Saved vulnerabilities
 
-The `vulnerabilities` table doubles as the NVD lookup cache (`GET /api/cve/:cveId`) and this saved list, distinguished by a `saved` flag (`docs/SPEC02.md` §7.1) — `GET /api/vulnerabilities` only ever returns rows the user explicitly saved.
+The `vulnerabilities` table doubles as the NVD lookup cache (`GET /api/cve/:cveId`) and this saved list, distinguished by a `saved` flag — `GET /api/vulnerabilities` only ever returns rows the user explicitly saved.
 
 ### Save
 
@@ -314,13 +314,13 @@ curl -X POST http://localhost:8080/api/vulnerabilities \
 
 `label`, `description`, and `cveId` are optional — omit `cveId` for a plain pasted vector (`source` becomes `"vector"` instead of `"nvd"`, and `label` falls back to the normalized vector string if not given). The score and normalized vector are always recomputed server-side from `vector`, not trusted from the request — the point of saving is a durable, re-scoreable record, not whatever a client happened to compute.
 
-A non-empty `description` (`docs/SPEC06.md` §3.1) is stored on both the insert and update path, winning over whatever the matched row already had and over the NVD prefill described below — this is how the Scoring page's save panel lets a description be set at save time, not only afterward via `PUT`. An empty or absent `description` changes nothing: an update keeps the existing row's value, a fresh NVD-sourced save still gets the prefill, and a fresh pasted-vector save stays empty.
+A non-empty `description` is stored on both the insert and update path, winning over whatever the matched row already had and over the NVD prefill described below — this is how the Scoring page's save panel lets a description be set at save time, not only afterward via `PUT`. An empty or absent `description` changes nothing: an update keeps the existing row's value, a fresh NVD-sourced save still gets the prefill, and a fresh pasted-vector save stays empty.
 
 Saving is an **upsert**, not an insert: a second save with the same `cveId` (or the same normalized `vector` for a plain pasted-vector save) updates the existing saved entry in place — including reusing an NVD-lookup cache row for that CVE if one already exists — rather than creating a duplicate. The response's `overwritten` field is `true` when an already-*saved* entry was updated, `false` on a first save (`201`) or on a save that only reused a cache row (still `201`); an update to an already-saved entry returns `200`.
 
-A CVE-sourced save also carries over that CVE's cached NVD data automatically — the upsert reuses the lookup-cache row's `nvd_json`, so the detail route's `vectors` array is populated without the client needing to send an `nvdJson` field (`docs/SPEC02.md` §7.3).
+A CVE-sourced save also carries over that CVE's cached NVD data automatically — the upsert reuses the lookup-cache row's `nvd_json`, so the detail route's `vectors` array is populated without the client needing to send an `nvdJson` field.
 
-A CVE-sourced save (`cveId` set) with an otherwise-empty `description` is also prefilled from that cached NVD payload's English description (`docs/SPEC04.md` §5.1) — the same text the detail route's `details.description` derives from `extractCveDetails()`. This never overwrites a non-empty `description`, so a re-save of an already-saved CVE whose description the user has edited (or previously prefilled) is left alone; a pasted-vector save (no `cveId`) or a CVE with no cached `nvd_json` always keeps `description` empty. Not truncated; stored and rendered as Markdown like any other description.
+A CVE-sourced save (`cveId` set) with an otherwise-empty `description` is also prefilled from that cached NVD payload's English description — the same text the detail route's `details.description` derives from `extractCveDetails()`. This never overwrites a non-empty `description`, so a re-save of an already-saved CVE whose description the user has edited (or previously prefilled) is left alone; a pasted-vector save (no `cveId`) or a CVE with no cached `nvd_json` always keeps `description` empty. Not truncated; stored and rendered as Markdown like any other description.
 
 ### Rename / edit description
 
@@ -330,7 +330,7 @@ curl -X PUT http://localhost:8080/api/vulnerabilities/2 \
   -d '{"label": "Log4Shell (prod-facing)", "description": "Tracked in the Q3 remediation sprint."}'
 ```
 
-Only `label` and `description` are editable this way — `vector`, `baseScore`, `cvssVersion`, and `cveId` are fixed at save time and ignored if sent. `description` renders as Markdown wherever it's displayed (`docs/SPEC02.md` §4).
+Only `label` and `description` are editable this way — `vector`, `baseScore`, `cvssVersion`, and `cveId` are fixed at save time and ignored if sent. `description` renders as Markdown wherever it's displayed.
 
 ### List / get / delete
 
@@ -340,7 +340,7 @@ curl http://localhost:8080/api/vulnerabilities/2
 curl -X DELETE http://localhost:8080/api/vulnerabilities/2   # 204 No Content
 ```
 
-`GET /api/vulnerabilities` accepts an optional `q` query parameter (`docs/SPEC06.md` §4.2.2) — a case-insensitive substring search matched against `label`, `cve_id`, `vector`, `description`, and the raw cached NVD JSON text (which makes the NVD description, affected products/CPE strings, and reference URLs/tags searchable with no extra columns). Absent or blank `q` returns every saved row, exactly as before; `saved = 0` cache rows never surface regardless of match.
+`GET /api/vulnerabilities` accepts an optional `q` query parameter — a case-insensitive substring search matched against `label`, `cve_id`, `vector`, `description`, and the raw cached NVD JSON text (which makes the NVD description, affected products/CPE strings, and reference URLs/tags searchable with no extra columns). Absent or blank `q` returns every saved row, exactly as before; `saved = 0` cache rows never surface regardless of match.
 
 ```bash
 curl 'http://localhost:8080/api/vulnerabilities?q=log4j'

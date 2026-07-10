@@ -1,6 +1,6 @@
-// Derivation rules per docs/SPEC01.md §5.3: process answered questions in catalog
-// order; a later question's `override` always wins over an earlier value; a
-// `cap` never displaces an existing `override`.
+// Derivation rules: process answered questions in catalog order; a later
+// question's `override` always wins over an earlier value; a `cap` never
+// displaces an existing `override`.
 
 import { CATALOG } from "./catalog.js";
 import type { CvssVersion, EffectType } from "./types.js";
