@@ -9,7 +9,7 @@ import { openDb } from "../src/db/index.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const migrationsDir = path.join(__dirname, "..", "src", "migrations");
 
-describe("migration 0002 (docs/SPEC02.md §7.1/§7.2)", () => {
+describe("migration 0002 (vulnerabilities.saved flag)", () => {
   let dataDir: string;
 
   beforeEach(() => {
@@ -55,7 +55,7 @@ describe("migration 0002 (docs/SPEC02.md §7.1/§7.2)", () => {
   });
 });
 
-describe("migration 0004 (docs/SPEC05.md §3.1)", () => {
+describe("migration 0004 (environments.location field)", () => {
   let dataDir: string;
 
   beforeEach(() => {

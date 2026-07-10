@@ -1,6 +1,6 @@
 import type { Severity } from "./types.js";
 
-// Mirrors server/src/scoring/severity.ts (docs/SPEC01.md §2.4 bands, shared by both
+// Mirrors server/src/scoring/severity.ts (severity bands shared by both
 // CVSS versions). Duplicated here only for the results animation's
 // in-transit color — the authoritative severity always comes from the API.
 export function severityFromScore(score: number): Severity {

@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { CATALOG, CATALOG_VERSION } from "../src/catalog/index.js";
 
-// Per docs/SPEC01.md §10.4 (catalog integrity):
+// Catalog integrity:
 //  - every option's effects reference valid metrics for the declared version
-//  - every scoring-relevant metric in §2.1 is touched by at least one option,
+//  - every scoring-relevant metric is touched by at least one option,
 //    or is documented as intentionally uncollected
 //  - supplemental effects (S, R, V, RE) never alter a computed score — this
 //    test can only assert they're *modeled* as supplemental; the scoring
@@ -71,7 +71,7 @@ describe("interview catalog", () => {
     }
   });
 
-  it("touches every scoring-relevant metric from docs/SPEC01.md §2.1 at least once, per version", () => {
+  it("touches every scoring-relevant metric at least once, per version", () => {
     const touched: Record<"4.0" | "3.1", Set<string>> = { "4.0": new Set(), "3.1": new Set() };
     for (const question of CATALOG) {
       for (const option of question.options) {
@@ -118,14 +118,13 @@ describe("interview catalog", () => {
     }
   });
 
-  // docs/SPEC03.md §6.3
   it("every question has non-empty helpDetail", () => {
     for (const question of CATALOG) {
       expect(question.helpDetail?.length, `${question.id} is missing helpDetail`).toBeGreaterThan(0);
     }
   });
 
-  // docs/SPEC03.md §2.2: no em-dash in any user-facing catalog string.
+  // No em-dashes anywhere user-facing, per the app's copy conventions.
   it("has no em-dashes in any user-facing string", () => {
     for (const question of CATALOG) {
       const fields = [question.question, question.whyWeAsk, question.finePrint, ...(question.helpDetail ?? [])];

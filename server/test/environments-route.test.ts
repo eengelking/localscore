@@ -214,7 +214,7 @@ describe("environment CRUD, answers, and re-derivation", () => {
     expect(body.metrics).toEqual([]);
   });
 
-  describe("quote stripping (docs/SPEC06.md §2.1)", () => {
+  describe("quote stripping", () => {
     it("strips wrapping quotes from name and location on create", async () => {
       const res = await app.request("/api/environments", {
         method: "POST",
@@ -287,8 +287,8 @@ describe("environment CRUD, answers, and re-derivation", () => {
     });
   });
 
-  // docs/SPEC05.md §3.2.1 (narrows docs/SPEC04.md §4.1) — the score-raising flag.
-  describe("raisesScores (docs/SPEC05.md §3.2.1)", () => {
+  // The score-raising flag (the narrowed trigger set — see raising.ts).
+  describe("raisesScores", () => {
     async function createAndAnswer(name: string, answers: { questionId: string; optionId: string }[]) {
       const createRes = await app.request("/api/environments", {
         method: "POST",
@@ -333,7 +333,7 @@ describe("environment CRUD, answers, and re-derivation", () => {
       expect(body.raisingAnswers).toEqual([{ questionId: "safety", optionId: "yes" }]);
     });
 
-    it("does NOT flag a Catastrophic-only (Q5/Q6/Q7) profile (SPEC05 §3.2.1 narrowing, the IL6 case)", async () => {
+    it("does NOT flag a Catastrophic-only (Q5/Q6/Q7) profile (the high-stakes-but-not-misconfigured case)", async () => {
       const id = await createAndAnswer("Crown Jewels", [
         { questionId: "confidentiality", optionId: "catastrophic" },
         { questionId: "integrity", optionId: "catastrophic" },
@@ -381,8 +381,8 @@ describe("environment CRUD, answers, and re-derivation", () => {
     });
   });
 
-  // docs/SPEC05.md §3.2.2 — configuration red flags.
-  describe("redFlags (docs/SPEC05.md §3.2.2)", () => {
+  // Configuration red flags.
+  describe("redFlags", () => {
     async function createAndAnswer(name: string, answers: { questionId: string; optionId: string }[]) {
       const createRes = await app.request("/api/environments", {
         method: "POST",
@@ -501,7 +501,7 @@ describe("environment CRUD, answers, and re-derivation", () => {
     });
   });
 
-  describe("catalog integrity for red flags (docs/SPEC05.md §3.2.2)", () => {
+  describe("catalog integrity for red flags", () => {
     it("every questionId/optionId referenced by the red-flags rule set exists in the shipped catalog", async () => {
       const { REFERENCED_ANSWERS } = await import("../src/scoring/redflags.js");
       const { CATALOG } = await import("../src/catalog/catalog.js");

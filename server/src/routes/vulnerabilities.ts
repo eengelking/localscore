@@ -40,15 +40,15 @@ function getVulnerabilityOr404(db: Database.Database, id: number): Vulnerability
   return row;
 }
 
-// Saved-vulnerability CRUD per docs/SPEC01.md §8. A save happens from a scored
-// result (§6.4) — the vector is always re-parsed/re-scored server-side
-// rather than trusting a client-supplied score.
+// Saved-vulnerability CRUD. A save happens from a scored result — the
+// vector is always re-parsed/re-scored server-side rather than trusting a
+// client-supplied score.
 //
 // The `vulnerabilities` table doubles as the NVD lookup cache (saved = 0
-// rows written by cve.ts) and the saved list (saved = 1). Per docs/SPEC02.md
-// §7.1 the list route only returns saved = 1 rows, and saving upserts onto
-// any existing row for the same identity (cve_id, or vector for pasted-vector
-// saves) instead of inserting a duplicate.
+// rows written by cve.ts) and the saved list (saved = 1). The list route
+// only returns saved = 1 rows, and saving upserts onto any existing row
+// for the same identity (cve_id, or vector for pasted-vector saves)
+// instead of inserting a duplicate.
 export function vulnerabilityRoutes(db: Database.Database) {
   const app = new Hono();
 
@@ -61,8 +61,8 @@ export function vulnerabilityRoutes(db: Database.Database) {
       return c.json(rows.map(serializeVulnerability));
     }
 
-    // docs/SPEC06.md §4.2.2: full-content search over label, CVE ID, vector,
-    // description, and the cached raw NVD JSON text (the latter is what makes
+    // Full-content search over label, CVE ID, vector, description, and the
+    // cached raw NVD JSON text (the latter is what makes
     // the NVD description, affected products/CPEs, and reference URLs/tags
     // searchable with no new columns or extraction pass). SQLite's LIKE is
     // only ASCII-case-insensitive by default; LOWER() on both sides is
@@ -105,10 +105,10 @@ export function vulnerabilityRoutes(db: Database.Database) {
     const source = cveId ? "nvd" : "vector";
     const now = new Date().toISOString();
     const nvdJsonText = body.nvdJson ? JSON.stringify(body.nvdJson) : null;
-    // docs/SPEC06.md §3.1: a non-empty client-supplied description wins over
-    // whatever the matched row had (and over the NVD prefill below, since
-    // that only fires when the description is still empty afterward). Empty
-    // or absent changes nothing about today's behavior.
+    // A non-empty client-supplied description wins over whatever the
+    // matched row had (and over the NVD prefill below, since that only
+    // fires when the description is still empty afterward). Empty or
+    // absent changes nothing about the existing behavior.
     const clientDescription = body.description && body.description.trim() ? body.description : undefined;
 
     // Identity for upsert: same CVE ID for NVD-sourced saves (this also
@@ -159,9 +159,9 @@ export function vulnerabilityRoutes(db: Database.Database) {
       id = Number(info.lastInsertRowid);
     }
 
-    // docs/SPEC04.md §5.1: an NVD-sourced save (cveId set) with an otherwise-
-    // empty description gets prefilled from the cached NVD English
-    // description, using the row's effective nvd_json (after the COALESCE
+    // An NVD-sourced save (cveId set) with an otherwise-empty description
+    // gets prefilled from the cached NVD English description, using the
+    // row's effective nvd_json (after the COALESCE
     // carry-through above, which the normal lookup-then-save path always
     // has populated). Never overwrites a non-empty description — a re-save
     // of an already-saved, user-edited CVE leaves it alone.
@@ -187,8 +187,8 @@ export function vulnerabilityRoutes(db: Database.Database) {
     });
   });
 
-  // Editable fields per docs/SPEC02.md §7.2 — label and description only.
-  // Score/vector/cve_id identity is fixed at save time and never touched here.
+  // Editable fields — label and description only. Score/vector/cve_id
+  // identity is fixed at save time and never touched here.
   app.put("/vulnerabilities/:id", async (c) => {
     const id = Number(c.req.param("id"));
     const current = getVulnerabilityOr404(db, id);

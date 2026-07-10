@@ -21,9 +21,9 @@ function writeCache(db: Database.Database, payload: unknown, fetchedAt: string) 
   ).run(JSON.stringify(payload), fetchedAt);
 }
 
-// Top-10 critical CVEs from the last 30 days, per docs/SPEC02.md §6.5. A
-// distinct path from /api/cve/:cveId — this is a separate daily-cached
-// aggregate, not a per-CVE lookup. Lazy refresh on access, no scheduler.
+// Top-10 critical CVEs from the last 30 days. A distinct path from
+// /api/cve/:cveId — this is a separate daily-cached aggregate, not a
+// per-CVE lookup. Lazy refresh on access, no scheduler.
 export function majorCvesRoutes(db: Database.Database) {
   const app = new Hono();
 

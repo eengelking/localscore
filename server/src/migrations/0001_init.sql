@@ -1,4 +1,4 @@
--- Initial schema. See docs/SPEC01.md §4 (data model) and §5.1 (catalog shape).
+-- Initial schema: environments, their derived metrics, interview answers, and vulnerabilities.
 
 CREATE TABLE environments (
   id              INTEGER PRIMARY KEY,

@@ -69,7 +69,7 @@ describe("POST /api/score", () => {
     expect(body.environments).toEqual([]);
   });
 
-  it("reproduces the docs/SPEC01.md §6 worked example end-to-end through the API", async () => {
+  it("reproduces the Disposable Dev Lab worked example end-to-end through the API", async () => {
     await createEnvironment("Disposable Dev Lab", [
       { questionId: "reachability", optionId: "internal_only" },
       { questionId: "confidentiality", optionId: "nothing" },
@@ -164,7 +164,7 @@ describe("POST /api/score", () => {
     expect(names).toEqual(["High Risk", "Low Risk"]);
   });
 
-  // docs/SPEC04.md §7.2 — ties the environments-route raisesScores flag
+  // Ties the environments-route raisesScores flag
   // (server/test/environments-route.test.ts) to real scoring behavior:
   // a flagged profile must actually produce delta > 0, not just match the
   // lookup table in isolation.

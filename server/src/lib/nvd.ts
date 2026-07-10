@@ -1,4 +1,4 @@
-// NVD CVE lookup per docs/SPEC01.md §7. Unauthenticated NVD rate limits are low
+// NVD CVE lookup. Unauthenticated NVD rate limits are low
 // (~5 requests/30s), so every call goes through a shared throttle, and every
 // successful response is cached by the caller (see routes/cve.ts) — this
 // module only knows how to fetch and how to parse.
@@ -177,11 +177,10 @@ function vendorProductFromCpe(criteria: string): string | null {
 }
 
 // Extracts human-oriented CVE context (description, references, affected
-// products) from an already-cached NVD payload, at read time, per
-// docs/SPEC03.md §7.4. No migration: this is derived from the same
-// `nvd_json` blob extractVectorOptions() already reads. Every field is
-// optional/empty-tolerant since NVD payload shapes vary and older cached
-// rows must not 500.
+// products) from an already-cached NVD payload, at read time. No migration:
+// this is derived from the same `nvd_json` blob extractVectorOptions()
+// already reads. Every field is optional/empty-tolerant since NVD payload
+// shapes vary and older cached rows must not 500.
 export function extractCveDetails(nvdJson: unknown): CveDetails {
   const cve = (nvdJson as { vulnerabilities?: { cve?: NvdCveDetail }[] })?.vulnerabilities?.[0]?.cve;
   if (!cve) {
@@ -274,10 +273,10 @@ async function fetchNvdCveSearch(
   return body.vulnerabilities ?? [];
 }
 
-// Top 10 most critical CVEs published in the last 30 days (docs/SPEC02.md
-// §6.5). NVD's search API doesn't support an OR across cvssV3Severity and
-// cvssV4Severity, so this runs two separate queries over the same date
-// window and merges/dedupes the results, preferring the v4.0 CVSS entry
+// Top 10 most critical CVEs published in the last 30 days. NVD's search API
+// doesn't support an OR across cvssV3Severity and cvssV4Severity, so this
+// runs two separate queries over the same date window and merges/dedupes
+// the results, preferring the v4.0 CVSS entry
 // when a CVE has both (pickPrimaryVector already encodes that preference).
 export async function fetchMajorCves(apiKey: string | undefined): Promise<MajorCveEntry[]> {
   const now = new Date();

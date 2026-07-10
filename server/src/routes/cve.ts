@@ -31,11 +31,11 @@ function serializeCveResponse(cveId: string, row: VulnerabilityRow, cached: bool
   };
 }
 
-// NVD lookup per docs/SPEC01.md §7. Cache-first: a cached CVE is served from
-// `vulnerabilities` without a network call unless ?refresh=1 is passed. The
-// `vulnerabilities` table doubles as this cache and the saved-vulnerability
-// list (docs/SPEC02.md §7.1) — lookups here never flip an existing row's
-// `saved` flag, they only keep vector/nvd_json fresh.
+// NVD lookup. Cache-first: a cached CVE is served from `vulnerabilities`
+// without a network call unless ?refresh=1 is passed. The `vulnerabilities`
+// table doubles as this cache and the saved-vulnerability list — lookups
+// here never flip an existing row's `saved` flag, they only keep
+// vector/nvd_json fresh.
 export function cveRoutes(db: Database.Database) {
   const app = new Hono();
 

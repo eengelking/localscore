@@ -111,7 +111,7 @@ describe("saved-vulnerability CRUD", () => {
     expect(await listRes.json()).toEqual([]);
   });
 
-  describe("saved-vs-cache separation (docs/SPEC02.md §7.1)", () => {
+  describe("saved-vs-cache separation", () => {
     const CVE_ID = "CVE-2026-55200";
 
     it("a lookup-cache row (saved = 0) doesn't show up in the saved list", () => {
@@ -245,7 +245,7 @@ describe("saved-vulnerability CRUD", () => {
     });
   });
 
-  describe("PUT /vulnerabilities/:id (docs/SPEC02.md §7.2)", () => {
+  describe("PUT /vulnerabilities/:id", () => {
     it("edits label and description in place", async () => {
       const createRes = await app.request("/api/vulnerabilities", {
         method: "POST",
@@ -310,7 +310,7 @@ describe("saved-vulnerability CRUD", () => {
     });
   });
 
-  describe("NVD data carries through on save (docs/SPEC02.md §7.3)", () => {
+  describe("NVD data carries through on save", () => {
     const CVE_ID = "CVE-2026-55200";
 
     it("a CVE saved without an explicit nvdJson still serves multiple vectors on its detail view", async () => {
@@ -383,7 +383,7 @@ describe("saved-vulnerability CRUD", () => {
     });
   });
 
-  describe("NVD-description prefill (docs/SPEC04.md §5.1)", () => {
+  describe("NVD-description prefill", () => {
     const CVE_ID = "CVE-2026-55200";
 
     function stubNvdFetch(description: string | null) {
@@ -497,7 +497,7 @@ describe("saved-vulnerability CRUD", () => {
     });
   });
 
-  describe("save-time description (docs/SPEC06.md §3.1)", () => {
+  describe("save-time description", () => {
     it("stores a client-supplied description on the insert path", async () => {
       const res = await app.request("/api/vulnerabilities", {
         method: "POST",
@@ -599,7 +599,7 @@ describe("saved-vulnerability CRUD", () => {
     });
   });
 
-  describe("search (docs/SPEC06.md §4.2.2)", () => {
+  describe("search", () => {
     const VECTOR_A = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H";
     const VECTOR_B = "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N";
 

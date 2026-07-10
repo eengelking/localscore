@@ -1,4 +1,4 @@
-// Vector parsing & version handling per docs/SPEC01.md §2.5 and §6.1.
+// Vector parsing and version detection/routing.
 
 import pkg from "ae-cvss-calculator";
 import { HttpError } from "../lib/errors.js";
@@ -31,7 +31,7 @@ export function parseBaseVector(raw: string): ParsedVector {
   if (trimmed.startsWith(V30_PREFIX)) {
     // 3.0 and 3.1 share the same metric letters/values; only the equations
     // differ (Roundup definition, a MISS ceiling in one branch). Score with
-    // the v3.1 engine but disclose the simplification per docs/SPEC01.md §2.5.
+    // the v3.1 engine but disclose the simplification — never silently.
     const rewritten = V31_PREFIX + trimmed.slice(V30_PREFIX.length);
     return {
       version: "3.1",

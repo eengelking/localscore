@@ -20,7 +20,7 @@ export interface Question {
   order: number;
   question: string;
   whyWeAsk: string;
-  finePrint?: string; // optional "what this maps to" disclosure for curious/expert users, per docs/SPEC01.md §5.2
-  helpDetail?: string[]; // richer plain-English paragraphs for the question-help modal, per docs/SPEC03.md §6.3
+  finePrint?: string; // optional "what this maps to" disclosure for curious/expert users
+  helpDetail?: string[]; // richer plain-English paragraphs for the question-help modal
   options: Option[]; // includes the implicit "Skip" option, see withSkip()
 }

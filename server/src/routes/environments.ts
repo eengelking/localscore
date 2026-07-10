@@ -49,10 +49,9 @@ function completionStatus(metrics: MetricRow[], answers: AnswerRow[]) {
 // Every environment response (list, detail, create, rename) shares this
 // camelCase shape so the frontend has one consistent contract. `raisesScores`
 // is re-derived from `environment_answers` via deriveMetrics() at request
-// time (docs/SPEC04.md §4.1, narrowed by docs/SPEC05.md §3.2.1) rather than
-// read from the persisted `environment_metrics` cache, because DerivedMetric
-// carries the questionId/optionId provenance the edit view needs and the
-// cache doesn't. `redFlags` (docs/SPEC05.md §3.2.2) is computed straight
+// time rather than read from the persisted `environment_metrics` cache,
+// because DerivedMetric carries the questionId/optionId provenance the
+// edit view needs and the cache doesn't. `redFlags` is computed straight
 // from the raw answers, not derived metrics, since its conditions reference
 // supplemental questions (Q10-Q12) that never produce a metric at all.
 function serializeEnvironment(env: EnvironmentRow, answers: AnswerRow[], metrics: MetricRow[]) {

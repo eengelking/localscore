@@ -1,22 +1,22 @@
-// docs/SPEC05.md §3.2.1 (narrows docs/SPEC04.md §4.1): which derived
-// overrides can push a modified score above its base score. `cap` effects
-// never raise severity by definition (SPEC01 §2.2), so only `override`
+// Which derived overrides can push a modified score above its base score.
+// `cap` effects never raise severity by definition, so only `override`
 // effects are ever checked here; encode the rule as metric+value pairs, not
 // question IDs, so catalog evolution keeps working without touching this
 // file.
 //
-// SPEC04 also flagged CR/IR/AR = H (Q5/Q6/Q7 "Catastrophic") as raising, but
-// that over-triggered: an environment that legitimately has a lot to lose
-// (the docs' example: a government IL6 system) got flagged permanently,
-// which makes the flag meaningless exactly where stakes are highest. CR/IR/AR
-// are dropped here per the user's explicit sign-off (SPEC05 §3.2.1) — the
-// remaining set is exactly the structural facts (blast radius, safety) that
-// SPEC01 §2.2 names as the deliberate above-base exception, i.e. something
-// about the environment's *position*, not merely its stakes. Note the
-// accepted trade-off: a CR/IR/AR-only profile can still produce `delta > 0`
-// on the scoring page without carrying this flag; that's intentional
-// (stakes are not a misconfiguration) and is what the new redflags.ts module
-// exists to catch instead, in combination with readiness answers.
+// An earlier version of this rule also flagged CR/IR/AR = H (Q5/Q6/Q7
+// "Catastrophic") as raising, but that over-triggered: an environment that
+// legitimately has a lot to lose (e.g. a government IL6 system) got flagged
+// permanently, which makes the flag meaningless exactly where stakes are
+// highest. CR/IR/AR were dropped from the trigger set (with explicit
+// maintainer sign-off) — the remaining set is exactly the structural facts
+// (blast radius, safety) that represent a deliberate above-base exception,
+// i.e. something about the environment's *position*, not merely its
+// stakes. Note the accepted trade-off: a CR/IR/AR-only profile can still
+// produce `delta > 0` on the scoring page without carrying this flag;
+// that's intentional (stakes are not a misconfiguration) and is what the
+// redflags.ts module exists to catch instead, in combination with
+// readiness answers.
 import type { CvssVersion } from "../catalog/types.js";
 import type { DerivedMetric } from "../catalog/derive.js";
 

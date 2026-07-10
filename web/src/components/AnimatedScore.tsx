@@ -58,7 +58,7 @@ export function AnimatedScore({ from, to, size = "lg" }: { from: number; to: num
   );
 }
 
-// SPEC04 §2.4: uses the --severity-*-text tokens (validated for text-on-
+// Uses the --severity-*-text tokens (validated for text-on-
 // surface use) rather than the raw pill-fill tokens. The fills were
 // deepened for white pill text and read poorly as foreground text
 // themselves at --surface (medium lands at 4.39:1, just under 4.5:1); the

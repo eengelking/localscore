@@ -93,16 +93,16 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
       .finally(() => setMajorCvesLoading(false));
   }, []);
 
-  // docs/SPEC05.md §4.1: whichever tab with an input is active takes focus,
-  // symmetrically — including on initial mount, since "Look up a CVE" is the
-  // default tab. The Major CVEs tab has no input and focuses nothing.
+  // Whichever tab with an input is active takes focus, symmetrically —
+  // including on initial mount, since "Look up a CVE" is the default tab.
+  // The Major CVEs tab has no input and focuses nothing.
   useEffect(() => {
     if (mode === "cve") cveInputRef.current?.focus();
     if (mode === "paste") vectorInputRef.current?.focus();
   }, [mode]);
 
-  // If we go offline while on a tab that requires the network, fall back to
-  // the paste tab per SPEC02 §6.4.
+  // If we go offline while on a tab that requires the network, fall back
+  // to the paste tab.
   useEffect(() => {
     if (!isOnline && (mode === "cve" || (mode === "major" && !majorCves))) {
       setMode("paste");
@@ -126,8 +126,8 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
     }
   }
 
-  // docs/SPEC06.md §3.2: a rendered score result is only valid for the exact
-  // input that produced it. A new lookup (including a same-CVE refresh, since
+  // A rendered score result is only valid for the exact input that
+  // produced it (invariant). A new lookup (including a same-CVE refresh, since
   // NVD data can change between fetches) invalidates whatever's showing
   // below the tabs until "Score It" is pressed again — one clearing point
   // here covers the lookup form, Major-CVE row clicks, and Refresh alike.
@@ -290,8 +290,8 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
               value={vector}
               onChange={(e) => {
                 setVector(e.target.value);
-                // docs/SPEC06.md §3.2: editing the vector invalidates any
-                // result already showing for the previous vector text.
+                // Stale-result invariant: editing the vector invalidates
+                // any result already showing for the previous vector text.
                 if (result) setResult(null);
               }}
               rows={2}
@@ -352,8 +352,8 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
                   selectedIndex={selectedVectorIndex}
                   onSelect={(index) => {
                     setSelectedVectorIndex(index);
-                    // docs/SPEC06.md §3.2: the result no longer corresponds
-                    // to the newly-selected vector.
+                    // Stale-result invariant: the result no longer
+                    // corresponds to the newly-selected vector.
                     if (result) setResult(null);
                   }}
                 />

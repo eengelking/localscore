@@ -1,4 +1,4 @@
-// Severity bands per docs/SPEC01.md §2.4 (both CVSS versions share these bands).
+// Severity bands (both CVSS versions share these bands).
 
 export type Severity = "None" | "Low" | "Medium" | "High" | "Critical";
 

@@ -58,9 +58,9 @@ export function SavedVulnerabilitiesPage({
       .catch((err: Error) => setError(err.message));
   }
 
-  // docs/SPEC06.md §4.2.2: search is server-side (it has to reach the cached
-  // NVD JSON, which the list response doesn't carry), debounced so typing
-  // doesn't fire a request per keystroke.
+  // Search is server-side (it has to reach the cached NVD JSON, which the
+  // list response doesn't carry), debounced so typing doesn't fire a
+  // request per keystroke.
   useEffect(() => {
     const timer = setTimeout(() => setSearchQuery(searchInput), SEARCH_DEBOUNCE_MS);
     return () => clearTimeout(timer);
@@ -74,8 +74,8 @@ export function SavedVulnerabilitiesPage({
       .catch(() => undefined);
   }, []);
 
-  // docs/SPEC06.md §4.2.1: type/severity are client-side filters over the
-  // already-fetched (possibly search-narrowed) list. Severity reuses the
+  // Type/severity are client-side filters over the already-fetched
+  // (possibly search-narrowed) list. Severity reuses the
   // exact mapping the row's own pill uses, so a row can never filter into a
   // bucket different from what it visibly shows.
   const filteredVulnerabilities = useMemo(() => {
