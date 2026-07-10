@@ -1759,9 +1759,13 @@ main {
   font-family: var(--font-body);
 }
 
+/* docs/SPEC05.md §4.2: bumped from an unset (inherited body-size) font-size
+   so the row's primary identifier reads as such next to the score figure,
+   rather than feeling smaller than it should in the site's type scale. */
 .major-cve-id {
   font-family: var(--font-display);
   font-weight: 600;
+  font-size: var(--text-lg);
 }
 
 .major-cve-figures {
