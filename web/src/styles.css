@@ -1178,6 +1178,15 @@ main {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
+}
+
+/* The interview question card has no flex gap between its title and the
+   option list below it, unlike NvdVectorPicker's other two homes (the
+   Scoring page's CVE result and the Saved page's expanded-row detail),
+   which already space their children via their own flex gap. Scoping the
+   top margin here keeps the interview's spacing pixel-identical while
+   letting those other two contexts control their own spacing directly. */
+.interview-question .option-list {
   margin-top: var(--space-5);
 }
 

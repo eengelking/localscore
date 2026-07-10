@@ -25,7 +25,7 @@ interface Viewing {
 }
 
 type TypeFilter = "all" | "nvd" | "vector";
-type SeverityFilter = "all" | Extract<Severity, "Critical" | "High" | "Medium" | "Low">;
+type SeverityFilter = Extract<Severity, "Critical" | "High" | "Medium" | "Low">;
 
 const SEVERITY_FILTERS: SeverityFilter[] = ["Critical", "High", "Medium", "Low"];
 const SEARCH_DEBOUNCE_MS = 280;
@@ -48,7 +48,9 @@ export function SavedVulnerabilitiesPage({
   const [editError, setEditError] = useState<string | null>(null);
 
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
-  const [severityFilter, setSeverityFilter] = useState<SeverityFilter>("all");
+  // Empty set means "All" — no way for a user to distinguish that from
+  // every severity being individually selected, by design (see issue #45).
+  const [severitySet, setSeveritySet] = useState<Set<SeverityFilter>>(new Set());
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -82,16 +84,27 @@ export function SavedVulnerabilitiesPage({
     if (!vulnerabilities) return null;
     return vulnerabilities.filter((vuln) => {
       if (typeFilter !== "all" && vuln.source !== typeFilter) return false;
-      if (severityFilter !== "all" && nvdSeverityToAppSeverity("", vuln.baseScore) !== severityFilter) return false;
+      if (severitySet.size > 0 && !severitySet.has(nvdSeverityToAppSeverity("", vuln.baseScore) as SeverityFilter)) {
+        return false;
+      }
       return true;
     });
-  }, [vulnerabilities, typeFilter, severityFilter]);
+  }, [vulnerabilities, typeFilter, severitySet]);
 
-  const filtersActive = typeFilter !== "all" || severityFilter !== "all" || searchInput.trim() !== "";
+  const filtersActive = typeFilter !== "all" || severitySet.size > 0 || searchInput.trim() !== "";
+
+  function toggleSeverity(option: SeverityFilter) {
+    setSeveritySet((prev) => {
+      const next = new Set(prev);
+      if (next.has(option)) next.delete(option);
+      else next.add(option);
+      return next;
+    });
+  }
 
   function clearFilters() {
     setTypeFilter("all");
-    setSeverityFilter("all");
+    setSeveritySet(new Set());
     setSearchInput("");
   }
 
@@ -201,9 +214,9 @@ export function SavedVulnerabilitiesPage({
             <div className="filter-group-options">
               <button
                 type="button"
-                className={`filter-chip ${severityFilter === "all" ? "is-active" : ""}`}
-                aria-pressed={severityFilter === "all"}
-                onClick={() => setSeverityFilter("all")}
+                className={`filter-chip ${severitySet.size === 0 ? "is-active" : ""}`}
+                aria-pressed={severitySet.size === 0}
+                onClick={() => setSeveritySet(new Set())}
               >
                 All
               </button>
@@ -212,10 +225,10 @@ export function SavedVulnerabilitiesPage({
                   key={option}
                   type="button"
                   className={`filter-chip filter-chip-severity-${option.toLowerCase()} ${
-                    severityFilter === option ? "is-active" : ""
+                    severitySet.has(option) ? "is-active" : ""
                   }`}
-                  aria-pressed={severityFilter === option}
-                  onClick={() => setSeverityFilter(option)}
+                  aria-pressed={severitySet.has(option)}
+                  onClick={() => toggleSeverity(option)}
                 >
                   {option}
                 </button>
@@ -356,7 +369,11 @@ export function SavedVulnerabilitiesPage({
                 {viewing?.id === vuln.id && (
                   <div className="result-row-detail stack">
                     {viewing.detail.details && (
-                      <CveDetailsView details={viewing.detail.details} cveId={viewing.detail.cveId} />
+                      <CveDetailsView
+                        details={viewing.detail.details}
+                        cveId={viewing.detail.cveId}
+                        showDescription={!vuln.description}
+                      />
                     )}
                     {viewing.detail.vectors.length > 1 && (
                       <NvdVectorPicker

@@ -12,9 +12,17 @@ function formatDate(iso: string | null): string | null {
 // fresh lookup. Collapsed by default in both places (score/vector content
 // is the page's job; these details are reference material) — always
 // starts collapsed on a fresh render, no open-state persistence.
-export function CveDetailsView({ details, cveId }: { details: CveDetails; cveId?: string | null }) {
+export function CveDetailsView({
+  details,
+  cveId,
+  showDescription = true,
+}: {
+  details: CveDetails;
+  cveId?: string | null;
+  showDescription?: boolean;
+}) {
   const [open, setOpen] = useState(false);
-  const description = details.description ?? "";
+  const description = showDescription ? (details.description ?? "") : "";
 
   const published = formatDate(details.published);
   const lastModified = formatDate(details.lastModified);
