@@ -249,8 +249,12 @@
   box-sizing: border-box;
 }
 
+/* docs/SPEC05.md §2.3: reserve scrollbar space on every page so navigating
+   from a short page (no scrollbar) to a long one (scrollbar) never shifts
+   centered content horizontally. */
 html {
   color-scheme: light dark;
+  overflow-y: scroll;
 }
 
 body {
@@ -556,25 +560,86 @@ main {
   color: var(--action-red-text);
 }
 
-/* SPEC04 §2.3: the yellow-outline treatment used --action-yellow-text,
-   whose light-theme value (#8a6300) reads as muddy brown at icon size. Moved
-   to the same solid --action-yellow fill + --action-ink icon pairing
-   .button-cancel already uses, so Edit and Cancel share one yellow identity
-   in both themes; the hover state brightens the fill like .button-cancel's
-   does, instead of washing an outline. */
+/* docs/SPEC05.md §2.2 (amends SPEC02 §2.2 / SPEC04 §2.3): two prior
+   attempts each failed differently — SPEC02's --action-yellow-text outline
+   read as muddy brown in light theme (#8a6300 at icon size); SPEC04's solid
+   --action-yellow fill read as a glaring bright-yellow square that
+   dominated every row it sat in. This drops the yellow-family requirement
+   for Edit specifically (Cancel keeps solid yellow) and reuses Delete's
+   outline box model in the accent family instead: quiet until you look for
+   it, but reads clearly as a distinct affordance next to Delete's red
+   outline and the neutral eye toggle. --accent is already contrast-validated
+   as border/text against both --surface and --surface-card in both themes
+   (SPEC04 §2.1: 6.32-6.75:1 range) — no new token needed, and no --action-*
+   token is left with zero users by this change (--action-yellow still
+   backs .button-cancel). */
 .icon-button-edit {
-  border-color: var(--action-yellow);
-  background: var(--action-yellow);
-  color: var(--action-ink);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .icon-button-edit:hover {
-  filter: brightness(1.08);
-  background: var(--action-yellow);
+  background: var(--accent-wash);
+  color: var(--accent);
 }
 
 .icon-button-quiet {
   border-color: transparent;
+}
+
+/* docs/SPEC05.md §2.1: theme toggle as a real on/off switch (mobile
+   convention) instead of a quiet icon button — light = off (thumb left,
+   neutral track), dark = on (thumb right, accent-filled track). The active
+   icon rides inside the sliding thumb at 18px (up from the old button's
+   16px), in a track tall enough to hold it comfortably.
+   Contrast (WCAG procedure, near-black/near-white so trivially clears):
+   thumb icon vs. thumb (--surface-card): 19.17:1 light, 17.42:1 dark.
+   Thumb vs. accent track background (state legibility, not text): 6.49:1
+   light, 6.05:1 dark. */
+.theme-switch {
+  appearance: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.theme-switch-track {
+  display: flex;
+  align-items: center;
+  width: 3.75rem;
+  height: 2rem;
+  padding: 0.1875rem;
+  border-radius: 999px;
+  background: var(--surface-sunken);
+  border: 1px solid var(--border-strong);
+  transition: background 0.2s ease, border-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.theme-switch[aria-checked="true"] .theme-switch-track {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.theme-switch-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.625rem;
+  height: 1.625rem;
+  border-radius: 50%;
+  background: var(--surface-card);
+  color: var(--ink);
+  transform: translateX(0);
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.theme-switch[aria-checked="true"] .theme-switch-thumb {
+  transform: translateX(1.75rem);
 }
 
 /* Text-labeled destructive confirm button (inside the delete confirmation
