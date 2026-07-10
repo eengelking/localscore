@@ -3,12 +3,14 @@ import type Database from "better-sqlite3";
 import { CATALOG_VERSION } from "../catalog/index.js";
 import { deriveMetrics } from "../catalog/derive.js";
 import { computeRaisesScores, computeRaisingAnswers } from "../scoring/raising.js";
+import { computeRedFlags } from "../scoring/redflags.js";
 import { HttpError } from "../lib/errors.js";
 
 interface EnvironmentRow {
   id: number;
   name: string;
   description: string;
+  location: string;
   catalog_version: string;
   created_at: string;
   updated_at: string;
@@ -46,20 +48,26 @@ function completionStatus(metrics: MetricRow[], answers: AnswerRow[]) {
 // Every environment response (list, detail, create, rename) shares this
 // camelCase shape so the frontend has one consistent contract. `raisesScores`
 // is re-derived from `environment_answers` via deriveMetrics() at request
-// time (docs/SPEC04.md §4.1) rather than read from the persisted
-// `environment_metrics` cache, because DerivedMetric carries the
-// questionId/optionId provenance the edit view needs and the cache doesn't.
+// time (docs/SPEC04.md §4.1, narrowed by docs/SPEC05.md §3.2.1) rather than
+// read from the persisted `environment_metrics` cache, because DerivedMetric
+// carries the questionId/optionId provenance the edit view needs and the
+// cache doesn't. `redFlags` (docs/SPEC05.md §3.2.2) is computed straight
+// from the raw answers, not derived metrics, since its conditions reference
+// supplemental questions (Q10-Q12) that never produce a metric at all.
 function serializeEnvironment(env: EnvironmentRow, answers: AnswerRow[], metrics: MetricRow[]) {
-  const derived = deriveMetrics(answers.map((a) => ({ questionId: a.question_id, optionId: a.option_id })));
+  const answerPairs = answers.map((a) => ({ questionId: a.question_id, optionId: a.option_id }));
+  const derived = deriveMetrics(answerPairs);
   return {
     id: env.id,
     name: env.name,
     description: env.description,
+    location: env.location,
     catalogVersion: env.catalog_version,
     createdAt: env.created_at,
     updatedAt: env.updated_at,
     interviewCompletion: completionStatus(metrics, answers),
     raisesScores: computeRaisesScores(derived),
+    redFlags: computeRedFlags(answerPairs).map((f) => f.id),
   };
 }
 
@@ -81,16 +89,16 @@ export function environmentRoutes(db: Database.Database) {
   });
 
   app.post("/environments", async (c) => {
-    const body = await c.req.json<{ name?: string; description?: string }>();
+    const body = await c.req.json<{ name?: string; description?: string; location?: string }>();
     if (!body.name || !body.name.trim()) {
       throw new HttpError(400, "name is required");
     }
     const now = new Date().toISOString();
     const info = db
       .prepare(
-        "INSERT INTO environments (name, description, catalog_version, created_at, updated_at) VALUES (?, ?, ?, ?, ?)",
+        "INSERT INTO environments (name, description, location, catalog_version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
       )
-      .run(body.name.trim(), body.description ?? "", CATALOG_VERSION, now, now);
+      .run(body.name.trim(), body.description ?? "", (body.location ?? "").trim(), CATALOG_VERSION, now, now);
     const env = getEnvironmentOr404(db, Number(info.lastInsertRowid));
     return c.json(serializeEnvironment(env, [], []), 201);
   });
@@ -100,11 +108,13 @@ export function environmentRoutes(db: Database.Database) {
     const env = getEnvironmentOr404(db, id);
     const answers = db.prepare("SELECT * FROM environment_answers WHERE environment_id = ?").all(id) as AnswerRow[];
     const metrics = db.prepare("SELECT * FROM environment_metrics WHERE environment_id = ?").all(id) as MetricRow[];
-    const derived = deriveMetrics(answers.map((a) => ({ questionId: a.question_id, optionId: a.option_id })));
+    const answerPairs = answers.map((a) => ({ questionId: a.question_id, optionId: a.option_id }));
+    const derived = deriveMetrics(answerPairs);
     return c.json({
       ...serializeEnvironment(env, answers, metrics),
       raisingAnswers: computeRaisingAnswers(derived),
-      answers: answers.map((a) => ({ questionId: a.question_id, optionId: a.option_id })),
+      redFlags: computeRedFlags(answerPairs),
+      answers: answerPairs,
       metrics: metrics.map((m) => ({
         cvssVersion: m.cvss_version,
         metric: m.metric,
@@ -117,12 +127,13 @@ export function environmentRoutes(db: Database.Database) {
   app.put("/environments/:id", async (c) => {
     const id = Number(c.req.param("id"));
     getEnvironmentOr404(db, id);
-    const body = await c.req.json<{ name?: string; description?: string }>();
+    const body = await c.req.json<{ name?: string; description?: string; location?: string }>();
     const now = new Date().toISOString();
     const current = getEnvironmentOr404(db, id);
-    db.prepare("UPDATE environments SET name = ?, description = ?, updated_at = ? WHERE id = ?").run(
+    db.prepare("UPDATE environments SET name = ?, description = ?, location = ?, updated_at = ? WHERE id = ?").run(
       body.name?.trim() || current.name,
       body.description ?? current.description,
+      body.location !== undefined ? body.location.trim() : current.location,
       now,
       id,
     );

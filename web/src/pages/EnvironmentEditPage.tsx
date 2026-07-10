@@ -4,6 +4,17 @@ import type { Catalog, EnvironmentDetail } from "../types.js";
 import { ConfirmModal } from "../components/Modal.js";
 import { Icon } from "../components/Icon.js";
 
+// docs/SPEC05.md §3.2.2 — plain-English register for each red flag, kept
+// alongside the rule set it explains (server/src/scoring/redflags.ts).
+const RED_FLAG_COPY: Record<string, string> = {
+  uncertain_recovery:
+    "This location says a compromise would be catastrophic, but recovery would be improvised.",
+  concentrated_availability:
+    "Uptime is critical here, yet the resources are concentrated on single systems.",
+  hard_to_patch:
+    "The stakes are high but patching is slow and disruptive, so vulnerabilities stay open longer.",
+};
+
 export function EnvironmentEditPage({
   environmentId,
   onDone,
@@ -17,6 +28,7 @@ export function EnvironmentEditPage({
   const [catalog, setCatalog] = useState<Catalog | null>(null);
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [location, setLocation] = useState("");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
@@ -27,6 +39,7 @@ export function EnvironmentEditPage({
         setEnvironment(env);
         setName(env.name);
         setDescription(env.description);
+        setLocation(env.location);
       })
       .catch((err: Error) => setError(err.message));
   }, [environmentId]);
@@ -43,7 +56,7 @@ export function EnvironmentEditPage({
     setSaving(true);
     setError(null);
     try {
-      await updateEnvironment(environmentId, { name: name.trim(), description });
+      await updateEnvironment(environmentId, { name: name.trim(), description, location: location.trim() });
       onDone();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Couldn't save changes");
@@ -71,14 +84,21 @@ export function EnvironmentEditPage({
 
   const hasStarted = environment.interviewCompletion["3.1"];
   const raisesScores = environment.raisesScores["4.0"] || environment.raisesScores["3.1"];
-  const raisingAnswerLabels = environment.raisingAnswers
-    .map(({ questionId, optionId }) => {
-      const question = catalog?.questions.find((q) => q.id === questionId);
-      const option = question?.options.find((o) => o.id === optionId);
-      if (!question || !option) return null;
-      return { question: question.question, option: option.label };
-    })
-    .filter((v): v is { question: string; option: string } => v !== null);
+
+  function labelAnswers(answers: { questionId: string; optionId: string }[]) {
+    return answers
+      .map(({ questionId, optionId }) => {
+        const question = catalog?.questions.find((q) => q.id === questionId);
+        const option = question?.options.find((o) => o.id === optionId);
+        if (!question || !option) return null;
+        return { question: question.question, option: option.label };
+      })
+      .filter((v): v is { question: string; option: string } => v !== null);
+  }
+
+  const raisingAnswerLabels = labelAnswers(environment.raisingAnswers);
+  const redFlags = environment.redFlags;
+  const showCallout = raisesScores || redFlags.length > 0;
 
   return (
     <div className="stack">
@@ -89,24 +109,45 @@ export function EnvironmentEditPage({
         </div>
       </div>
 
-      {raisesScores && (
+      {showCallout && (
         <div className="callout-warning">
           <Icon name="warning" size={18} />
           <div>
-            <p>
-              Because of how this environment is configured, vulnerabilities can score <strong>higher</strong> here
-              than their published base score. These answers state the location has a lot to lose, which is worth
-              reviewing, not necessarily a misconfiguration. <strong>localscore</strong> recommends having this
-              configuration reviewed by a security professional.
-            </p>
-            {raisingAnswerLabels.length > 0 && (
-              <ul className="raises-scores-list">
-                {raisingAnswerLabels.map(({ question, option }, i) => (
-                  <li key={i}>
-                    <strong>{question}</strong> {option}
-                  </li>
+            {raisesScores && (
+              <div className="callout-section">
+                <p>
+                  Because of how this environment is configured, vulnerabilities can score <strong>higher</strong>{" "}
+                  here than their published base score. These answers state the location has a lot to lose, which
+                  is worth reviewing, not necessarily a misconfiguration. <strong>localscore</strong> recommends
+                  having this configuration reviewed by a security professional.
+                </p>
+                {raisingAnswerLabels.length > 0 && (
+                  <ul className="raises-scores-list">
+                    {raisingAnswerLabels.map(({ question, option }, i) => (
+                      <li key={i}>
+                        <strong>{question}</strong> {option}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            )}
+            {redFlags.length > 0 && (
+              <div className="callout-section">
+                <p className="callout-section-title">This configuration needs review</p>
+                {redFlags.map((flag) => (
+                  <div key={flag.id} className="red-flag-block">
+                    <p>{RED_FLAG_COPY[flag.id] ?? flag.id}</p>
+                    <ul className="raises-scores-list">
+                      {labelAnswers(flag.answers).map(({ question, option }, i) => (
+                        <li key={i}>
+                          <strong>{question}</strong> {option}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
             )}
           </div>
         </div>
@@ -120,6 +161,17 @@ export function EnvironmentEditPage({
             className="input"
             value={name}
             onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+
+        <div className="field">
+          <label htmlFor="environment-edit-location">Location (optional)</label>
+          <input
+            id="environment-edit-location"
+            className="input"
+            placeholder='e.g. "us-east-1", "Building 4, rack 12"'
+            value={location}
+            onChange={(e) => setLocation(e.target.value)}
           />
         </div>
 

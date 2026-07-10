@@ -54,14 +54,17 @@ export function getEnvironment(id: number): Promise<EnvironmentDetail> {
   return request(`/api/environments/${id}`);
 }
 
-export function createEnvironment(name: string, description?: string): Promise<Environment> {
+export function createEnvironment(name: string, description?: string, location?: string): Promise<Environment> {
   return request("/api/environments", {
     method: "POST",
-    body: JSON.stringify({ name, description }),
+    body: JSON.stringify({ name, description, location }),
   });
 }
 
-export function updateEnvironment(id: number, body: { name?: string; description?: string }): Promise<Environment> {
+export function updateEnvironment(
+  id: number,
+  body: { name?: string; description?: string; location?: string },
+): Promise<Environment> {
   return request(`/api/environments/${id}`, {
     method: "PUT",
     body: JSON.stringify(body),

@@ -37,15 +37,22 @@ export interface RaisesScores {
   "3.1": boolean;
 }
 
+export interface RedFlag {
+  id: string;
+  answers: Answer[];
+}
+
 export interface Environment {
   id: number;
   name: string;
   description: string;
+  location: string;
   catalogVersion: string;
   createdAt: string;
   updatedAt: string;
   interviewCompletion: InterviewCompletion;
   raisesScores: RaisesScores;
+  redFlags: string[];
 }
 
 export interface Answer {
@@ -60,10 +67,11 @@ export interface DerivedMetric {
   effect: "override" | "cap";
 }
 
-export interface EnvironmentDetail extends Environment {
+export interface EnvironmentDetail extends Omit<Environment, "redFlags"> {
   answers: Answer[];
   metrics: DerivedMetric[];
   raisingAnswers: Answer[];
+  redFlags: RedFlag[];
 }
 
 export type Severity = "None" | "Low" | "Medium" | "High" | "Critical";
