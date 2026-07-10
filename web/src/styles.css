@@ -1721,14 +1721,42 @@ main {
 
 /* CVE detail enrichment (SPEC03 §7.4) — secondary to the score/vector
    content above it, so it stays a plain stacked block rather than
-   competing visually with the primary lookup/save flow. */
+   competing visually with the primary lookup/save flow. docs/SPEC04.md
+   §5.2: collapsed behind a disclosure by default, so the summary button
+   carries the divider/spacing that used to sit on the whole block. */
 .cve-details {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
   padding-top: var(--space-3);
   border-top: 1px solid var(--border);
   font-size: var(--text-sm);
+}
+
+.cve-details-summary {
+  appearance: none;
+  border: none;
+  background: transparent;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: 0;
+  color: var(--ink);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  text-align: left;
+}
+
+.cve-details-summary-meta {
+  font-weight: 400;
+  color: var(--ink-muted);
+}
+
+.cve-details-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
 }
 
 .cve-details-description p {

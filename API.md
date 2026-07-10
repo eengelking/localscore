@@ -297,6 +297,8 @@ Saving is an **upsert**, not an insert: a second save with the same `cveId` (or 
 
 A CVE-sourced save also carries over that CVE's cached NVD data automatically — the upsert reuses the lookup-cache row's `nvd_json`, so the detail route's `vectors` array is populated without the client needing to send an `nvdJson` field (`docs/SPEC02.md` §7.3).
 
+A CVE-sourced save (`cveId` set) with an otherwise-empty `description` is also prefilled from that cached NVD payload's English description (`docs/SPEC04.md` §5.1) — the same text the detail route's `details.description` derives from `extractCveDetails()`. This never overwrites a non-empty `description`, so a re-save of an already-saved CVE whose description the user has edited (or previously prefilled) is left alone; a pasted-vector save (no `cveId`) or a CVE with no cached `nvd_json` always keeps `description` empty. Not truncated; stored and rendered as Markdown like any other description.
+
 ### Rename / edit description
 
 ```bash

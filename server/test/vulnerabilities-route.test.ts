@@ -382,4 +382,118 @@ describe("saved-vulnerability CRUD", () => {
       expect(detail.details).toBeNull();
     });
   });
+
+  describe("NVD-description prefill (docs/SPEC04.md §5.1)", () => {
+    const CVE_ID = "CVE-2026-55200";
+
+    function stubNvdFetch(description: string | null) {
+      const fetchMock = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            vulnerabilities: [
+              {
+                cve: {
+                  id: CVE_ID,
+                  descriptions: description ? [{ lang: "en", value: description }] : [],
+                  metrics: {
+                    cvssMetricV31: [
+                      {
+                        source: "nvd@nist.gov",
+                        type: "Primary",
+                        cvssData: { version: "3.1", vectorString: VECTOR, baseScore: 9.8, baseSeverity: "CRITICAL" },
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+    }
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it("lookup-then-save populates description with the NVD English description", async () => {
+      stubNvdFetch("A prefillable description.");
+      await app.request(`/api/cve/${CVE_ID}`);
+
+      const saveRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR, cveId: CVE_ID }),
+      });
+      const saved = await saveRes.json();
+      expect(saved.description).toBe("A prefillable description.");
+    });
+
+    it("does not clobber a description the user edited after the initial save", async () => {
+      stubNvdFetch("The original NVD description.");
+      await app.request(`/api/cve/${CVE_ID}`);
+
+      const saveRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR, cveId: CVE_ID }),
+      });
+      const saved = await saveRes.json();
+
+      await app.request(`/api/vulnerabilities/${saved.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: saved.label, description: "My own notes." }),
+      });
+
+      // Re-saving the same CVE (e.g. scoring it again and saving) must not
+      // overwrite the user's edited description.
+      const resaveRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR, cveId: CVE_ID }),
+      });
+      const resaved = await resaveRes.json();
+      expect(resaved.description).toBe("My own notes.");
+    });
+
+    it("leaves a pasted-vector save's description empty", async () => {
+      const saveRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR }),
+      });
+      const saved = await saveRes.json();
+      expect(saved.description).toBe("");
+    });
+
+    it("saves cleanly with an empty description when NVD has no English description (never a 500)", async () => {
+      stubNvdFetch(null);
+      await app.request(`/api/cve/${CVE_ID}`);
+
+      const saveRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR, cveId: CVE_ID }),
+      });
+      expect(saveRes.status).toBe(201);
+      const saved = await saveRes.json();
+      expect(saved.description).toBe("");
+    });
+
+    it("saves cleanly with an empty description for a CVE cache row with no nvd_json (never a 500)", async () => {
+      // A cveId with no prior lookup means the upsert finds no existing cache
+      // row and nvd_json stays null for the new row.
+      const saveRes = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vector: VECTOR, cveId: "CVE-2026-99999" }),
+      });
+      expect(saveRes.status).toBe(201);
+      const saved = await saveRes.json();
+      expect(saved.description).toBe("");
+    });
+  });
 });
