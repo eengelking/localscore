@@ -8,6 +8,10 @@ localscore fixes that by asking plain-English questions about a location instead
 
 > Self-hosted, single container, SQLite on a volume. No account, no cloud dependency — the only optional network call is looking up a CVE by ID from NVD.
 
+<p align="center">
+  <img src="images/example.png" alt="localscore showing a CVE's base score next to modified scores for four environments, each with its own severity and delta" width="480">
+</p>
+
 ## How it works
 
 1. **Define a location.** Give it a name, e.g. *"My Data Center"*, *"Retail Kiosks"*, *"Dev Lab"*.
