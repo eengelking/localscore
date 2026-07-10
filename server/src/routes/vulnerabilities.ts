@@ -102,7 +102,20 @@ export function vulnerabilityRoutes(db: Database.Database) {
       id = Number(info.lastInsertRowid);
     }
 
-    const row = getVulnerabilityOr404(db, id);
+    // docs/SPEC04.md §5.1: an NVD-sourced save (cveId set) with an otherwise-
+    // empty description gets prefilled from the cached NVD English
+    // description, using the row's effective nvd_json (after the COALESCE
+    // carry-through above, which the normal lookup-then-save path always
+    // has populated). Never overwrites a non-empty description — a re-save
+    // of an already-saved, user-edited CVE leaves it alone.
+    let row = getVulnerabilityOr404(db, id);
+    if (cveId && !row.description.trim() && row.nvd_json) {
+      const details = extractCveDetails(JSON.parse(row.nvd_json));
+      if (details.description) {
+        db.prepare("UPDATE vulnerabilities SET description = ? WHERE id = ?").run(details.description, id);
+        row = getVulnerabilityOr404(db, id);
+      }
+    }
     return c.json({ ...serializeVulnerability(row), overwritten }, overwritten ? 200 : 201);
   });
 
