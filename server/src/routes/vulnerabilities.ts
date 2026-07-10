@@ -53,9 +53,37 @@ export function vulnerabilityRoutes(db: Database.Database) {
   const app = new Hono();
 
   app.get("/vulnerabilities", (c) => {
+    const q = c.req.query("q")?.trim();
+    if (!q) {
+      const rows = db
+        .prepare("SELECT * FROM vulnerabilities WHERE saved = 1 ORDER BY created_at DESC")
+        .all() as VulnerabilityRow[];
+      return c.json(rows.map(serializeVulnerability));
+    }
+
+    // docs/SPEC06.md §4.2.2: full-content search over label, CVE ID, vector,
+    // description, and the cached raw NVD JSON text (the latter is what makes
+    // the NVD description, affected products/CPEs, and reference URLs/tags
+    // searchable with no new columns or extraction pass). SQLite's LIKE is
+    // only ASCII-case-insensitive by default; LOWER() on both sides is
+    // sufficient for this personal-scale list, no FTS5 needed. `%`/`_` in the
+    // query are escaped so they match literally rather than as wildcards.
+    const escaped = q.replace(/[%_\\]/g, (ch) => `\\${ch}`);
+    const like = `%${escaped.toLowerCase()}%`;
     const rows = db
-      .prepare("SELECT * FROM vulnerabilities WHERE saved = 1 ORDER BY created_at DESC")
-      .all() as VulnerabilityRow[];
+      .prepare(
+        `SELECT * FROM vulnerabilities
+         WHERE saved = 1
+           AND (
+             LOWER(label) LIKE ? ESCAPE '\\'
+             OR LOWER(COALESCE(cve_id, '')) LIKE ? ESCAPE '\\'
+             OR LOWER(vector) LIKE ? ESCAPE '\\'
+             OR LOWER(description) LIKE ? ESCAPE '\\'
+             OR LOWER(COALESCE(nvd_json, '')) LIKE ? ESCAPE '\\'
+           )
+         ORDER BY created_at DESC`,
+      )
+      .all(like, like, like, like, like) as VulnerabilityRow[];
     return c.json(rows.map(serializeVulnerability));
   });
 

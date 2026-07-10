@@ -98,8 +98,9 @@ export function getMajorCves(): Promise<MajorCvesResponse> {
   return request("/api/major-cves");
 }
 
-export function listVulnerabilities(): Promise<SavedVulnerability[]> {
-  return request("/api/vulnerabilities");
+export function listVulnerabilities(q?: string): Promise<SavedVulnerability[]> {
+  const query = q?.trim() ? `?q=${encodeURIComponent(q.trim())}` : "";
+  return request(`/api/vulnerabilities${query}`);
 }
 
 export function saveVulnerability(body: {

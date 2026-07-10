@@ -598,4 +598,176 @@ describe("saved-vulnerability CRUD", () => {
       expect(fresh.description).toBe("");
     });
   });
+
+  describe("search (docs/SPEC06.md §4.2.2)", () => {
+    const VECTOR_A = "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H";
+    const VECTOR_B = "CVSS:3.1/AV:A/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N";
+
+    async function saveOne(body: Record<string, unknown>) {
+      const res = await app.request("/api/vulnerabilities", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      return res.json();
+    }
+
+    it("matches a query against the label", async () => {
+      await saveOne({ vector: VECTOR_A, label: "Log4Shell in prod" });
+      await saveOne({ vector: VECTOR_B, label: "Unrelated finding" });
+      const res = await app.request("/api/vulnerabilities?q=log4shell");
+      const results = await res.json();
+      expect(results).toHaveLength(1);
+      expect(results[0].label).toBe("Log4Shell in prod");
+    });
+
+    it("matches a query against the CVE ID", async () => {
+      await saveOne({ vector: VECTOR_A, cveId: "CVE-2021-44228" });
+      await saveOne({ vector: VECTOR_B, cveId: "CVE-2020-00001" });
+      const res = await app.request("/api/vulnerabilities?q=2021-44228");
+      const results = await res.json();
+      expect(results).toHaveLength(1);
+      expect(results[0].cveId).toBe("CVE-2021-44228");
+    });
+
+    it("matches a query against the vector", async () => {
+      await saveOne({ vector: VECTOR_A });
+      await saveOne({ vector: VECTOR_B });
+      const res = await app.request(`/api/vulnerabilities?q=${encodeURIComponent("AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H")}`);
+      const results = await res.json();
+      expect(results).toHaveLength(1);
+      expect(results[0].vector).toBe(VECTOR_A);
+    });
+
+    it("matches a query against the description", async () => {
+      await saveOne({ vector: VECTOR_A, description: "Affects the checkout service." });
+      await saveOne({ vector: VECTOR_B, description: "Affects the billing service." });
+      const res = await app.request("/api/vulnerabilities?q=checkout");
+      const results = await res.json();
+      expect(results).toHaveLength(1);
+      expect(results[0].vector).toBe(VECTOR_A);
+    });
+
+    it("matches a query against the cached NVD JSON (e.g. an affected-product string)", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            vulnerabilities: [
+              {
+                cve: {
+                  id: "CVE-2026-77000",
+                  descriptions: [{ lang: "en", value: "A vulnerability in Apache Struts." }],
+                  configurations: [
+                    {
+                      nodes: [
+                        {
+                          cpeMatch: [{ vulnerable: true, criteria: "cpe:2.3:a:apache:struts:2.5.30:*:*:*:*:*:*:*" }],
+                        },
+                      ],
+                    },
+                  ],
+                  metrics: {
+                    cvssMetricV31: [
+                      {
+                        source: "nvd@nist.gov",
+                        type: "Primary",
+                        cvssData: {
+                          version: "3.1",
+                          vectorString: VECTOR_A,
+                          baseScore: 9.8,
+                          baseSeverity: "CRITICAL",
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      try {
+        await app.request("/api/cve/CVE-2026-77000");
+        await saveOne({ vector: VECTOR_A, cveId: "CVE-2026-77000" });
+        await saveOne({ vector: VECTOR_B, label: "Unrelated" });
+
+        const res = await app.request("/api/vulnerabilities?q=struts");
+        const results = await res.json();
+        expect(results).toHaveLength(1);
+        expect(results[0].cveId).toBe("CVE-2026-77000");
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+
+    it("matching is case-insensitive", async () => {
+      await saveOne({ vector: VECTOR_A, label: "Mixed Case Label" });
+      const res = await app.request("/api/vulnerabilities?q=MIXED case");
+      expect(await res.json()).toHaveLength(1);
+    });
+
+    it("escapes % and _ so they match literally rather than as LIKE wildcards", async () => {
+      // "off_special" (real underscore) vs "offXspecial" (no underscore at
+      // all): if the query's underscore were left unescaped, SQLite's LIKE
+      // treats it as "any single character" and would wrongly match both.
+      await saveOne({ vector: VECTOR_A, label: "off_special" });
+      await saveOne({ vector: VECTOR_B, label: "offXspecial" });
+
+      const res = await app.request("/api/vulnerabilities?q=off_special");
+      const results = await res.json();
+      expect(results).toHaveLength(1);
+      expect(results[0].label).toBe("off_special");
+    });
+
+    it("returns all saved rows when q is blank or absent", async () => {
+      await saveOne({ vector: VECTOR_A });
+      await saveOne({ vector: VECTOR_B });
+      const blank = await app.request("/api/vulnerabilities?q=");
+      expect(await blank.json()).toHaveLength(2);
+      const absent = await app.request("/api/vulnerabilities");
+      expect(await absent.json()).toHaveLength(2);
+    });
+
+    it("never surfaces saved = 0 cache rows regardless of match", async () => {
+      const fetchMock = vi.fn().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            vulnerabilities: [
+              {
+                cve: {
+                  id: "CVE-2026-88000",
+                  descriptions: [{ lang: "en", value: "A cache-only lookup, never saved." }],
+                  metrics: {
+                    cvssMetricV31: [
+                      {
+                        source: "nvd@nist.gov",
+                        type: "Primary",
+                        cvssData: {
+                          version: "3.1",
+                          vectorString: VECTOR_A,
+                          baseScore: 9.8,
+                          baseSeverity: "CRITICAL",
+                        },
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          }),
+          { status: 200 },
+        ),
+      );
+      vi.stubGlobal("fetch", fetchMock);
+      try {
+        await app.request("/api/cve/CVE-2026-88000");
+        const res = await app.request("/api/vulnerabilities?q=cache-only");
+        expect(await res.json()).toHaveLength(0);
+      } finally {
+        vi.unstubAllGlobals();
+      }
+    });
+  });
 });

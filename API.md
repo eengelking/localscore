@@ -340,4 +340,10 @@ curl http://localhost:8080/api/vulnerabilities/2
 curl -X DELETE http://localhost:8080/api/vulnerabilities/2   # 204 No Content
 ```
 
+`GET /api/vulnerabilities` accepts an optional `q` query parameter (`docs/SPEC06.md` §4.2.2) — a case-insensitive substring search matched against `label`, `cve_id`, `vector`, `description`, and the raw cached NVD JSON text (which makes the NVD description, affected products/CPE strings, and reference URLs/tags searchable with no extra columns). Absent or blank `q` returns every saved row, exactly as before; `saved = 0` cache rows never surface regardless of match.
+
+```bash
+curl 'http://localhost:8080/api/vulnerabilities?q=log4j'
+```
+
 The detail route additionally includes `vectors` and `details` (same shapes as the CVE lookup route above, both derived from the row's cached NVD JSON) when `source` is `"nvd"`; both are `[]`/`null` for a plain pasted-vector save, which has no cached NVD payload to derive them from.
