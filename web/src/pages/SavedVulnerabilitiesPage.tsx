@@ -190,7 +190,7 @@ export function SavedVulnerabilitiesPage({
                   aria-pressed={typeFilter === option}
                   onClick={() => setTypeFilter(option)}
                 >
-                  {option === "all" ? "All" : option === "nvd" ? "NVD" : "Pasted vector"}
+                  {option === "all" ? "All" : option === "nvd" ? "NVD" : "Vector"}
                 </button>
               ))}
             </div>
@@ -309,7 +309,7 @@ export function SavedVulnerabilitiesPage({
                       <MarkdownContent source={vuln.description} className="environment-description" />
                     )}
                     <div className="badge-row">
-                      <span className="badge">{vuln.source === "nvd" ? "NVD" : "Pasted vector"}</span>
+                      <span className="badge">{vuln.source === "nvd" ? "NVD" : "Vector"}</span>
                       {vuln.cveId && <span className="badge">{vuln.cveId}</span>}
                       <SeverityPill severity={nvdSeverityToAppSeverity("", vuln.baseScore)} variant="outline" />
                       <span className="score-figure">{vuln.baseScore.toFixed(1)}</span>
