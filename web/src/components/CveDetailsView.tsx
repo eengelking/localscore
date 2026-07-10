@@ -15,7 +15,7 @@ function formatDate(iso: string | null): string | null {
 // default in both places (score/vector content is the page's job; these
 // details are reference material) — always starts collapsed on a fresh
 // render, no open-state persistence.
-export function CveDetailsView({ details }: { details: CveDetails }) {
+export function CveDetailsView({ details, cveId }: { details: CveDetails; cveId?: string | null }) {
   const [open, setOpen] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const description = details.description ?? "";
@@ -40,12 +40,24 @@ export function CveDetailsView({ details }: { details: CveDetails }) {
           {published && <span className="cve-details-summary-meta"> · Published {published}</span>}
         </span>
         <span className={`disclosure ${open ? "is-open" : ""}`} aria-hidden="true">
-          <Icon name="chevron" size={16} />
+          <Icon name="chevron" size={20} />
         </span>
       </button>
 
       {open && (
         <div className="cve-details-body">
+          {cveId && (
+            <a
+              href={`https://nvd.nist.gov/vuln/detail/${cveId}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="cve-details-nvd-link"
+              aria-label={`View ${cveId} on NVD`}
+            >
+              NVD <Icon name="external-link" size={14} />
+            </a>
+          )}
+
           {description && (
             <div className="cve-details-description">
               <p>{shownDescription}</p>

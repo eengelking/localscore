@@ -1827,34 +1827,63 @@ main {
 /* CVE detail enrichment (SPEC03 §7.4) — secondary to the score/vector
    content above it, so it stays a plain stacked block rather than
    competing visually with the primary lookup/save flow. docs/SPEC04.md
-   §5.2: collapsed behind a disclosure by default, so the summary button
-   carries the divider/spacing that used to sit on the whole block. */
+   §5.2: collapsed behind a disclosure by default. docs/SPEC05.md §5.2:
+   this block doesn't own a dedicated card the way .result-row does (it's a
+   header inside someone else's padding, either the Scoring page's
+   lookup-result card or the Saved page's expanded-row panel), so rather
+   than the old border-top-divider treatment, .cve-details-summary gets its
+   own bounded row (border + radius + surface-sunken background) to read as
+   clearly clickable without restructuring into a nested card. */
 .cve-details {
-  padding-top: var(--space-3);
-  border-top: 1px solid var(--border);
+  margin-top: var(--space-3);
   font-size: var(--text-sm);
 }
 
 .cve-details-summary {
   appearance: none;
-  border: none;
-  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--surface-sunken);
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  padding: 0;
+  padding: var(--space-3) var(--space-4);
   color: var(--ink);
   font-weight: 600;
   font-size: var(--text-sm);
   cursor: pointer;
   text-align: left;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.cve-details-summary:hover {
+  background: var(--surface-card);
+  border-color: var(--border-strong);
 }
 
 .cve-details-summary-meta {
   font-weight: 400;
   color: var(--ink-muted);
+}
+
+/* docs/SPEC05.md §5.4: a direct link to the CVE's NVD page, same grammar as
+   the Major-CVE rows' NVD link (SPEC03 §7.2). Placed at the top of the
+   expanded body rather than the summary row, since the summary is itself a
+   <button> and nesting an <a> inside it isn't valid HTML/ARIA — this also
+   means it never needs stopPropagation. */
+.cve-details-nvd-link {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--text-sm);
+  color: var(--ink-secondary);
+}
+
+.cve-details-nvd-link:hover {
+  color: var(--accent);
 }
 
 .cve-details-body {
@@ -1908,6 +1937,22 @@ main {
 
 .cve-details-reference-tag {
   font-size: 0.65rem;
+}
+
+/* docs/SPEC05.md §5.3 (narrow amendment to SPEC04 §2.1's "all neutral
+   badges go accent" rule, scoped to contexts where badges sit adjacent to
+   accent links): inside the expanded CVE details, the affected-product
+   chips and reference tags were rendering in the same --accent as the
+   reference links right beside them, making links/tags/chips all one
+   undifferentiated blue. Moved to --ink-secondary (not --ink-muted, which
+   only clears 3.41:1/3.50:1 against --surface/--surface-card in light
+   theme — --ink-secondary clears 7.53:1+ in both themes at this size, per
+   the dataviz contrast() procedure) so the hierarchy becomes: link =
+   accent = interactive, chip = neutral = metadata. Elsewhere in the app
+   (Saved-row source/CVE-ID tags, "no profile yet") .badge stays accent. */
+.cve-details-body .badge {
+  color: var(--ink-secondary);
+  border-color: var(--ink-secondary);
 }
 
 .cve-lookup-meta {
@@ -1965,14 +2010,30 @@ main {
   overflow: hidden;
 }
 
+/* docs/SPEC05.md §5.1: was flex-wrap: wrap, which let the actions column
+   (eye/edit/delete) wrap below the text column once a description made
+   .environment-row-main tall/wide enough. The action cluster must stay
+   pinned to the header's top-right regardless of content, so this is a
+   non-wrapping two-column layout instead — the text column keeps
+   min-width: 0 (already set on .environment-row-main) plus the
+   overflow-wrap: anywhere protection below, and the actions column
+   (.environment-row-actions) keeps flex-shrink: 0 (already set). A
+   deliberate stacked layout below 480px is fine; accidental mid-header
+   wrapping is what this fixes. */
 .vulnerability-row-header {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: var(--space-5);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   padding: var(--space-4) var(--space-5);
   cursor: pointer;
+}
+
+@media (max-width: 480px) {
+  .vulnerability-row-header {
+    flex-wrap: wrap;
+  }
 }
 
 /* SPEC03 §8.3: a pasted-vector save with no label defaults its label to
