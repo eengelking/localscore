@@ -105,6 +105,7 @@ export function listVulnerabilities(): Promise<SavedVulnerability[]> {
 export function saveVulnerability(body: {
   vector: string;
   label?: string;
+  description?: string;
   cveId?: string;
   nvdJson?: unknown;
 }): Promise<SavedVulnerability> {

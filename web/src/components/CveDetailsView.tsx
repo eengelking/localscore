@@ -2,8 +2,6 @@ import { useState } from "react";
 import type { CveDetails } from "../types.js";
 import { Icon } from "./Icon.js";
 
-const DESCRIPTION_CLAMP_LENGTH = 320;
-
 function formatDate(iso: string | null): string | null {
   if (!iso) return null;
   return new Date(iso).toLocaleDateString();
@@ -17,10 +15,7 @@ function formatDate(iso: string | null): string | null {
 // render, no open-state persistence.
 export function CveDetailsView({ details, cveId }: { details: CveDetails; cveId?: string | null }) {
   const [open, setOpen] = useState(false);
-  const [expanded, setExpanded] = useState(false);
   const description = details.description ?? "";
-  const isLong = description.length > DESCRIPTION_CLAMP_LENGTH;
-  const shownDescription = isLong && !expanded ? `${description.slice(0, DESCRIPTION_CLAMP_LENGTH)}…` : description;
 
   const published = formatDate(details.published);
   const lastModified = formatDate(details.lastModified);
@@ -46,26 +41,9 @@ export function CveDetailsView({ details, cveId }: { details: CveDetails; cveId?
 
       {open && (
         <div className="cve-details-body">
-          {cveId && (
-            <a
-              href={`https://nvd.nist.gov/vuln/detail/${cveId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="cve-details-nvd-link"
-              aria-label={`View ${cveId} on NVD`}
-            >
-              NVD <Icon name="external-link" size={14} />
-            </a>
-          )}
-
           {description && (
             <div className="cve-details-description">
-              <p>{shownDescription}</p>
-              {isLong && (
-                <button type="button" className="link-button" onClick={() => setExpanded((v) => !v)}>
-                  {expanded ? "Show Less" : "Show More"}
-                </button>
-              )}
+              <p>{description}</p>
             </div>
           )}
 
@@ -109,6 +87,20 @@ export function CveDetailsView({ details, cveId }: { details: CveDetails; cveId?
                   </li>
                 ))}
               </ul>
+            </div>
+          )}
+
+          {cveId && (
+            <div className="cve-details-footer">
+              <a
+                href={`https://nvd.nist.gov/vuln/detail/${cveId}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="cve-details-nvd-link"
+                aria-label={`View ${cveId} on NVD`}
+              >
+                NVD <Icon name="external-link" size={14} />
+              </a>
             </div>
           )}
         </div>

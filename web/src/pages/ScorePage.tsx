@@ -126,7 +126,17 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
     }
   }
 
+  // docs/SPEC06.md §3.2: a rendered score result is only valid for the exact
+  // input that produced it. A new lookup (including a same-CVE refresh, since
+  // NVD data can change between fetches) invalidates whatever's showing
+  // below the tabs until "Score It" is pressed again — one clearing point
+  // here covers the lookup form, Major-CVE row clicks, and Refresh alike.
+  // Any future input source feeding into a score MUST clear `result` here or
+  // at its own point of change (see the vector textarea and NVD vector
+  // picker handlers below) rather than leaving a stale result on screen.
   async function performCveLookup(id: string, refresh: boolean) {
+    setResult(null);
+    setLookupSource(null);
     if (refresh) setRefreshing(true);
     else setLookingUp(true);
     setCveError(null);
@@ -278,7 +288,12 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
               className="textarea"
               placeholder={PLACEHOLDER}
               value={vector}
-              onChange={(e) => setVector(e.target.value)}
+              onChange={(e) => {
+                setVector(e.target.value);
+                // docs/SPEC06.md §3.2: editing the vector invalidates any
+                // result already showing for the previous vector text.
+                if (result) setResult(null);
+              }}
               rows={2}
             />
             <span className="hint">e.g. {PLACEHOLDER}</span>
@@ -335,7 +350,12 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
                 <NvdVectorPicker
                   vectors={cveLookup.vectors}
                   selectedIndex={selectedVectorIndex}
-                  onSelect={setSelectedVectorIndex}
+                  onSelect={(index) => {
+                    setSelectedVectorIndex(index);
+                    // docs/SPEC06.md §3.2: the result no longer corresponds
+                    // to the newly-selected vector.
+                    if (result) setResult(null);
+                  }}
                 />
               ) : (
                 <p className="vector-string">{cveLookup.primaryVector}</p>
@@ -416,8 +436,8 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
           onOpenInterview={onOpenInterview}
           defaultSaveLabel={lookupSource?.cveId}
           overwriteLabel={overwriteTarget ? (overwriteTarget.cveId ?? overwriteTarget.label) : undefined}
-          onSave={async (label) => {
-            await saveVulnerability({ vector: result.base.vector, label, cveId: lookupSource?.cveId });
+          onSave={async (label, description) => {
+            await saveVulnerability({ vector: result.base.vector, label, description, cveId: lookupSource?.cveId });
             refreshSavedVulnerabilities();
           }}
         />

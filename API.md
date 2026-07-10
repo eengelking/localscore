@@ -312,7 +312,9 @@ curl -X POST http://localhost:8080/api/vulnerabilities \
 }
 ```
 
-`label` and `cveId` are optional — omit `cveId` for a plain pasted vector (`source` becomes `"vector"` instead of `"nvd"`, and `label` falls back to the normalized vector string if not given). The score and normalized vector are always recomputed server-side from `vector`, not trusted from the request — the point of saving is a durable, re-scoreable record, not whatever a client happened to compute.
+`label`, `description`, and `cveId` are optional — omit `cveId` for a plain pasted vector (`source` becomes `"vector"` instead of `"nvd"`, and `label` falls back to the normalized vector string if not given). The score and normalized vector are always recomputed server-side from `vector`, not trusted from the request — the point of saving is a durable, re-scoreable record, not whatever a client happened to compute.
+
+A non-empty `description` (`docs/SPEC06.md` §3.1) is stored on both the insert and update path, winning over whatever the matched row already had and over the NVD prefill described below — this is how the Scoring page's save panel lets a description be set at save time, not only afterward via `PUT`. An empty or absent `description` changes nothing: an update keeps the existing row's value, a fresh NVD-sourced save still gets the prefill, and a fresh pasted-vector save stays empty.
 
 Saving is an **upsert**, not an insert: a second save with the same `cveId` (or the same normalized `vector` for a plain pasted-vector save) updates the existing saved entry in place — including reusing an NVD-lookup cache row for that CVE if one already exists — rather than creating a duplicate. The response's `overwritten` field is `true` when an already-*saved* entry was updated, `false` on a first save (`201`) or on a save that only reused a cache row (still `201`); an update to an already-saved entry returns `200`.
 
