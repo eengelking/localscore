@@ -32,6 +32,11 @@ export interface InterviewCompletion {
   "3.1": boolean;
 }
 
+export interface RaisesScores {
+  "4.0": boolean;
+  "3.1": boolean;
+}
+
 export interface Environment {
   id: number;
   name: string;
@@ -40,6 +45,7 @@ export interface Environment {
   createdAt: string;
   updatedAt: string;
   interviewCompletion: InterviewCompletion;
+  raisesScores: RaisesScores;
 }
 
 export interface Answer {
@@ -57,6 +63,7 @@ export interface DerivedMetric {
 export interface EnvironmentDetail extends Environment {
   answers: Answer[];
   metrics: DerivedMetric[];
+  raisingAnswers: Answer[];
 }
 
 export type Severity = "None" | "Low" | "Medium" | "High" | "Critical";
