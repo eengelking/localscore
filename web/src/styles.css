@@ -1508,14 +1508,35 @@ main {
 
 /* docs/SPEC04.md §4.4: names each answer responsible for the risk-warning
    callout, question text + chosen answer text (plain English, no metric
-   codes). */
+   codes). docs/SPEC06.md §2.2: indented under its .callout-section-intro so
+   the structure reads as "statement, then supporting evidence," with a
+   wider gap between pairs so multi-answer provenance doesn't blur together. */
 .raises-scores-list {
   margin: var(--space-3) 0 0;
-  padding: 0;
+  padding-left: var(--space-4);
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-3);
+}
+
+.raises-scores-list li {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+
+.raises-scores-question,
+.raises-scores-answer {
+  margin: 0;
+}
+
+.raises-scores-answer {
+  font-weight: 400;
+}
+
+.callout-section-intro p {
+  margin: 0;
 }
 
 /* Shown inside EnvironmentResultRow's expanded detail whenever an
@@ -1531,8 +1552,8 @@ main {
    flags) stacked in one card. A hairline divider + top padding separates a
    second portion from the first; a single portion has neither. */
 .callout-section + .callout-section {
-  margin-top: var(--space-3);
-  padding-top: var(--space-3);
+  margin-top: var(--space-5);
+  padding-top: var(--space-5);
   border-top: 1px solid var(--border);
 }
 
@@ -1549,8 +1570,16 @@ main {
   margin-top: var(--space-2);
 }
 
+/* The Q/A pair inside one .raises-scores-list item are two <p>s, so the
+   general .callout-section p + p rule above would otherwise put a gap
+   between them too — override back to none. The gap belongs only between
+   different pairs (the list's own `gap: var(--space-3)`), not within one. */
+.raises-scores-list li p + p {
+  margin-top: 0;
+}
+
 .red-flag-block + .red-flag-block {
-  margin-top: var(--space-3);
+  margin-top: var(--space-5);
 }
 
 /* Location: a short, muted, single-line place label under the environment

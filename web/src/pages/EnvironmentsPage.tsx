@@ -90,7 +90,7 @@ export function EnvironmentsPage({
             <input
               id="new-environment-name"
               className="input"
-              placeholder='e.g. "My Data Center"'
+              placeholder="e.g. My Data Center"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
@@ -104,7 +104,7 @@ export function EnvironmentsPage({
           <input
             id="new-environment-location"
             className="input"
-            placeholder='e.g. "us-east-1", "Building 4, rack 12"'
+            placeholder="e.g. us-east-1 or Building 4, rack 12"
             value={newLocation}
             onChange={(e) => setNewLocation(e.target.value)}
           />

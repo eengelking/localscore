@@ -115,17 +115,22 @@ export function EnvironmentEditPage({
           <div>
             {raisesScores && (
               <div className="callout-section">
-                <p>
-                  Because of how this environment is configured, vulnerabilities can score <strong>higher</strong>{" "}
-                  here than their published base score. These answers state the location has a lot to lose, which
-                  is worth reviewing, not necessarily a misconfiguration. <strong>localscore</strong> recommends
-                  having this configuration reviewed by a security professional.
-                </p>
+                <div className="callout-section-intro">
+                  <p>
+                    Because of how this environment is configured, vulnerabilities can score <strong>higher</strong>{" "}
+                    here than their published base score. These answers state the location has a lot to lose, which
+                    is worth reviewing, not necessarily a misconfiguration. <strong>localscore</strong> recommends
+                    having this configuration reviewed by a security professional.
+                  </p>
+                </div>
                 {raisingAnswerLabels.length > 0 && (
                   <ul className="raises-scores-list">
                     {raisingAnswerLabels.map(({ question, option }, i) => (
                       <li key={i}>
-                        <strong>{question}</strong> {option}
+                        <p className="raises-scores-question">
+                          <strong>Q:</strong> <strong>{question}</strong>
+                        </p>
+                        <p className="raises-scores-answer">A: {option}</p>
                       </li>
                     ))}
                   </ul>
@@ -134,14 +139,21 @@ export function EnvironmentEditPage({
             )}
             {redFlags.length > 0 && (
               <div className="callout-section">
-                <p className="callout-section-title">This configuration needs review</p>
+                <div className="callout-section-intro">
+                  <p className="callout-section-title">This configuration needs review</p>
+                </div>
                 {redFlags.map((flag) => (
                   <div key={flag.id} className="red-flag-block">
-                    <p>{RED_FLAG_COPY[flag.id] ?? flag.id}</p>
+                    <div className="callout-section-intro">
+                      <p>{RED_FLAG_COPY[flag.id] ?? flag.id}</p>
+                    </div>
                     <ul className="raises-scores-list">
                       {labelAnswers(flag.answers).map(({ question, option }, i) => (
                         <li key={i}>
-                          <strong>{question}</strong> {option}
+                          <p className="raises-scores-question">
+                            <strong>Q:</strong> <strong>{question}</strong>
+                          </p>
+                          <p className="raises-scores-answer">A: {option}</p>
                         </li>
                       ))}
                     </ul>
@@ -169,7 +181,7 @@ export function EnvironmentEditPage({
           <input
             id="environment-edit-location"
             className="input"
-            placeholder='e.g. "us-east-1", "Building 4, rack 12"'
+            placeholder="e.g. us-east-1 or Building 4, rack 12"
             value={location}
             onChange={(e) => setLocation(e.target.value)}
           />

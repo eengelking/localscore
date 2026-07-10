@@ -214,6 +214,79 @@ describe("environment CRUD, answers, and re-derivation", () => {
     expect(body.metrics).toEqual([]);
   });
 
+  describe("quote stripping (docs/SPEC06.md §2.1)", () => {
+    it("strips wrapping quotes from name and location on create", async () => {
+      const res = await app.request("/api/environments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: '"My Data Center"', location: "'us-east-1'" }),
+      });
+      expect(res.status).toBe(201);
+      const body = await res.json();
+      expect(body.name).toBe("My Data Center");
+      expect(body.location).toBe("us-east-1");
+    });
+
+    it("strips wrapping quotes from name and location on update", async () => {
+      const createRes = await app.request("/api/environments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Plain Name" }),
+      });
+      const created = await createRes.json();
+
+      const putRes = await app.request(`/api/environments/${created.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "“Renamed Lab”", location: "‘Building 4, rack 12’" }),
+      });
+      expect(putRes.status).toBe(200);
+      const body = await putRes.json();
+      expect(body.name).toBe("Renamed Lab");
+      expect(body.location).toBe("Building 4, rack 12");
+    });
+
+    it("fully strips nested matched quote pairs", async () => {
+      const res = await app.request("/api/environments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "\"'My Lab'\"" }),
+      });
+      const body = await res.json();
+      expect(body.name).toBe("My Lab");
+    });
+
+    it("preserves interior/unmatched quotes", async () => {
+      const res = await app.request("/api/environments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Bob's Lab", location: 'say "hi"' }),
+      });
+      const body = await res.json();
+      expect(body.name).toBe("Bob's Lab");
+      expect(body.location).toBe('say "hi"');
+    });
+
+    it("400s when a name is only quotes (becomes empty after stripping)", async () => {
+      const res = await app.request("/api/environments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: '""' }),
+      });
+      expect(res.status).toBe(400);
+    });
+
+    it("does not strip quotes from description", async () => {
+      const res = await app.request("/api/environments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: "Quoted Desc", description: '"kept as-is"' }),
+      });
+      const body = await res.json();
+      expect(body.description).toBe('"kept as-is"');
+    });
+  });
+
   // docs/SPEC05.md §3.2.1 (narrows docs/SPEC04.md §4.1) — the score-raising flag.
   describe("raisesScores (docs/SPEC05.md §3.2.1)", () => {
     async function createAndAnswer(name: string, answers: { questionId: string; optionId: string }[]) {
