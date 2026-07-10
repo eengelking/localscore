@@ -244,7 +244,9 @@ export function SavedVulnerabilitiesPage({
 
                 {viewing?.id === vuln.id && (
                   <div className="result-row-detail stack">
-                    {viewing.detail.details && <CveDetailsView details={viewing.detail.details} />}
+                    {viewing.detail.details && (
+                      <CveDetailsView details={viewing.detail.details} cveId={viewing.detail.cveId} />
+                    )}
                     {viewing.detail.vectors.length > 1 && (
                       <NvdVectorPicker
                         vectors={viewing.detail.vectors}

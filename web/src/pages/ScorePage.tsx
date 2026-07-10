@@ -345,7 +345,7 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
                 {scoring ? "Scoring…" : "Score It"}
               </button>
 
-              {cveLookup.details && <CveDetailsView details={cveLookup.details} />}
+              {cveLookup.details && <CveDetailsView details={cveLookup.details} cveId={cveLookup.cveId} />}
             </div>
           )}
         </div>
