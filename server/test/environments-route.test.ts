@@ -468,6 +468,88 @@ describe("environment CRUD, answers, and re-derivation", () => {
       expect(body.redFlags.map((f: { id: string }) => f.id)).toEqual(["hard_to_patch"]);
     });
 
+    it("triggers exposed_high_stakes on internet reachability + basic protections + high stakes", async () => {
+      const id = await createAndAnswer("Public And Bare", [
+        { questionId: "reachability", optionId: "internet" },
+        { questionId: "network_protections", optionId: "basic" },
+        { questionId: "confidentiality", optionId: "catastrophic" },
+      ]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.redFlags.map((f: { id: string }) => f.id)).toEqual(["exposed_high_stakes"]);
+      expect(body.redFlags[0].answers).toEqual(
+        expect.arrayContaining([
+          { questionId: "reachability", optionId: "internet" },
+          { questionId: "network_protections", optionId: "basic" },
+          { questionId: "confidentiality", optionId: "catastrophic" },
+        ]),
+      );
+    });
+
+    it("does not trigger exposed_high_stakes when any leg is missing", async () => {
+      const noStakes = await createAndAnswer("Public And Bare No Stakes", [
+        { questionId: "reachability", optionId: "internet" },
+        { questionId: "network_protections", optionId: "basic" },
+      ]);
+      let body = await (await app.request(`/api/environments/${noStakes}`)).json();
+      expect(body.redFlags).toEqual([]);
+
+      const layered = await createAndAnswer("Public But Layered", [
+        { questionId: "reachability", optionId: "internet" },
+        { questionId: "network_protections", optionId: "layered" },
+        { questionId: "confidentiality", optionId: "catastrophic" },
+      ]);
+      body = await (await app.request(`/api/environments/${layered}`)).json();
+      expect(body.redFlags).toEqual([]);
+
+      const internalOnly = await createAndAnswer("Internal And Bare", [
+        { questionId: "reachability", optionId: "internal_only" },
+        { questionId: "network_protections", optionId: "basic" },
+        { questionId: "confidentiality", optionId: "catastrophic" },
+      ]);
+      body = await (await app.request(`/api/environments/${internalOnly}`)).json();
+      expect(body.redFlags).toEqual([]);
+    });
+
+    it("triggers open_access_high_stakes on no-login access + high stakes", async () => {
+      const id = await createAndAnswer("Wide Open And Costly", [
+        { questionId: "accounts", optionId: "anyone" },
+        { questionId: "safety", optionId: "yes" },
+      ]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.redFlags.map((f: { id: string }) => f.id)).toEqual(["open_access_high_stakes"]);
+      expect(body.redFlags[0].answers).toEqual(
+        expect.arrayContaining([
+          { questionId: "accounts", optionId: "anyone" },
+          { questionId: "safety", optionId: "yes" },
+        ]),
+      );
+    });
+
+    it("does not trigger open_access_high_stakes on stakes alone or open access alone", async () => {
+      const stakesOnly = await createAndAnswer("Just Safety Critical", [{ questionId: "safety", optionId: "yes" }]);
+      let body = await (await app.request(`/api/environments/${stakesOnly}`)).json();
+      expect(body.redFlags).toEqual([]);
+
+      const accessOnly = await createAndAnswer("Just Open Access", [
+        { questionId: "accounts", optionId: "anyone" },
+      ]);
+      body = await (await app.request(`/api/environments/${accessOnly}`)).json();
+      expect(body.redFlags).toEqual([]);
+    });
+
+    it("suppresses open_access_high_stakes when there is no network path to the login at all", async () => {
+      const id = await createAndAnswer("Air Gapped Open Console", [
+        { questionId: "accounts", optionId: "anyone" },
+        { questionId: "safety", optionId: "yes" },
+        { questionId: "reachability", optionId: "no_network" },
+      ]);
+      const getRes = await app.request(`/api/environments/${id}`);
+      const body = await getRes.json();
+      expect(body.redFlags).toEqual([]);
+    });
+
     it("skipped questions never satisfy a condition", async () => {
       const id = await createAndAnswer("All Skipped", [
         { questionId: "confidentiality", optionId: "skip" },

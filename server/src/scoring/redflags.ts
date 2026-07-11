@@ -62,7 +62,50 @@ const RULES: RedFlagRule[] = [
     condition: (m) => matchingHighStakes(m).length > 0 && m.get("patch_effort") === "hard",
     provenance: (m) => [...matchingHighStakes(m), { questionId: "patch_effort", optionId: "hard" }],
   },
+  {
+    id: "exposed_high_stakes",
+    condition: (m) =>
+      matchingHighStakes(m).length > 0 &&
+      m.get("reachability") === "internet" &&
+      m.get("network_protections") === "basic",
+    provenance: (m) => [
+      ...matchingHighStakes(m),
+      { questionId: "reachability", optionId: "internet" },
+      { questionId: "network_protections", optionId: "basic" },
+    ],
+  },
+  {
+    id: "open_access_high_stakes",
+    // Air-gapped locations are exempted: "anyone can log in, no account
+    // needed" is a meaningfully different risk when there's no network path
+    // for an outsider to reach that login in the first place, versus the
+    // same open-access posture on a reachable system.
+    condition: (m) =>
+      matchingHighStakes(m).length > 0 &&
+      m.get("accounts") === "anyone" &&
+      m.get("reachability") !== "no_network",
+    provenance: (m) => [...matchingHighStakes(m), { questionId: "accounts", optionId: "anyone" }],
+  },
 ];
+
+// Candidates considered and rejected during the Q1-12 audit, kept here so the
+// reasoning isn't re-litigated on the next pass:
+//
+// - "interactive human use + safety-critical" (human_use=interactive +
+//   safety=yes): rejected. Interactivity is an attack-surface fact (a human
+//   is present to click something), not a readiness/exposure gap the way
+//   "basic protections" or "no account required" are. Pairing it with
+//   safety stakes would flag plenty of properly-secured, actively-staffed
+//   safety-critical sites for no operational reason, closer to flagging on
+//   stakes alone than the existing rules.
+// - "concentrated value density + uncertain recovery" (value_density=
+//   concentrated + recovery=uncertain): rejected. Value density is a v4
+//   supplemental/display-only signal, not one of the HIGH_STAKES_ANSWERS
+//   magnitudes (CR/IR/AR/safety), so this combination could fire for an
+//   environment with low confidentiality/integrity/availability stakes
+//   just because one box happens to be a hypervisor with a shaky recovery
+//   story. That's the same over-triggering failure mode CR/IR/AR=H hit in
+//   raising.ts, so it's left out.
 
 // Every questionId/optionId pair referenced anywhere in RULES/HIGH_STAKES_ANSWERS,
 // for the catalog-integrity test.
@@ -72,6 +115,10 @@ export const REFERENCED_ANSWERS: RedFlagAnswer[] = [
   { questionId: "availability", optionId: "immediate" },
   { questionId: "value_density", optionId: "concentrated" },
   { questionId: "patch_effort", optionId: "hard" },
+  { questionId: "reachability", optionId: "internet" },
+  { questionId: "reachability", optionId: "no_network" },
+  { questionId: "network_protections", optionId: "basic" },
+  { questionId: "accounts", optionId: "anyone" },
 ];
 
 export function computeRedFlags(answers: Answer[]): RedFlag[] {

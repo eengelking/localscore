@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { deleteEnvironment, getCatalog, getEnvironment, updateEnvironment } from "../api.js";
-import type { Catalog, EnvironmentDetail } from "../types.js";
+import type { Catalog, DerivedMetric, EnvironmentDetail } from "../types.js";
 import { ConfirmModal } from "../components/Modal.js";
 import { Icon } from "../components/Icon.js";
 
@@ -13,7 +13,55 @@ const RED_FLAG_COPY: Record<string, string> = {
     "Uptime is critical here, yet the resources are concentrated on single systems.",
   hard_to_patch:
     "The stakes are high but patching is slow and disruptive, so vulnerabilities stay open longer.",
+  exposed_high_stakes:
+    "This location is directly reachable from the internet with nothing beyond basic protections, but a compromise here would be catastrophic.",
+  open_access_high_stakes:
+    "Anyone can log in here without an account, but a compromise here would be catastrophic.",
 };
+
+// Canonical display order for derived environmental metrics, covering both
+// the v4.0 and v3.1 metric names the catalog emits. Anything unanticipated
+// falls back to the order it appears in the API response.
+const METRIC_ORDER = [
+  "MAV",
+  "MAC",
+  "MAT",
+  "MPR",
+  "MUI",
+  "MVC",
+  "MC",
+  "MVI",
+  "MI",
+  "MVA",
+  "MA",
+  "MSC",
+  "MSI",
+  "MSA",
+  "MS",
+  "CR",
+  "IR",
+  "AR",
+  "S",
+  "R",
+  "V",
+  "RE",
+];
+
+function formatProfile(metrics: DerivedMetric[], version: "4.0" | "3.1"): string {
+  return metrics
+    .filter((m) => m.cvssVersion === version)
+    .slice()
+    .sort((a, b) => {
+      const ai = METRIC_ORDER.indexOf(a.metric);
+      const bi = METRIC_ORDER.indexOf(b.metric);
+      if (ai === -1 && bi === -1) return 0;
+      if (ai === -1) return 1;
+      if (bi === -1) return -1;
+      return ai - bi;
+    })
+    .map((m) => `${m.metric}:${m.value}`)
+    .join("/");
+}
 
 export function EnvironmentEditPage({
   environmentId,
@@ -32,6 +80,7 @@ export function EnvironmentEditPage({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [calloutOpen, setCalloutOpen] = useState(false);
 
   useEffect(() => {
     getEnvironment(environmentId)
@@ -99,6 +148,12 @@ export function EnvironmentEditPage({
   const raisingAnswerLabels = labelAnswers(environment.raisingAnswers);
   const redFlags = environment.redFlags;
   const showCallout = raisesScores || redFlags.length > 0;
+  const calloutSummary =
+    raisesScores && redFlags.length > 0
+      ? "This environment can score higher than base, and its configuration needs review."
+      : raisesScores
+        ? "This environment can score higher than its published base score."
+        : "This environment's configuration needs review.";
 
   return (
     <div className="stack">
@@ -110,9 +165,23 @@ export function EnvironmentEditPage({
       </div>
 
       {showCallout && (
-        <div className="callout-warning">
-          <Icon name="warning" size={18} />
-          <div>
+        <div className="callout-warning callout-disclosure">
+          <button
+            type="button"
+            className="callout-disclosure-summary"
+            aria-expanded={calloutOpen}
+            onClick={() => setCalloutOpen((v) => !v)}
+          >
+            <span className="callout-disclosure-summary-text">
+              <Icon name="warning" size={18} />
+              {calloutSummary}
+            </span>
+            <span className={`disclosure ${calloutOpen ? "is-open" : ""}`} aria-hidden="true">
+              <Icon name="chevron" size={20} />
+            </span>
+          </button>
+          {calloutOpen && (
+          <div className="callout-disclosure-body">
             {raisesScores && (
               <div className="callout-section">
                 <div className="callout-section-intro">
@@ -162,6 +231,7 @@ export function EnvironmentEditPage({
               </div>
             )}
           </div>
+          )}
         </div>
       )}
 
@@ -229,6 +299,15 @@ export function EnvironmentEditPage({
               ? "This environment has a profile. Re-answer to update it."
               : "No answers yet. Start the interview to build this environment's profile."}
           </p>
+          {(["4.0", "3.1"] as const).map((version) => {
+            const profile = formatProfile(environment.metrics, version);
+            if (!profile) return null;
+            return (
+              <p key={version} className="vector-string environment-profile-line">
+                CVSS {version}: {profile}
+              </p>
+            );
+          })}
         </div>
         <button type="button" className="button button-primary" onClick={() => onOpenInterview(environmentId)}>
           {hasStarted ? "Re-Answer Interview" : "Answer Interview"}
