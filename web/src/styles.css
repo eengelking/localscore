@@ -939,12 +939,28 @@ main {
   gap: var(--space-3);
 }
 
+/* Non-wrapping two-column layout, same fix as .vulnerability-row-header:
+   flex-wrap: wrap let a long markdown description push the edit/delete
+   action cluster onto its own line below the card content. The text column
+   keeps min-width: 0 (.environment-row-main) plus overflow-wrap: anywhere
+   below, and the actions column (.environment-row-actions) keeps
+   flex-shrink: 0. A deliberate stacked layout is restored below 480px. */
 .environment-row {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: var(--space-5);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+}
+
+@media (max-width: 480px) {
+  .environment-row {
+    flex-wrap: wrap;
+  }
+}
+
+.environment-row .environment-name {
+  overflow-wrap: anywhere;
 }
 
 .environment-row-main {
@@ -1593,6 +1609,69 @@ main {
 
 .red-flag-block + .red-flag-block {
   margin-top: var(--space-5);
+}
+
+/* Environment edit page's two-tier risk callout, collapsed by default so a
+   multi-answer-provenance callout doesn't push the name/description form
+   down the page. Same disclosure interaction as .cve-details-summary
+   (button + aria-expanded + rotating chevron), but keeps .callout-warning's
+   red-accented visual language on the summary bar itself instead of the
+   neutral surface-sunken treatment .cve-details-summary uses. */
+.callout-disclosure {
+  display: block;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.callout-disclosure-summary {
+  appearance: none;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--warning-wash);
+  border: 1px solid var(--warning-wash);
+  color: var(--ink);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.15s ease;
+}
+
+.callout-disclosure-summary:hover {
+  border-color: var(--action-red-text);
+}
+
+.callout-disclosure-summary-text {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Overrides .callout-warning svg's red coloring for the chevron specifically
+   — it's a neutral disclosure affordance, not part of the warning glyph. */
+.callout-disclosure-summary .disclosure svg {
+  color: var(--ink-secondary);
+  margin-top: 0;
+}
+
+.callout-disclosure-body {
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--warning-wash);
+  border: 1px solid var(--warning-wash);
+}
+
+/* One .vector-string line per CVSS version under the interview card's
+   status paragraph, showing the derived environmental profile. */
+.environment-profile-line {
+  margin-top: var(--space-2);
 }
 
 /* Location: a short, muted, single-line place label under the environment
