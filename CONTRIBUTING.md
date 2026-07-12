@@ -5,8 +5,9 @@ Thanks for your interest in localscore. This document covers how to get set up, 
 ## Before you start
 
 - [`README.md`](./README.md) explains what the project does and why.
-- [`CLAUDE.md`](./CLAUDE.md) is the deeper technical reference, covering architecture, API surface, the design system, testing/container/release procedures, and known gotchas. It was written to brief an AI coding agent with no prior context, which makes it equally useful for a human contributor doing the same thing. Skim it before making a non-trivial change.
-- [`docs/API.md`](./docs/API.md) documents every API route with curl examples.
+- [`CLAUDE.md`](./CLAUDE.md) is the deeper technical reference, covering architecture invariants, the mandated tech stack, API surface, and known gotchas. It was written to brief an AI coding agent with no prior context, which makes it equally useful for a human contributor doing the same thing. Skim it before making a non-trivial change.
+- [`docs/API.md`](./docs/API.md) documents every API route with curl examples. [`docs/BACKEND.md`](./docs/BACKEND.md) and [`docs/FRONTEND.md`](./docs/FRONTEND.md) hold deeper implementation reference for `server/` and `web/`.
+- Operational workflows (testing, releasing, Dependabot handling, documentation upkeep, image attestation) live as project skills under `.claude/skills/`, not in `CLAUDE.md`. See that directory if you're picking up one of those tasks.
 
 ## Development setup
 
@@ -37,7 +38,7 @@ These are exactly what CI (`.github/workflows/ci.yml`) runs on every pull reques
 
 To run a single test file: `npm run test --workspace server -- test/catalog.test.ts` (or `--workspace web`).
 
-If you're changing anything in `web/`, also see `CLAUDE.md`'s "Verifying frontend changes" section. This repo doesn't have an automated visual regression suite, so UI changes are verified by actually driving them in a real browser via Playwright, screenshotted in both light and dark theme.
+If you're changing anything in `web/`, also see the `testing` skill's `ui-verification.md` resource. This repo doesn't have an automated visual regression suite, so UI changes are verified by actually driving them in a real browser via Playwright, screenshotted in both light and dark theme.
 
 ## Branching & commit conventions
 
@@ -61,7 +62,7 @@ For anything beyond a small fix, such as a new feature, a schema change, a depen
 A few things worth checking against before proposing something large:
 
 - **The stack is intentionally small**: Hono + better-sqlite3 on the backend, React + Vite with plain CSS (no UI framework) on the frontend, single SQLite file, single container. See `CLAUDE.md`'s "Mandated tech stack" and "Architecture" sections. A proposal that adds a second database, a heavy component library, or a second service should come with a strong justification.
-- **UI work goes through a design pass first.** Any new screen or visual change should use the `frontend-design` skill (and the `dataviz` skill for anything color-coding data) before code is written. See `CLAUDE.md`'s "Frontend design" section for why and how this repo's design system evolved the way it did.
+- **UI work goes through a design pass first.** Any new screen or visual change should use the `frontend-design` skill (and the `dataviz` skill for anything color-coding data) before code is written. See `docs/FRONTEND.md`'s "Design system" section for how this repo's design system evolved the way it did.
 - **Scoring changes are held to a high bar.** The scoring engine must match FIRST's reference CVSS calculators exactly, so any change here needs reference-vector test coverage, not just "it looks right."
 
 ## Code of Conduct
