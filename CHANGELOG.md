@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+## [1.1.4] - 2026-07-12
+
+- Bump `vite` from 5.4.21 to 8.1.4 (major, Dependabot; verified with a full local build and a running-server smoke test of frontend asset serving, the catalog API, and a DB round trip). Note: this alone doesn't clear the known `npm audit` vulnerabilities, see "Known gotchas" in `CLAUDE.md`, since those are rooted in `vitest`'s bundled dependencies, not `vite` directly.
+
 ## [1.1.3] - 2026-07-12
 
 - Bump `better-sqlite3` from 11.10.0 to 12.11.1 (major, Dependabot; verified against the built container image, not just CI, since it's a native module).
@@ -57,7 +61,8 @@ First stable release. The product works end to end:
 
 - Initial project scaffold: monorepo, SQLite database and migrations, question catalog, environment CRUD, the CVSS scoring engine, and the first version of the frontend (environments list, interview wizard, results screen).
 
-[Unreleased]: https://github.com/eengelking/localscore/compare/1.1.3...HEAD
+[Unreleased]: https://github.com/eengelking/localscore/compare/1.1.4...HEAD
+[1.1.4]: https://github.com/eengelking/localscore/compare/1.1.3...1.1.4
 [1.1.3]: https://github.com/eengelking/localscore/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/eengelking/localscore/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/eengelking/localscore/compare/1.1.0...1.1.1
