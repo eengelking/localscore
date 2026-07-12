@@ -12,7 +12,8 @@ function ensureDataDir(dataDir: string) {
     mkdirSync(dataDir, { recursive: true });
   } catch (err) {
     throw new Error(
-      `DATA_DIR "${dataDir}" is not writable. Mount a volume there and check permissions.\n${String(err)}`,
+      `DATA_DIR "${dataDir}" is not writable. Mount a volume there and check permissions.`,
+      { cause: err },
     );
   }
 }
