@@ -2,11 +2,11 @@
 
 **localscore** turns a CVSS base score into the score that actually applies to *your* systems.
 
-A vulnerability scanner reports a 10.0 and everyone panics — but the CVSS base score describes a worst-case target: reachable from anywhere, full of secrets, and impossible to lose. Most real systems don't look like that. CVSS has environmental metrics built in to correct for this, but the official calculators are expert-facing and almost nobody uses them.
+A vulnerability scanner reports a 10.0 and everyone panics, but the CVSS base score describes a worst-case target: reachable from anywhere, full of secrets, and impossible to lose. Most real systems don't look like that. CVSS has environmental metrics built in to correct for this, but the official calculators are expert-facing and almost nobody uses them.
 
 localscore fixes that by asking plain-English questions about a location instead of CVSS jargon, then applying the answers to any vulnerability you paste in.
 
-> Self-hosted, single container, SQLite on a volume. No account, no cloud dependency — the only optional network call is looking up a CVE by ID from NVD.
+> Self-hosted, single container, SQLite on a volume. No account, no cloud dependency, other than the only optional network call: looking up a CVE by ID from NVD.
 
 <p align="center">
   <img src="images/example.png" alt="localscore showing a CVE's base score next to modified scores for four environments, each with its own severity and delta" width="480">
@@ -15,21 +15,21 @@ localscore fixes that by asking plain-English questions about a location instead
 ## How it works
 
 1. **Define a location.** Give it a name, e.g. *"My Data Center"*, *"Retail Kiosks"*, *"Dev Lab"*.
-2. **Answer the interview.** ~12 short questions — how reachable it is, whether it needs a login, what happens if data on it leaks or the box goes down, whether compromising it gives an attacker a path to anything else. No CVSS knowledge required.
+2. **Answer the interview.** ~12 short questions covering how reachable it is, whether it needs a login, what happens if data on it leaks or the box goes down, and whether compromising it gives an attacker a path to anything else. No CVSS knowledge required.
 3. **Repeat for each location you care about.** Every environment gets its own saved profile.
-4. **Paste a CVSS vector, or look one up by CVE ID.** localscore parses the base score and, for every environment you've defined, shows the *modified* score next to it — with a plain-English breakdown of exactly which answers caused each change. A CVE lookup that finds multiple disagreeing NVD-reported scores lets you pick which one to score.
+4. **Paste a CVSS vector, or look one up by CVE ID.** localscore parses the base score and, for every environment you've defined, shows the *modified* score next to it, with a plain-English breakdown of exactly which answers caused each change. A CVE lookup that finds multiple disagreeing NVD-reported scores lets you pick which one to score.
 
-A 9.8 "Critical" against a production database might land at 9.8 for your data center and 0.0 for a disposable dev environment that gets rebuilt from a pipeline every morning. Same vulnerability, two very different stories — and now you can see both.
+A 9.8 "Critical" against a production database might land at 9.8 for your data center and 0.0 for a disposable dev environment that gets rebuilt from a pipeline every morning. Same vulnerability, two very different stories, and now you can see both.
 
 ## Features
 
-- **The interview & environment profiles.** ~12 plain-English questions per location, saved as an editable profile — revisit and re-answer at any time, with prior answers pre-selected.
+- **The interview & environment profiles.** ~12 plain-English questions per location, saved as an editable profile that you can revisit and re-answer at any time, with prior answers pre-selected.
 - **Scoring.** Paste any CVSS v4.0, v3.1, or v3.0 vector (v3.0 is scored with v3.1's equations, disclosed in the UI), or look one up by CVE ID. Every defined environment gets its own modified score, animated from base to modified on load, with a plain-English "why" breakdown of exactly which answers moved the number and by how much.
 - **Risk warnings.** Environments are flagged two independent ways: when an answer can legitimately *raise* a score above base (e.g. "compromising this is a stepping stone to something bigger"), and when a combination of high stakes plus a readiness gap (uncertain recovery, concentrated availability, hard-to-patch systems) suggests the profile itself deserves a second look.
-- **NVD CVE lookup** — cache-first, throttled, and tolerant of NVD being unreachable, with description, references, and affected products pulled from the same cached response. Supports an optional `NVD_API_KEY` to raise the lookup rate limit.
-- **A Major CVEs feed** — the 10 most critical CVEs published in the last 30 days, refreshed daily, one click away from scoring against your environments.
+- **NVD CVE lookup.** Cache-first, throttled, and tolerant of NVD being unreachable, with description, references, and affected products pulled from the same cached response. Supports an optional `NVD_API_KEY` to raise the lookup rate limit.
+- **A Major CVEs feed.** The 10 most critical CVEs published in the last 30 days, refreshed daily, one click away from scoring against your environments.
 - **Saved vulnerabilities** with full-content search (label, CVE ID, vector, description, and the cached NVD payload), type/severity filters, inline editing, and markdown-rendered descriptions.
-- **A design system with light/dark theming** and offline-aware UI — CVE lookup and the Major CVEs tab disable themselves with an explanatory tooltip when there's no network, rather than hanging or erroring.
+- **A design system with light/dark theming** and offline-aware UI. CVE lookup and the Major CVEs tab disable themselves with an explanatory tooltip when there's no network, rather than hanging or erroring.
 - **A container image under 300 MB** that builds and runs cleanly under Podman or Docker, with its own `HEALTHCHECK`, and a **published image** on Docker Hub so you can run it without building locally.
 
 ## Running it
@@ -62,9 +62,9 @@ podman build --format docker -t localscore .
 
 Then run it the same way, swapping `docker.io/eengelking/localscore:latest` for the locally built `localscore` tag.
 
-`PORT` and `DATA_DIR` are configurable (see `.env.example`); there's also an optional `NVD_API_KEY` that raises NVD's CVE-lookup rate limit above the default ~5 requests/30s — pass it through with `-e NVD_API_KEY=...` if you hit that limit.
+`PORT` and `DATA_DIR` are configurable (see `.env.example`); there's also an optional `NVD_API_KEY` that raises NVD's CVE-lookup rate limit above the default ~5 requests/30s. Pass it through with `-e NVD_API_KEY=...` if you hit that limit.
 
-Any OCI-compatible tool (Docker included) works the same way — the image and `compose.yaml` aren't Podman-specific. Also see `compose.yaml` for the same setup as a single `podman compose up` (or `docker compose up`).
+Any OCI-compatible tool (Docker included) works the same way; the image and `compose.yaml` aren't Podman-specific. Also see `compose.yaml` for the same setup as a single `podman compose up` (or `docker compose up`).
 
 ## Developing locally
 
@@ -76,23 +76,31 @@ npm run dev:server   # API on :8080, reloads on change
 npm run dev:web      # Vite dev server, proxies /api to :8080
 ```
 
-`npm test`, `npm run typecheck`, and `npm run lint` all run against both workspaces — the same checks a GitHub Actions CI run enforces on every pull request. See [`CLAUDE.md`](./CLAUDE.md) for the full command reference and architecture notes, and [`CONTRIBUTING.md`](./CONTRIBUTING.md) for how to propose and submit changes.
+`npm test`, `npm run typecheck`, and `npm run lint` all run against both workspaces, the same checks a GitHub Actions CI run enforces on every pull request. See [`CLAUDE.md`](./CLAUDE.md) for the full command reference and architecture notes, and [`CONTRIBUTING.md`](./CONTRIBUTING.md) for how to propose and submit changes.
 
 ## Using the API directly
 
-Every route the UI uses — environments, the interview, scoring, CVE lookup, saved vulnerabilities — is also usable directly. See [`docs/API.md`](./docs/API.md) for curl examples and response shapes for every route.
+Every route the UI uses, including environments, the interview, scoring, CVE lookup, and saved vulnerabilities, is also usable directly. See [`docs/API.md`](./docs/API.md) for curl examples and response shapes for every route.
 
 ## What it does *not* do
 
-- It doesn't scan anything or talk to your infrastructure — you tell it about a location by answering questions, and you paste in vectors or CVE IDs.
-- It doesn't guess whether an exploit exists in the wild (CVSS threat/temporal metrics) — those are per-vulnerability, not per-environment, and are shown read-only from whatever you paste in.
+- It doesn't scan anything or talk to your infrastructure. You tell it about a location by answering questions, and you paste in vectors or CVE IDs.
+- It doesn't guess whether an exploit exists in the wild (CVSS threat/temporal metrics). Those are per-vulnerability, not per-environment, and are shown read-only from whatever you paste in.
 - It doesn't support CVSS v2.0 (NVD stopped assigning it in 2022).
 - It doesn't require an internet connection, except for the optional "look up this CVE by ID" convenience.
 
 ## Contributing
 
-Bug reports, feature ideas, and pull requests are welcome — see [`CONTRIBUTING.md`](./CONTRIBUTING.md) for dev setup, test/lint commands, branch conventions, and PR expectations.
+Bug reports, feature ideas, and pull requests are welcome. See [`CONTRIBUTING.md`](./CONTRIBUTING.md) for dev setup, test/lint commands, branch conventions, and PR expectations. See [`CHANGELOG.md`](./CHANGELOG.md) for a version-by-version history of what shipped.
 
 ## Why this exists
 
-Longer background on the problem this tool solves: [*"That CVSS 10 Might Actually Be a Zero"*](https://edengelking.com/blog/that-cvss-10-might-actually-be-a-zero) — the base score is only one input into a much bigger scoring system, and the environmental metrics are the part almost nobody reads.
+Longer background on the problem this tool solves, from a series of posts on my blog:
+
+- [*"That CVSS 10 Might Actually Be a Zero"*](https://edengelking.com/blog/that-cvss-10-might-actually-be-a-zero): the base score is only one input into a much bigger scoring system, and the environmental metrics are the part almost nobody reads.
+- [*"The CIA Triad Is Why Severity Means Anything"*](https://edengelking.com/blog/the-cia-triad-is-why-severity-means-anything): a CVSS score isn't one number, it's an impact across confidentiality, integrity, and availability, and knowing which leg of that triad a vulnerability actually threatens in your environment is what turns a scanner output into a real risk assessment.
+- [*"Environmental Scores Can Go Up, Not Just Down"*](https://edengelking.com/blog/environmental-scores-can-go-up-not-just-down): the flip side of the first post. Environmental context can also *raise* a score, when a system is more exposed or more critical than its base score assumes, and this is the post where localscore itself gets introduced.
+
+### A personal, educational project
+
+localscore is a personal project, built to demonstrate the ideas in the posts above. It's not a commercial product, and I have no plans to sell it or monetize it. It's released under the MIT license, as-is, with no warranty. That said, it's built to be genuinely useful: it's viable to self-host and run against your own environments to better understand how exposure, data sensitivity, and criticality change a vulnerability's real severity. Use it, learn from it, adapt it, just know it comes with no guarantees attached.
