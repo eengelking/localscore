@@ -30,11 +30,12 @@ Filing an issue is not authorization to work on it — wait for the user to say 
 
 1. **Notice and triage.** `gh pr list --author app/dependabot[bot]` lists the open ones. Read the PR body for the semver jump (patch/minor/major) and what changed, Dependabot includes release notes or a changelog link for most ecosystems.
 2. **Let the PR's own CI run first.** Don't act on a Dependabot PR before its check has resolved. A red check on a dependency bump is a real signal, most likely a genuine incompatibility, not project flakiness, and is worth investigating before doing anything else with that PR.
-3. **Patch and minor bumps, once CI is green, are authorized for autonomous handling: no need to check with the user first.**
+3. **Check whether the branch is behind `main` before doing anything else with it.** `gh pr view <number> --json mergeStateStatus` reports `BEHIND` when GitHub would otherwise show a "This branch is out-of-date with the base branch" banner in the UI. If so, run `gh pr update-branch <number>` (merges `main` into the Dependabot branch) and wait for that branch's CI to finish again before proceeding. An out-of-date branch can hide a conflict with something that merged into `main` after Dependabot opened the PR, and a release image built from stale code defeats the point of building from that branch in the first place.
+4. **Patch and minor bumps, once CI is green and the branch is up to date, are authorized for autonomous handling: no need to check with the user first.**
    - Treat it like any other code-changing PR under "Publishing a release image" below: check out the branch, bump `package.json`/`server/package.json`/`web/package.json`'s version (a patch bump, consistent with a dependency bump being a small change by default), add the matching `CHANGELOG.md` entry describing what was bumped, and build/tag/push the release image from that branch.
    - Push that version-bump commit onto the Dependabot branch, then once CI is green again, merge the PR yourself, the one documented exception to "merging stays manual" above, since the user has pre-authorized this category.
    - Finish the same as any other release: tag the merge commit in git and publish the GitHub Release, per "Publishing a release image".
-4. **Major bumps don't get merged or built automatically.** Summarize the breaking-change risk for the user (check "Known gotchas" below, e.g. the `vite`/`vitest` major-bump note) and wait for an explicit go-ahead, the same as any other major-version decision on this project.
+5. **Major bumps don't get merged or built automatically.** Summarize the breaking-change risk for the user (check "Known gotchas" below, e.g. the `vite`/`vitest` major-bump note) and wait for an explicit go-ahead, the same as any other major-version decision on this project.
 
 ## What this project is
 
