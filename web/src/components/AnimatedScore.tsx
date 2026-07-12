@@ -21,6 +21,12 @@ export function AnimatedScore({ from, to, size = "lg" }: { from: number; to: num
 
   useEffect(() => {
     if (prefersReducedMotion()) {
+      // This effect drives a requestAnimationFrame loop syncing `value` to
+      // the DOM's timing APIs, a legitimate external-system effect, not a
+      // derived-render calculation. Snapping straight to the final value
+      // when motion is reduced is the same kind of synchronous update as
+      // the animation ticks below, just skipping the animation itself.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValue(to);
       return;
     }

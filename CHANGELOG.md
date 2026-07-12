@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+## [1.2.2] - 2026-07-12
+
+- Bump `eslint-plugin-react-hooks` from 5 to 7 (major, Dependabot-originated but hand-verified). Fixes the new `react-hooks/set-state-in-effect` rule's real violations: `InterviewPage.tsx`'s help-modal reset now adjusts state during render (React's recommended pattern for resetting state on another state value changing) instead of an effect; a redundant `setMajorCvesLoading(true)` was removed from `ScorePage.tsx`'s mount-only effect; two remaining cases (`ScorePage.tsx`'s offline tab redirect, `AnimatedScore.tsx`'s reduced-motion snap) are legitimate sync-to-external-system effects and are suppressed with an inline justification rather than restructured. Verified end to end with Playwright in both light and dark theme (interview help-modal flow, score-reveal animation in both normal and reduced-motion modes). Closes #73; supersedes #58.
+
 ## [1.2.1] - 2026-07-12
 
 - Bump `eslint` and `@eslint/js` from 9 to 10 together (major, Dependabot-originated but hand-verified). Fixes two real violations the new default rules surfaced: attach the caught error as `cause` in `server/src/db/index.ts`'s `DATA_DIR` error (`preserve-caught-error`), and drop a dead initializer in `server/src/routes/health.ts` (`no-useless-assignment`). Closes #72; supersedes #63 and #69.
@@ -73,7 +77,8 @@ First stable release. The product works end to end:
 
 - Initial project scaffold: monorepo, SQLite database and migrations, question catalog, environment CRUD, the CVSS scoring engine, and the first version of the frontend (environments list, interview wizard, results screen).
 
-[Unreleased]: https://github.com/eengelking/localscore/compare/1.2.1...HEAD
+[Unreleased]: https://github.com/eengelking/localscore/compare/1.2.2...HEAD
+[1.2.2]: https://github.com/eengelking/localscore/compare/1.2.1...1.2.2
 [1.2.1]: https://github.com/eengelking/localscore/compare/1.2.0...1.2.1
 [1.2.0]: https://github.com/eengelking/localscore/compare/1.1.5...1.2.0
 [1.1.5]: https://github.com/eengelking/localscore/compare/1.1.4...1.1.5
