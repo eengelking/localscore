@@ -47,13 +47,13 @@ The product works end-to-end: an npm-workspaces monorepo (`server/` = Hono + bet
 
 ## Mandated tech stack
 
-- **Runtime**: Node 22 LTS, TypeScript everywhere, strict mode.
+- **Runtime**: Node 24 LTS, TypeScript everywhere, strict mode.
 - **Backend**: Hono (Fastify only if Hono proves awkward) serving both the JSON API and the built frontend static assets from one process on one port (default 8080).
 - **Frontend**: React + Vite, built to static assets at image build time. Plain CSS (custom properties for theming) or a tiny utility layer — no heavy UI framework, no large-runtime component library. Use the `frontend-design` skill for any UI/visual work — see "Frontend design" under Frontend below.
 - **Database**: SQLite via `better-sqlite3`, single file at `/data/localscore.db`, WAL mode. Migrations are sequential numbered SQL files (`migrations/0001_*.sql`, …) applied at startup inside a transaction, tracked in a `schema_migrations` table.
 - **Scoring**: MUST match FIRST's reference calculators exactly (v4.0 and v3.1). Use an existing maintained library (`ae-cvss-calculator` is the leading candidate) or vendor FIRST's reference code, validated against reference test vectors before committing. Hand-rolled scoring math without reference-validated test vectors is explicitly not acceptable.
 - **Testing**: Vitest. Tests are a release gate, enforced both locally and by CI.
-- **Container**: multi-stage Dockerfile (plain OCI — builds and runs under Docker or Podman), non-root user, `node:22-slim`/alpine runtime, final image < 300 MB, `HEALTHCHECK` on `/api/health`. The maintainer runs Podman day-to-day, so use `podman`/`podman compose` in docs and examples.
+- **Container**: multi-stage Dockerfile (plain OCI — builds and runs under Docker or Podman), non-root user, `node:24-slim`/alpine runtime, final image < 300 MB, `HEALTHCHECK` on `/api/health`. The maintainer runs Podman day-to-day, so use `podman`/`podman compose` in docs and examples.
 
 No external services, no telemetry. The only outbound network call anywhere in the app is the optional NVD CVE lookup.
 
@@ -223,7 +223,7 @@ Run from the repo root unless noted.
 - `npm run typecheck` / `npm run lint` — both workspaces. CI runs all four (`lint`, `typecheck`, `test`, `build`) on every PR and push to `main`.
 - `podman build --format docker -t localscore .` then `podman run ...` — container build. The maintainer uses **Podman, not Docker**; the Dockerfile/compose.yaml are plain OCI and must keep working under Docker too, but write any documentation/examples with `podman`. **`--format docker` is required for a direct `podman build`** — Podman's default OCI build format silently drops the Dockerfile's `HEALTHCHECK` instruction with just a warning, no error.
 - `podman compose up` — builds and runs via `compose.yaml`. Verified this does **not** need `--format docker`: going through the external `docker-compose` provider already produces a Docker-format image with `HEALTHCHECK` intact (confirmed by `podman inspect` reporting `healthy`). So the flag only matters for a bare `podman build`, not for compose.
-- Published image: `docker.io/eengelking/localscore` (tags `latest`, `1.1.5`) — pushed with `podman push`. See "Publishing a release image" below for the required tag/push/verify procedure — never push an untagged or `latest`-only build.
+- Published image: `docker.io/eengelking/localscore` (tags `latest`, `1.2.0`) — pushed with `podman push`. See "Publishing a release image" below for the required tag/push/verify procedure — never push an untagged or `latest`-only build.
 
 Verified end-to-end: both `podman build --format docker` + `podman run`, and `podman compose up`, produce a container `podman inspect` reports as `healthy`, with the API/frontend reachable and a full create-environment round trip working.
 

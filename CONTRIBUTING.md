@@ -10,7 +10,7 @@ Thanks for your interest in localscore. This document covers how to get set up, 
 
 ## Development setup
 
-Prerequisites: Node.js ≥22 (a `.nvmrc` is checked in, so `nvm use` picks it up automatically).
+Prerequisites: Node.js ≥24 (a `.nvmrc` is checked in, so `nvm use` picks it up automatically).
 
 ```bash
 git clone https://github.com/eengelking/localscore.git
