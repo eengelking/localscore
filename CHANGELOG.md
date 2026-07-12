@@ -8,6 +8,14 @@ All notable changes to this project are documented here. Format loosely follows 
 
 - Bump `@vitejs/plugin-react` from 4.7.0 to 6.0.3 (major, Dependabot-originated but hand-verified). Breaking changes across 5.0.0 and 6.0.0 are all dev-server/Babel-internals concerns (Oxc-based Fast Refresh transform, Babel dropped as a dependency, a Node >=20.19/Vite >=7 floor) that don't touch this project's usage: `web/vite.config.ts` calls `react()` with no options, no custom `exclude`, and no Babel config. Verified with lint/typecheck/full test suite (166 tests) and a production build producing byte-identical output to the pre-bump build.
 
+## [1.2.6] - 2026-07-12
+
+- Bump `@hono/node-server` from 1.19.14 to 2.0.8 (major, Dependabot-originated but hand-verified). Breaking changes were minimal: a Node >=20 requirement (already on Node 24) and removal of the unused Vercel adapter; `serve()` and `serveStatic` (the only two exports this project uses, in `server/src/index.ts`) kept their API unchanged. Verified with lint/typecheck/full test suite (166 tests)/build, plus a running-server smoke test (`/api/health`, the built frontend's `index.html`, and `/api/catalog`) against the actual HTTP server this dependency implements.
+
+## [1.2.5] - 2026-07-12
+
+- Bump `vitest` from 2.1.9 to 4.1.10 (major, Dependabot-originated but hand-verified). No config changes needed: neither `server/vitest.config.ts` nor `web/vitest.config.ts` uses coverage, pool/thread options, or workspace/projects config, and no test file relies on the mocking APIs that changed behavior (`vi.useFakeTimers`, `mockReset`, `spyOn` on an already-mocked method). The one `toThrowError` usage in `server/test/scoring.test.ts` passes a regex, not an `Error` instance, so v3's stricter error-equality rules don't apply. Also resolves the `npm audit` findings rooted in vitest's old bundled esbuild noted in this file's "Known gotchas" (5 vulnerabilities -> 2). Lint, typecheck, full test suite (166 tests), and build all verified clean with no code changes required.
+
 ## [1.2.4] - 2026-07-12
 
 - Bump `marked` from 18.0.5 to 18.0.6 (patch, Dependabot).
@@ -89,7 +97,10 @@ First stable release. The product works end to end:
 
 - Initial project scaffold: monorepo, SQLite database and migrations, question catalog, environment CRUD, the CVSS scoring engine, and the first version of the frontend (environments list, interview wizard, results screen).
 
-[Unreleased]: https://github.com/eengelking/localscore/compare/1.2.4...HEAD
+[Unreleased]: https://github.com/eengelking/localscore/compare/1.2.7...HEAD
+[1.2.7]: https://github.com/eengelking/localscore/compare/1.2.6...1.2.7
+[1.2.6]: https://github.com/eengelking/localscore/compare/1.2.5...1.2.6
+[1.2.5]: https://github.com/eengelking/localscore/compare/1.2.4...1.2.5
 [1.2.4]: https://github.com/eengelking/localscore/compare/1.2.3...1.2.4
 [1.2.3]: https://github.com/eengelking/localscore/compare/1.2.2...1.2.3
 [1.2.2]: https://github.com/eengelking/localscore/compare/1.2.1...1.2.2
