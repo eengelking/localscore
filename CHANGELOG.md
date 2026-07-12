@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+## [1.1.1] - 2026-07-12
+
+- Bump `hono` from 4.12.28 to 4.12.29 (patch, Dependabot).
+
 ## [1.1.0] - 2026-07-10
 
 - Environment edit page: profile display, layout fixes, collapsed-by-default risk-warning disclosure, red-flag detection.
@@ -45,7 +49,8 @@ First stable release. The product works end to end:
 
 - Initial project scaffold: monorepo, SQLite database and migrations, question catalog, environment CRUD, the CVSS scoring engine, and the first version of the frontend (environments list, interview wizard, results screen).
 
-[Unreleased]: https://github.com/eengelking/localscore/compare/1.1.0...HEAD
+[Unreleased]: https://github.com/eengelking/localscore/compare/1.1.1...HEAD
+[1.1.1]: https://github.com/eengelking/localscore/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/eengelking/localscore/compare/1.0.4...1.1.0
 [1.0.4]: https://github.com/eengelking/localscore/compare/1.0.3...1.0.4
 [1.0.3]: https://github.com/eengelking/localscore/compare/1.0.2...1.0.3
