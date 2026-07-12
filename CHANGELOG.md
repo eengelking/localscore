@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+## [1.2.4] - 2026-07-12
+
+- Bump `marked` from 18.0.5 to 18.0.6 (patch, Dependabot).
+
 ## [1.2.3] - 2026-07-12
 
 - Bump `react`, `react-dom`, `@types/react`, and `@types/react-dom` from 18 to 19 together (major, Dependabot-originated but hand-verified). Confirmed no removed-API usage beforehand (no `forwardRef`, `propTypes`, string refs, legacy context, or `ReactDOM.render`; already on `createRoot`). One real fix: `AnimatedScore.tsx`'s `useRef<number>()` needed an explicit initial value under React 19's stricter types. Verified end to end with Playwright in both light and dark theme across the interview flow, the score-reveal animation, and the saved-vulnerabilities list. Closes #71; supersedes #60 and #68.
@@ -81,7 +85,8 @@ First stable release. The product works end to end:
 
 - Initial project scaffold: monorepo, SQLite database and migrations, question catalog, environment CRUD, the CVSS scoring engine, and the first version of the frontend (environments list, interview wizard, results screen).
 
-[Unreleased]: https://github.com/eengelking/localscore/compare/1.2.3...HEAD
+[Unreleased]: https://github.com/eengelking/localscore/compare/1.2.4...HEAD
+[1.2.4]: https://github.com/eengelking/localscore/compare/1.2.3...1.2.4
 [1.2.3]: https://github.com/eengelking/localscore/compare/1.2.2...1.2.3
 [1.2.2]: https://github.com/eengelking/localscore/compare/1.2.1...1.2.2
 [1.2.1]: https://github.com/eengelking/localscore/compare/1.2.0...1.2.1
