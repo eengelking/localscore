@@ -5,7 +5,7 @@ export function healthRoutes(db: Database.Database) {
   const app = new Hono();
 
   app.get("/health", (c) => {
-    let dbOk = false;
+    let dbOk: boolean;
     try {
       db.prepare("SELECT 1").get();
       dbOk = true;

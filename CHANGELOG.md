@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+## [1.2.1] - 2026-07-12
+
+- Bump `eslint` and `@eslint/js` from 9 to 10 together (major, Dependabot-originated but hand-verified). Fixes two real violations the new default rules surfaced: attach the caught error as `cause` in `server/src/db/index.ts`'s `DATA_DIR` error (`preserve-caught-error`), and drop a dead initializer in `server/src/routes/health.ts` (`no-useless-assignment`). Closes #72; supersedes #63 and #69.
+
 ## [1.2.0] - 2026-07-12
 
 - Upgrade the mandated runtime from Node 22 LTS to Node 24 LTS (the current actual LTS release, since Node 26 doesn't become LTS until October 2026): Dockerfile base image, `.nvmrc`, `engines.node`, and `@types/node`, plus the CLAUDE.md/CONTRIBUTING.md mandate text. Closes #74; supersedes #57 and #61.
@@ -69,7 +73,8 @@ First stable release. The product works end to end:
 
 - Initial project scaffold: monorepo, SQLite database and migrations, question catalog, environment CRUD, the CVSS scoring engine, and the first version of the frontend (environments list, interview wizard, results screen).
 
-[Unreleased]: https://github.com/eengelking/localscore/compare/1.2.0...HEAD
+[Unreleased]: https://github.com/eengelking/localscore/compare/1.2.1...HEAD
+[1.2.1]: https://github.com/eengelking/localscore/compare/1.2.0...1.2.1
 [1.2.0]: https://github.com/eengelking/localscore/compare/1.1.5...1.2.0
 [1.1.5]: https://github.com/eengelking/localscore/compare/1.1.4...1.1.5
 [1.1.4]: https://github.com/eengelking/localscore/compare/1.1.3...1.1.4
