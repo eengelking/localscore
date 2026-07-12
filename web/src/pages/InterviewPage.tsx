@@ -15,7 +15,16 @@ export function InterviewPage({ environmentId, onDone }: { environmentId: number
   const [error, setError] = useState<string | null>(null);
   const [helpOpen, setHelpOpen] = useState(false);
 
-  useEffect(() => setHelpOpen(false), [index]);
+  // helpOpen resets whenever the question changes, so switching questions
+  // via the progress ticks doesn't leave a stale modal open for the wrong
+  // question. Adjusted during render (comparing against the last-seen
+  // index) rather than in an effect, per React's guidance for resetting
+  // state in response to another state value changing.
+  const [prevIndex, setPrevIndex] = useState(index);
+  if (index !== prevIndex) {
+    setPrevIndex(index);
+    setHelpOpen(false);
+  }
 
   useEffect(() => {
     Promise.all([getCatalog(), getEnvironment(environmentId)])

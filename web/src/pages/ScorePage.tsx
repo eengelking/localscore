@@ -81,7 +81,9 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
   }
 
   useEffect(() => {
-    setMajorCvesLoading(true);
+    // majorCvesLoading already initializes to true and this effect's empty
+    // dependency array means it only ever runs once, on mount, so setting
+    // it true here is redundant, not a reset for a later re-run.
     getMajorCves()
       .then((res) => {
         setMajorCves(res);
@@ -102,9 +104,12 @@ export function ScorePage({ onOpenInterview }: { onOpenInterview: (environmentId
   }, [mode]);
 
   // If we go offline while on a tab that requires the network, fall back
-  // to the paste tab.
+  // to the paste tab. This is a deliberate sync-to-external-system effect
+  // (browser online/offline status), not a derived-render calculation, so
+  // the extra render the synchronous setState causes is intentional.
   useEffect(() => {
     if (!isOnline && (mode === "cve" || (mode === "major" && !majorCves))) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- see comment above
       setMode("paste");
     }
   }, [isOnline, mode, majorCves]);
