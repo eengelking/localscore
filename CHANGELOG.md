@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+## [1.2.5] - 2026-07-12
+
+- Bump `vitest` from 2.1.9 to 4.1.10 (major, Dependabot-originated but hand-verified). No config changes needed: neither `server/vitest.config.ts` nor `web/vitest.config.ts` uses coverage, pool/thread options, or workspace/projects config, and no test file relies on the mocking APIs that changed behavior (`vi.useFakeTimers`, `mockReset`, `spyOn` on an already-mocked method). The one `toThrowError` usage in `server/test/scoring.test.ts` passes a regex, not an `Error` instance, so v3's stricter error-equality rules don't apply. Also resolves the `npm audit` findings rooted in vitest's old bundled esbuild noted in this file's "Known gotchas" (5 vulnerabilities -> 2). Lint, typecheck, full test suite (166 tests), and build all verified clean with no code changes required.
+
 ## [1.2.4] - 2026-07-12
 
 - Bump `marked` from 18.0.5 to 18.0.6 (patch, Dependabot).
