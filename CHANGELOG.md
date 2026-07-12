@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+## [1.1.3] - 2026-07-12
+
+- Bump `better-sqlite3` from 11.10.0 to 12.11.1 (major, Dependabot; verified against the built container image, not just CI, since it's a native module).
+
 ## [1.1.2] - 2026-07-12
 
 - Bump `typescript` from 5.9.3 to 7.0.2 (major, Dependabot; verified clean typecheck/lint/test/build).
@@ -53,7 +57,8 @@ First stable release. The product works end to end:
 
 - Initial project scaffold: monorepo, SQLite database and migrations, question catalog, environment CRUD, the CVSS scoring engine, and the first version of the frontend (environments list, interview wizard, results screen).
 
-[Unreleased]: https://github.com/eengelking/localscore/compare/1.1.2...HEAD
+[Unreleased]: https://github.com/eengelking/localscore/compare/1.1.3...HEAD
+[1.1.3]: https://github.com/eengelking/localscore/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/eengelking/localscore/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/eengelking/localscore/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/eengelking/localscore/compare/1.0.4...1.1.0
