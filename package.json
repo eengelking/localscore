@@ -17,5 +17,9 @@
     "test": "npm run test --workspace server && npm run test --workspace web",
     "typecheck": "npm run typecheck --workspace server && npm run typecheck --workspace web",
     "lint": "npm run lint --workspace server && npm run lint --workspace web"
+  },
+  "allowScripts": {
+    "better-sqlite3@12.11.1": true,
+    "esbuild@0.28.1": true
   }
 }
