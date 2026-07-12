@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-07-12
+
+- Bump `react`, `react-dom`, `@types/react`, and `@types/react-dom` from 18 to 19 together (major, Dependabot-originated but hand-verified). Confirmed no removed-API usage beforehand (no `forwardRef`, `propTypes`, string refs, legacy context, or `ReactDOM.render`; already on `createRoot`). One real fix: `AnimatedScore.tsx`'s `useRef<number>()` needed an explicit initial value under React 19's stricter types. Verified end to end with Playwright in both light and dark theme across the interview flow, the score-reveal animation, and the saved-vulnerabilities list. Closes #71; supersedes #60 and #68.
+
 ## [1.2.2] - 2026-07-12
 
 - Bump `eslint-plugin-react-hooks` from 5 to 7 (major, Dependabot-originated but hand-verified). Fixes the new `react-hooks/set-state-in-effect` rule's real violations: `InterviewPage.tsx`'s help-modal reset now adjusts state during render (React's recommended pattern for resetting state on another state value changing) instead of an effect; a redundant `setMajorCvesLoading(true)` was removed from `ScorePage.tsx`'s mount-only effect; two remaining cases (`ScorePage.tsx`'s offline tab redirect, `AnimatedScore.tsx`'s reduced-motion snap) are legitimate sync-to-external-system effects and are suppressed with an inline justification rather than restructured. Verified end to end with Playwright in both light and dark theme (interview help-modal flow, score-reveal animation in both normal and reduced-motion modes). Closes #73; supersedes #58.
@@ -77,7 +81,8 @@ First stable release. The product works end to end:
 
 - Initial project scaffold: monorepo, SQLite database and migrations, question catalog, environment CRUD, the CVSS scoring engine, and the first version of the frontend (environments list, interview wizard, results screen).
 
-[Unreleased]: https://github.com/eengelking/localscore/compare/1.2.2...HEAD
+[Unreleased]: https://github.com/eengelking/localscore/compare/1.2.3...HEAD
+[1.2.3]: https://github.com/eengelking/localscore/compare/1.2.2...1.2.3
 [1.2.2]: https://github.com/eengelking/localscore/compare/1.2.1...1.2.2
 [1.2.1]: https://github.com/eengelking/localscore/compare/1.2.0...1.2.1
 [1.2.0]: https://github.com/eengelking/localscore/compare/1.1.5...1.2.0

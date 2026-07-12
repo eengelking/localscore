@@ -17,7 +17,7 @@ function prefersReducedMotion(): boolean {
 // deliberate animation in the app — everything else stays quiet.
 export function AnimatedScore({ from, to, size = "lg" }: { from: number; to: number; size?: "lg" | "hero" }) {
   const [value, setValue] = useState(prefersReducedMotion() ? to : from);
-  const raf = useRef<number>();
+  const raf = useRef<number | undefined>(undefined);
 
   useEffect(() => {
     if (prefersReducedMotion()) {
