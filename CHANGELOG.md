@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+## [1.2.6] - 2026-07-12
+
+- Bump `@hono/node-server` from 1.19.14 to 2.0.8 (major, Dependabot-originated but hand-verified). Breaking changes were minimal: a Node >=20 requirement (already on Node 24) and removal of the unused Vercel adapter; `serve()` and `serveStatic` (the only two exports this project uses, in `server/src/index.ts`) kept their API unchanged. Verified with lint/typecheck/full test suite (166 tests)/build, plus a running-server smoke test (`/api/health`, the built frontend's `index.html`, and `/api/catalog`) against the actual HTTP server this dependency implements.
+
 ## [1.2.4] - 2026-07-12
 
 - Bump `marked` from 18.0.5 to 18.0.6 (patch, Dependabot).
