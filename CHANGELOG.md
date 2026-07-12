@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+## [1.1.5] - 2026-07-12
+
+- Bump `dompurify` from 3.4.11 to 3.4.12 (patch, Dependabot).
+
 ## [1.1.4] - 2026-07-12
 
 - Bump `vite` from 5.4.21 to 8.1.4 (major, Dependabot; verified with a full local build and a running-server smoke test of frontend asset serving, the catalog API, and a DB round trip). Note: this alone doesn't clear the known `npm audit` vulnerabilities, see "Known gotchas" in `CLAUDE.md`, since those are rooted in `vitest`'s bundled dependencies, not `vite` directly.
@@ -61,7 +65,8 @@ First stable release. The product works end to end:
 
 - Initial project scaffold: monorepo, SQLite database and migrations, question catalog, environment CRUD, the CVSS scoring engine, and the first version of the frontend (environments list, interview wizard, results screen).
 
-[Unreleased]: https://github.com/eengelking/localscore/compare/1.1.4...HEAD
+[Unreleased]: https://github.com/eengelking/localscore/compare/1.1.5...HEAD
+[1.1.5]: https://github.com/eengelking/localscore/compare/1.1.4...1.1.5
 [1.1.4]: https://github.com/eengelking/localscore/compare/1.1.3...1.1.4
 [1.1.3]: https://github.com/eengelking/localscore/compare/1.1.2...1.1.3
 [1.1.2]: https://github.com/eengelking/localscore/compare/1.1.1...1.1.2
