@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+## [1.1.2] - 2026-07-12
+
+- Bump `typescript` from 5.9.3 to 7.0.2 (major, Dependabot; verified clean typecheck/lint/test/build).
+
 ## [1.1.1] - 2026-07-12
 
 - Bump `hono` from 4.12.28 to 4.12.29 (patch, Dependabot).
@@ -49,7 +53,8 @@ First stable release. The product works end to end:
 
 - Initial project scaffold: monorepo, SQLite database and migrations, question catalog, environment CRUD, the CVSS scoring engine, and the first version of the frontend (environments list, interview wizard, results screen).
 
-[Unreleased]: https://github.com/eengelking/localscore/compare/1.1.1...HEAD
+[Unreleased]: https://github.com/eengelking/localscore/compare/1.1.2...HEAD
+[1.1.2]: https://github.com/eengelking/localscore/compare/1.1.1...1.1.2
 [1.1.1]: https://github.com/eengelking/localscore/compare/1.1.0...1.1.1
 [1.1.0]: https://github.com/eengelking/localscore/compare/1.0.4...1.1.0
 [1.0.4]: https://github.com/eengelking/localscore/compare/1.0.3...1.0.4
