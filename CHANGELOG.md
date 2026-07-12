@@ -4,6 +4,10 @@ All notable changes to this project are documented here. Format loosely follows 
 
 ## [Unreleased]
 
+## [1.2.7] - 2026-07-12
+
+- Bump `@vitejs/plugin-react` from 4.7.0 to 6.0.3 (major, Dependabot-originated but hand-verified). Breaking changes across 5.0.0 and 6.0.0 are all dev-server/Babel-internals concerns (Oxc-based Fast Refresh transform, Babel dropped as a dependency, a Node >=20.19/Vite >=7 floor) that don't touch this project's usage: `web/vite.config.ts` calls `react()` with no options, no custom `exclude`, and no Babel config. Verified with lint/typecheck/full test suite (166 tests) and a production build producing byte-identical output to the pre-bump build.
+
 ## [1.2.4] - 2026-07-12
 
 - Bump `marked` from 18.0.5 to 18.0.6 (patch, Dependabot).
